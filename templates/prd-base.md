@@ -113,13 +113,8 @@ As a [role], I want [goal] so that [benefit].
 
 > **GUIDE**
 > **What**: Boundary conditions, nullable fields, concurrent actions, failure modes.
-> **Why**: Edge cases are where bugs live.
-> **How**: For each, specify the condition and expected behavior. Cover at minimum:
-> - Nullable/missing data
-> - Boundary values (min, max, empty)
-> - Network failures and timeouts
-> - Concurrent actions (double-submit, rapid requests)
-> - Auth/session expiration mid-flow
+> **Why**: Edge cases are where bugs live. The #1 complaint about AI-generated PRDs is missing edge cases.
+> **How**: Generate systematically, not from intuition. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data. For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: indeterminate condition, rapid toggle mid-flow. Then deduplicate and remove impossible scenarios.
 
 | # | Condition | Expected Behavior |
 |---|-----------|-------------------|

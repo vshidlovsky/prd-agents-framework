@@ -111,6 +111,50 @@ Build the PRD in this order:
 3. For Tier 2 sections (Success Criteria, Security Constraints, Cross-Initiative Alignment): check if their condition applies. If yes, move the section from the Tier 2 block at the bottom of the template to the insertion point specified in its `Insert into` tag. If no, delete the section entirely.
 4. For backend/API projects with no UI: mark AC sub-sections (Loading States, Error States, Empty States) as `N/A — backend service` if they don't apply. Loading States may still apply (e.g., async processing indicators). Only include sub-sections that are meaningful for the project type.
 
+### Systematic Edge Case Generation
+
+After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — don't rely on intuition. Run each input through three checklists:
+
+**Per Key Entity / field:**
+
+| Dimension | Question |
+|-----------|----------|
+| Null/missing | What if this value is absent or null? |
+| Empty | What if this is an empty string, empty list, or zero? |
+| Boundary min | What happens at the minimum valid value? |
+| Boundary max | What happens at the maximum valid value? |
+| Just outside | What happens at min-1 or max+1? |
+| Invalid format | What if the type is wrong (string for number, future date for past-only)? |
+| Stale | What if this value changed between when it was read and when it's used? |
+
+**Per API endpoint:**
+
+| Dimension | Question |
+|-----------|----------|
+| Network failure | What does the user see if the request fails mid-flight? |
+| Timeout | What happens after N seconds with no response? |
+| Auth expiry | What if the session/token expires during this request? |
+| Rate limit | What if the API returns 429? |
+| Partial response | What if optional response fields come back null? |
+| Concurrent mutation | What if two users/tabs submit the same request simultaneously? |
+
+**Per conditional FR (supplements Quality Standard #8):**
+
+| Dimension | Question |
+|-----------|----------|
+| Indeterminate | What if the condition can't be evaluated (data missing to decide)? |
+| Rapid toggle | What if the condition flips while the user is mid-flow? |
+
+**Process:**
+1. Walk each entity through the entity checklist → produces candidate rows
+2. Walk each endpoint through the endpoint checklist → produces candidate rows
+3. Walk each conditional FR through the conditional checklist → produces candidate rows
+4. Deduplicate — merge rows that describe the same scenario from different angles
+5. Remove rows that are truly impossible given the system constraints (document why)
+6. Write the survivors into the Edge Cases table
+
+This is mechanical, not creative. Every entity × dimension is considered. The reviewer's Matrix E checks these same dimensions — generating them here prevents revision cycles.
+
 ### PRD Versioning
 
 If project-context.md specifies versioned filenames:

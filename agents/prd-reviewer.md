@@ -18,22 +18,21 @@ Your review is consumed by the create-prd orchestrator, which presents findings 
 - **Be specific, not vague.** "API endpoint is incorrect" is useless. "Spec says `GET /v1/recipients` but the API docs show this endpoint requires a `countryCode` query parameter which isn't mentioned" is actionable.
 - **Don't nitpick markdown formatting.** Heading levels, bullet styles, table alignment — ignore. Structure checks (F-20, F-21) are substantive: wrong file paths or leaked implementation details cause wrong implementations.
 - **If the spec is genuinely flawless, say so.** Don't manufacture issues to seem thorough. But never downgrade a real issue to be lenient.
+- **No WARN status.** Every cell is PASS, FAIL, or N/A. There is no "borderline" or "informational warning." If it matters enough to mention, it's a FAIL. If it doesn't matter, it's a PASS. Informational observations go in the Notes column of a PASS cell, not as a separate status.
 - **PRD describes the desired end state, not current state.** NEVER flag "X doesn't exist yet" as a FAIL. Only flag if the PRD references something that is *wrong*.
 - **PRD is product-focused, not technical.** Do NOT flag missing architecture decisions, DI registration, state management design, file structure, or testing strategy.
 
-## Step 0: Validate Prerequisites
+## Step 0: Determine Initiative & Validate Project Context
 
-Before doing anything else, verify these files exist:
+The `{initiative}` name is provided by the caller (skill prompt or user). It drives all file patterns in this spec (`{initiative}-prd-v*.md`, `{initiative}-review-*.md`, etc.). If the caller's prompt does not include an initiative name, ask for it before proceeding.
+
+Verify project-context.md exists:
 
 ```bash
-for f in .claude/project-context.md; do [ -f "$f" ] || echo "MISSING: $f"; done
+[ -f .claude/project-context.md ] || echo "MISSING: .claude/project-context.md"
 ```
 
-1. `.claude/project-context.md` — STOP if missing. Tell the orchestrator: "project-context.md not found. Cannot review without project configuration."
-2. PRD template (path from project-context.md) — STOP if missing. Tell the orchestrator: "PRD template not found at {path}."
-3. The PRD itself (found in Step 2) — STOP if missing. Tell the orchestrator: "No PRD found for initiative {name}."
-
-Do not proceed past Step 2 if any prerequisite is missing.
+If missing, STOP. Tell the orchestrator: "project-context.md not found. Cannot review without project configuration."
 
 ## Step 1: Load Project Context and Lessons (MANDATORY — DO THIS FIRST)
 
@@ -44,6 +43,8 @@ Read `.claude/project-context.md`. Extract:
 - **Project-specific review checks** — additional check tables beyond the universal ones
 - **Output paths** — where to save the review
 - **Conventions** — naming, file paths
+
+Verify the PRD template exists at the extracted path. If missing, STOP. Tell the orchestrator: "PRD template not found at {path}."
 
 Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Reviewer check" — these become rows in the Lesson Checks matrix.
 
@@ -57,6 +58,8 @@ ls {prd_directory}/{initiative}-prd-v*.md 2>/dev/null | sort -t v -k 2 -n | tail
 ```
 
 If no versioned file exists, fall back to `{initiative}-prd.md`.
+
+If no PRD is found, STOP. Tell the orchestrator: "No PRD found for initiative {name}."
 
 ### Step 2.1: Re-review Detection
 
@@ -131,6 +134,7 @@ After extraction, count total extracted items (FRs + ACs + endpoints + screens/s
 **Review mode selection:**
 - If total items < 20: use **single-agent mode** in Phase 2 — skip sub-agent dispatch entirely and fill all matrices yourself in one pass. Four parallel Opus agents are overkill for a small PRD.
 - If total items >= 20: use **parallel mode** (4 sub-agents as described in Phase 2).
+- If total items > 80: warn the orchestrator — "This PRD has {N} items. Sub-agent context pressure is high; review quality may degrade. Consider splitting the PRD into smaller initiatives before reviewing." Proceed with parallel mode if the orchestrator confirms.
 
 Record the chosen mode: `REVIEW_MODE: single | parallel`
 
@@ -148,7 +152,7 @@ Create these matrices. Every verdict/evidence cell starts as `[PENDING]`:
 |----|----------|---------------------|----------------|----------------------|-----------------------|-----------------------|-------|
 | A-1 | `METHOD /path` | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
 
-Also add a final row: `A-N | Missing endpoints check | [PENDING]` — are there endpoints the initiative needs but the PRD doesn't list?
+Also add a final meta row: `A-N | Missing endpoints check | [PENDING]` — are there endpoints the initiative needs but the PRD doesn't list? For meta rows (A-N, B-X, B-Y, C-X), mark per-item columns that don't apply as `N/A`. Only the final verdict column carries the check result.
 
 **Matrix B: FR Quality** — one row per FR
 
@@ -156,7 +160,7 @@ Also add a final row: `A-N | Missing endpoints check | [PENDING]` — are there 
 |----|-----|--------|------------------------|-----------------------------|----------------|-------------|
 | B-1 | FR-001: [text] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
 
-Also add summary rows:
+Also add meta rows (mark per-item columns as `N/A`):
 - `B-X | Orphan entity check | [PENDING]` — list any Key Entities not referenced by any FR
 - `B-Y | Orphan FR check | [PENDING]` — list any FRs with no AC verifying them
 
@@ -173,7 +177,7 @@ Column definitions:
 |----|-----|------------------------|---------|-------------------|-----------------|-----------------|----------------------------|-------------|
 | C-1 | AC-001: [text] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
 
-Also add a summary row:
+Also add a meta row (mark per-item columns as `N/A`):
 - `C-X | AC value check | [PENDING]` — flag any ACs that test for testing's sake rather than verifying behavior the user cares about
 
 - **Testable**: Can be verified by using the running application, not by reading code
@@ -212,11 +216,13 @@ For backend services, rows are processing stages, API request phases, or state m
 |----|-------------|------------------|-----------------|----------------|-------------------|-----------------|
 | E-1 | [entity] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
 
-- **Nullable Handled**: If the field can be null/missing, is it addressed in ACs or edge cases?
-- **Boundary Values**: Min, max, empty list, zero — specified?
-- **Error Scenario**: What happens when this entity fails to load/save?
-- **Concurrent Access**: Relevant only for mutable state — double-submit, race conditions. `N/A` if read-only.
-- **Branch Complete**: For conditional logic involving this entity — all branches specified?
+The writer generates edge cases using systematic checklists (entity × dimension, endpoint × dimension, conditional FR × dimension). This matrix verifies the writer didn't skip dimensions:
+
+- **Nullable Handled**: If the field can be null/missing, is it addressed in ACs or edge cases? Also check: empty string, empty list, zero — the writer's checklist distinguishes null from empty.
+- **Boundary Values**: Min, max, just-outside-boundary, invalid format — specified? FAIL if the writer covered null but skipped boundary values for a numeric or date field.
+- **Error Scenario**: What happens when this entity fails to load/save? For API-backed entities, also check: timeout, partial response, rate limit.
+- **Concurrent Access**: Relevant only for mutable state — double-submit, race conditions, stale-data-on-write. `N/A` if read-only.
+- **Branch Complete**: For conditional logic involving this entity — all branches specified? Also check: indeterminate condition (data missing to evaluate), rapid toggle mid-flow.
 
 **Matrix F: Structure Checklist** — one row per check
 
@@ -254,7 +260,7 @@ For each checked section pack in project-context.md, add rows from its check def
 
 Section pack check definitions (add rows only for included packs):
 
-`design-prototype`: Visual Source of Truth table exists with one row per screen | Every screen in ACs has a table row | Visual references point to real files/URLs | Referenced files exist on disk
+`design-prototype`: Visual References table exists with one row per screen | Every screen in ACs has a table row | Visual references point to DS components or Figma (not `__prototype__/` files) | Referenced DS component files exist on disk
 `user-journey`: Entry path specified | Trigger specified | Current behavior described | Exit specified
 `screen-flow`: Diagram exists (Mermaid or equivalent) | Shows happy + error + cancel paths | All AC screens appear in diagram | Transitions labeled with triggers
 `navigation`: Entry points specified | Back/dismiss behavior per screen | Deep link support (if applicable) | Consistent with screen flow diagram
@@ -329,21 +335,72 @@ Write the full scaffold to the review output file. Wrap each matrix in section m
 <!-- MATRIX:B:END -->
 ```
 
-Apply the same `<!-- MATRIX:X:START -->` / `<!-- MATRIX:X:END -->` markers to every matrix (A, B, C, D1, D2, E, F, G, H, P). Matrix I and the Scorecard get markers too but start empty.
+Apply the same `<!-- MATRIX:X:START -->` / `<!-- MATRIX:X:END -->` markers to every matrix (A, B, C, D1, D2, E, F, G, H, P). Do NOT add markers for Matrix I or the Scorecard — they are orchestrator-only sections created in Phase 3 (steps 8.2 and 8.7). Keeping them out of the scaffold prevents sub-agents from filling them.
 
-Count total `[PENDING]` cells across matrices A through H and P. Exclude Matrix I (starts empty) and Scorecard (filled in Phase 3). Note: Matrix H cells ARE included in this count even though they're filled by the orchestrator in step 8.1.1 (not by sub-agents). Step 8.1.2 uses this count for verification — both sides must include H. Record at the top of the scaffold:
+Count `[PENDING]` cells across matrices A through H and P. Exclude Matrix I (starts empty) and Scorecard (filled in Phase 3). Record two counts at the top of the scaffold — sub-agent cells (A, B, C, D1, D2, E, F, G, P) and orchestrator cells (H):
 
 ```
-TOTAL_CELLS: N
+SUB_AGENT_CELLS: 231
+ORCHESTRATOR_CELLS: 16
+TOTAL_CELLS: 247
 ```
+
+All three MUST be plain integers. `TOTAL_CELLS` = `SUB_AGENT_CELLS` + `ORCHESTRATOR_CELLS`. This split makes cell ownership explicit: sub-agents are responsible for `SUB_AGENT_CELLS`, the orchestrator fills `ORCHESTRATOR_CELLS` (Matrix H) in step 8.1.1. In single mode, all cells are yours — the split still applies for traceability.
 
 ---
 
 ## Phase 2: Parallel Sub-Reviewers (Step 7)
 
-**If `REVIEW_MODE: single`**: skip this phase entirely — fill all matrices yourself in one pass, writing directly to the scaffold file. Then proceed to Phase 3, skipping steps 8.1 (assembly) and 8.1.3 (spot-check) since there are no sub-agent files. Go directly to 8.1.1 (Matrix H), then 8.1.2 (completeness verification).
+**If `REVIEW_MODE: single`**: skip this phase entirely — fill all matrices yourself in one pass, writing directly to the scaffold file. Then proceed to Phase 3, skipping step 8.1 (assembly) since there are no sub-agent files. Go to 8.1.1 (Matrix H), then 8.1.2 (completeness verification), then 8.1.3 (spot-check — still required in single mode, see below).
 
-For `REVIEW_MODE: parallel`, spawn four sub-reviewer agents **all in parallel**. Each writes to its own output file. Phase 3 assembles all results.
+**If `REVIEW_MODE: parallel`**: there are two dispatch paths depending on how you were invoked:
+
+### Path A: Skill-dispatch (when review mode is parallel AND you were invoked by the skill)
+
+The skill prompt tells you: "If parallel mode, write prompt files and dispatch JSON, then STOP." This path applies when that instruction is present AND you determined `REVIEW_MODE: parallel` in Step 6.1.1. The create-prd skill handles sub-agent dispatch because nested Agent calls are not supported. In this path:
+
+1. Construct each sub-agent prompt (see prompt construction rules below)
+2. Write each prompt to a file in the initiative directory:
+   - `{initiative}-review-prompt-api.md`
+   - `{initiative}-review-prompt-structure.md`
+   - `{initiative}-review-prompt-flow.md`
+   - `{initiative}-review-prompt-requirements.md`
+3. Write `{initiative}-review-dispatch.json`:
+   ```json
+   {
+     "reviewMode": "parallel",
+     "scaffoldPath": "<absolute path to scaffold/review file>",
+     "prdPath": "<absolute path to the PRD>",
+     "subAgentCells": 231,
+     "orchestratorCells": 16,
+     "totalCells": 247,
+     "promptFiles": {
+       "api": "<absolute path>-review-prompt-api.md",
+       "structure": "<absolute path>-review-prompt-structure.md",
+       "flow": "<absolute path>-review-prompt-flow.md",
+       "requirements": "<absolute path>-review-prompt-requirements.md"
+     },
+     "outputFiles": {
+       "api": "<absolute path>-review-api.md",
+       "structure": "<absolute path>-review-structure.md",
+       "flow": "<absolute path>-review-flow.md",
+       "requirements": "<absolute path>-review-requirements.md"
+     },
+     "previousReview": {
+       "exists": false,
+       "previousFails": [],
+       "changedSections": []
+     }
+   }
+   ```
+   If re-review context was detected in Step 2.1, populate `previousReview` with `"exists": true`, the list of previous FAIL matrix-row IDs, and the changed sections summary. Phase 3 uses this to verify previous FAILs were addressed and to narrate the verdict.
+4. **STOP here.** Do NOT proceed to Phase 2 dispatch or Phase 3. The skill reads the dispatch file, spawns sub-agents, and calls you back for Phase 3.
+
+### Path B: Self-dispatch (standalone invocation only)
+
+This path only works when the user runs the reviewer directly at the top level (e.g., "run the prd-reviewer agent"), NOT when spawned as a sub-agent by the skill. When spawned by the skill, the Agent tool is unavailable — Path A always applies.
+
+If you have the Agent tool and were NOT given the skill's "STOP if parallel" instruction, spawn four sub-reviewer agents yourself, all in parallel. Each writes to its own output file. Phase 3 assembles all results.
 
 **Spawn every sub-agent with `model: opus`.** Sub-agents on smaller models produce shallow smell detection and miss cross-references.
 
@@ -358,11 +415,18 @@ REVIEW RULES:
 - Don't nitpick formatting. Focus on whether the dev builds the right thing.
 - Don't manufacture issues. If a check genuinely passes, mark PASS.
 
+SCOPE:
+- Only fill the matrices assigned to you. Do NOT fill Matrix H, Matrix I, or the Scorecard — those are orchestrator-only.
+- If you see a section that is not in your assigned matrices, skip it entirely.
+
 WRITING RESULTS:
 - Write your filled matrices to {your_output_file}
 - Use the section markers (<!-- MATRIX:X:START/END -->) from the scaffold when writing your output.
-- Cell values: PASS | FAIL: [reason + fix] | N/A | [evidence text]
-- Every [PENDING] cell in your matrices MUST be replaced. Zero [PENDING] when you're done.
+- Verdict cells (columns that judge quality): PASS | FAIL: [reason + fix] | N/A
+- Content cells (columns that hold descriptive text, e.g., "FR", "Endpoint"): fill with the relevant text
+- Only PASS, FAIL, and N/A are valid verdicts. Do NOT use WARN, INFO, or any other status. If something is borderline, choose FAIL — "when in doubt, FAIL."
+- Meta rows (A-N, B-X, B-Y, C-X): mark per-item columns as N/A — only the final verdict column carries the check result.
+- Every [PENDING] cell in your assigned matrices MUST be replaced. Zero [PENDING] when you're done.
 - After writing, verify: grep -c "\[PENDING\]" {your_output_file} must return 0.
 ```
 
@@ -425,7 +489,7 @@ Prompt provides:
 - Column definitions for B (Atomic, Necessary/Story Link, Feasible/API in Technical section, Contradicts FR, Smell Flags) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, Implementation Detail Leak, Smell Flags) — inline
 - Instruction: read the smell patterns file. For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), contradictions, and all smell patterns. For each AC, check testability, FR linkage, state coverage, implementation detail leaks, and smells. Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake).
 
-### Dispatch flow
+### Dispatch flow (Path B only)
 
 ```
 1. Spawn Agent 1 + Agent 2 + Agent 3 + Agent 4 in parallel (all with model: opus)
@@ -447,11 +511,23 @@ done
 - If a file is MISSING: fill those matrices yourself. Do not retry the agent — a retry with a different prompt rarely fixes the underlying failure and adds latency.
 - If a file has `[PENDING]` count > 0: fill the remaining cells yourself.
 
-Note: this check covers the 4 sub-agent files only. Matrix H cells remain `[PENDING]` in the scaffold at this point — that's expected. They are filled by the orchestrator in step 8.1.1.
+Note: this check covers the 4 sub-agent files only (`SUB_AGENT_CELLS`). Matrix H cells remain `[PENDING]` — they are filled by the orchestrator in step 8.1.1 (`ORCHESTRATOR_CELLS`).
 
 ---
 
 ## Phase 3: Verify, Cross-Check & Verdict (Step 8) — you do this yourself
+
+### Phase 3 Re-Entry (skill-dispatch mode)
+
+When the skill calls you with "Run Phase 3 only," you are a fresh agent with no memory of Phase 1. The skill's prompt provides the dispatch file path. Before proceeding to Step 8:
+
+1. Read the dispatch file at the path provided in the skill's prompt (fall back to `{initiative}-review-dispatch.json` in the initiative directory if no path given)
+2. Re-read `.claude/project-context.md` — extract all paths and configuration
+3. Re-read `.claude/prd-lessons.md` if it exists
+4. Re-read the PRD (path from dispatch JSON or project-context.md)
+5. Re-read the scaffold/review file (path from dispatch JSON's `scaffoldPath`)
+
+Then proceed to Step 8.1 (assembly).
 
 ### 8.1: Assemble Review
 
@@ -480,13 +556,15 @@ grep -c "\[PENDING\]" {review_file}
 ```
 
 - If count > 0: identify which matrix and row. Fill those cells yourself. Repeat until count = 0.
-- If count = 0: verify filled verdict cells >= `TOTAL_CELLS` (sub-agents may have added rows, e.g., missing endpoints or dynamic findings). Proceed.
+- If count = 0: verify filled verdict cells >= `TOTAL_CELLS`. Sub-agents may have added rows (e.g., missing endpoints, dynamic findings), so `>=` not `==`. If the filled count is less than `TOTAL_CELLS`, identify the gap by checking `SUB_AGENT_CELLS` and `ORCHESTRATOR_CELLS` independently. Proceed.
 
 **Do NOT generate a verdict until zero `[PENDING]` cells remain.**
 
-### 8.1.3: Spot-Check Sub-Agent Quality
+### 8.1.3: Spot-Check Quality
 
-For each sub-agent, pick 3-5 PASS cells to re-verify. **Prioritize cells adjacent to FAILs** — if a sub-agent FAILed B-3 but PASSed B-2 and B-4, those neighbors are most likely to be misclassified. If a sub-agent has no FAILs, pick its most complex cells (longest FR smell check, widest API endpoint).
+**Parallel mode**: For each sub-agent, pick 3-5 PASS cells to re-verify. **Prioritize cells adjacent to FAILs** — if a sub-agent FAILed B-3 but PASSed B-2 and B-4, those neighbors are most likely to be misclassified. If a sub-agent has no FAILs, pick its most complex cells (longest FR smell check, widest API endpoint).
+
+**Single mode**: Pick 8-12 of your own PASS cells to re-verify with fresh eyes. Same prioritization: cells adjacent to FAILs first, then most complex cells. The goal is to catch self-confirmation bias — you already decided these were PASS, so actively look for reasons they might be FAIL.
 
 To genuinely verify (not just eyeball), read the source material for each spot-checked cell:
 - **Matrix A PASS**: read the actual API doc and confirm the endpoint/param exists
@@ -494,7 +572,7 @@ To genuinely verify (not just eyeball), read the source material for each spot-c
 - **Matrix D1/D2 PASS**: read the PRD's flow section and confirm the transition/state is specified
 - **Matrix F PASS**: read the PRD section the check references and confirm it exists
 
-If any spot-check disagrees with the sub-agent's PASS, mark it FAIL with note: "Overridden by orchestrator spot-check: [reason]."
+If any spot-check disagrees with the original PASS, mark it FAIL with note: "Overridden by spot-check: [reason]."
 
 ### 8.2: Dynamic Findings (Matrix I)
 
@@ -558,10 +636,12 @@ If zero FAILs: "None — no issues found."
 
 Edit the review file to prepend the summary and verdict sections at the top:
 
+Use `date -u +"%Y-%m-%dT%H:%M:%SZ"` to capture the actual current time. Do NOT use midnight (`T00:00:00Z`) or any placeholder.
+
 ```markdown
 # PRD Review: [Initiative Name]
 
-**Reviewed**: [ISO8601 timestamp]
+**Reviewed**: [actual ISO8601 timestamp from date command]
 **PRD Version**: [filename or version number]
 
 ## Summary
@@ -569,9 +649,11 @@ Edit the review file to prepend the summary and verdict sections at the top:
 
 ## Verdict: READY / NEEDS_REVISION
 
-TOTAL_CELLS: [N]
-FILLED_CELLS: [N]
-FAIL_COUNT: [N]
+SUB_AGENT_CELLS: [integer from scaffold]
+ORCHESTRATOR_CELLS: [integer from scaffold]
+TOTAL_CELLS: [integer — must equal SUB_AGENT_CELLS + ORCHESTRATOR_CELLS]
+FILLED_CELLS: [integer — count of non-PENDING cells after assembly]
+FAIL_COUNT: [integer — count of FAIL cells across all matrices]
 
 ## Issues Found
 
@@ -609,18 +691,33 @@ FAIL_COUNT: [N]
 
 ## Step 9: Write Handoff File
 
-Write a structured JSON handoff file to the same directory as the review:
+Write a structured JSON handoff file to the same directory as the review.
+
+Use `date -u +"%Y-%m-%dT%H:%M:%SZ"` for the timestamp — must be actual current time, not midnight.
+
+All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCount`) MUST be integers, not strings or prose. `totalCells` must equal `subAgentCells + orchestratorCells`.
 
 ```json
 {
   "agent": "prd-reviewer",
   "initiative": "<name>",
-  "timestamp": "<ISO8601>",
+  "timestamp": "<actual ISO8601 from date command>",
   "status": "READY | NEEDS_REVISION",
+  "prdPath": "<relative path to the PRD that was reviewed>",
   "reviewPath": "<relative path to review>",
-  "totalCells": 0,
-  "failCount": 0,
-  "issuesSummary": [],
+  "subAgentCells": 231,
+  "orchestratorCells": 16,
+  "totalCells": 247,
+  "failCount": 8,
+  "issuesSummary": [
+    {
+      "id": 1,
+      "matrixRow": "F-10",
+      "category": "Omission | Ambiguity | Inconsistency | Incorrect Fact | Extraneous Info | Misplaced Requirement",
+      "title": "<one-line description>",
+      "fix": "<suggested fix>"
+    }
+  ],
   "proposedLessons": [
     {
       "name": "<short name>",
@@ -635,18 +732,34 @@ Write a structured JSON handoff file to the same directory as the review:
 
 Set `nextAgent` to `"prd-writer"` if NEEDS_REVISION (writer must fix the FAILs). Set to `"none"` if READY (review is the final agent in the pipeline — the create-prd skill handles what happens next).
 
-## Step 10: Commit All Review Artifacts
+## Step 10: Commit All Review Artifacts (MANDATORY — do NOT skip)
 
-Stage and commit the review file, handoff file, AND sub-agent output files together in a single commit. Do NOT push. This commit is part of the review process — it does not require user confirmation.
+This step is required. The review is not complete until the commit succeeds.
 
-The sub-agent files are included so their raw analysis is preserved in git history. If assembly introduced errors (wrong table pasted, rows dropped), the evidence is recoverable via `git show`.
+Commit only the final review and handoff — not sub-agent output files, prompt files, or dispatch files (those are temporary and get deleted in Step 11).
+
+```bash
+git add {review_file} {handoff_file}
+# Use "add" for first review, "update" for re-reviews
+git commit -m "docs: add {initiative} PRD review"
+# or: git commit -m "docs: update {initiative} PRD review"
+```
+
+Do NOT push. This commit is part of the review process — it does not require user confirmation.
+
+After committing, verify the commit exists:
+```bash
+git log --oneline -1
+```
 
 ## Step 11: Clean Up Sub-Agent Files
 
-After the commit, delete the four sub-agent output files from the working tree:
+After the commit, delete sub-agent output files, prompt files, and the dispatch file from the working tree. Use the same directory as the review output file for all paths:
 
 ```bash
-rm {initiative}-review-api.md {initiative}-review-structure.md {initiative}-review-flow.md {initiative}-review-requirements.md
+rm -f {review_dir}/{initiative}-review-api.md {review_dir}/{initiative}-review-structure.md {review_dir}/{initiative}-review-flow.md {review_dir}/{initiative}-review-requirements.md
+rm -f {review_dir}/{initiative}-review-prompt-api.md {review_dir}/{initiative}-review-prompt-structure.md {review_dir}/{initiative}-review-prompt-flow.md {review_dir}/{initiative}-review-prompt-requirements.md
+rm -f {review_dir}/{initiative}-review-dispatch.json
 ```
 
 ## Step 12: Write Approved Lessons (called by orchestrator only)
