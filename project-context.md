@@ -123,8 +123,9 @@ Custom section pack files (one path per line, or "none"):
 > The prd-reviewer runs these ON TOP OF the 8 universal checks.
 > Write each as a checklist the reviewer can verify against the codebase.
 
-Add one table per custom check. Delete the examples below and replace with your own, or leave this section empty if none apply.
+Add one table per custom check, or leave this section empty if none apply.
 
+<!-- EXAMPLE — DELETE EVERYTHING BETWEEN THESE MARKERS AFTER COPYING
 #### Example: Spring Security
 | # | Check Item |
 |---|-----------|
@@ -137,6 +138,7 @@ Add one table per custom check. Delete the examples below and replace with your 
 | 1 | Firebase console key uses SCREAMING_SNAKE_CASE with domain prefix |
 | 2 | Dart enum member uses camelCase |
 | 3 | Code fallback is false |
+END EXAMPLE — DELETE -->
 
 ---
 

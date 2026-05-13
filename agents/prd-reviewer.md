@@ -754,7 +754,9 @@ git log --oneline -1
 
 ## Step 11: Clean Up Sub-Agent Files
 
-After the commit, delete sub-agent output files, prompt files, and the dispatch file from the working tree. Use the same directory as the review output file for all paths:
+Only run cleanup if the Step 10 commit succeeded (verified by `git log --oneline -1`). If the commit failed, STOP — do not delete evidence files. Fix the commit first.
+
+Delete sub-agent output files, prompt files, and the dispatch file from the working tree. Use the same directory as the review output file for all paths:
 
 ```bash
 rm -f {review_dir}/{initiative}-review-api.md {review_dir}/{initiative}-review-structure.md {review_dir}/{initiative}-review-flow.md {review_dir}/{initiative}-review-requirements.md
