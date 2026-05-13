@@ -242,12 +242,14 @@ Then say: **"Review `.claude/project-context.md` and fill in any `[TODO]` marker
 ## Step 12: Cleanup (after user confirms)
 
 When the user confirms the draft is good:
-1. Keep all section pack files in the section packs directory — even unchecked ones. The user may enable them later for a different initiative. Deleting them forces re-copying from the framework.
-2. Run the verification prompt on project-context.md:
+1. Create an empty `prd-lessons.md` in the project root if it doesn't already exist. This file captures lessons learned across PRD initiatives — the reviewer and writer agents will reference it over time.
+2. Keep all section pack files in the section packs directory — even unchecked ones. The user may enable them later for a different initiative. Deleting them forces re-copying from the framework.
+3. Run the verification prompt on project-context.md:
    - Confirm no `[TODO]` markers remain
    - Confirm no `> GUIDE` blocks remain
    - Confirm no template scaffolding text remains (e.g., `> Fill this file once per project`)
    - Confirm all checked section pack files exist on disk
    - Confirm all custom research step files exist on disk
    - Confirm `docs/api-sources.md` exists and references valid files
-3. Report: "Setup complete. You can now run `/create-prd {initiative}` or individual agents."
+   - Confirm `prd-lessons.md` exists in the project root
+4. Report: "Setup complete. You can now run `/create-prd {initiative}` or individual agents."

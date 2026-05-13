@@ -127,13 +127,18 @@ Spawn an Agent using `.claude/agents/prd-reviewer.md` with the prompt:
 
 > "Run Phase 3 only for initiative '{argument}'. Sub-agents have completed. The dispatch file is at {absolute_path_to_dispatch_json}. Re-read project context, lessons, PRD, and scaffold. Assemble sub-agent outputs, fill Matrix H, run completeness verification, spot-check, dynamic findings, defect taxonomy, verdict, and commit."
 
-### Step 3.5: Defensive cleanup
+### Step 3.6: Defensive cleanup
 
-After the reviewer returns from Phase 3, clean up any remaining temporary files (idempotent — safe if the reviewer already deleted them in its Step 11):
+After the reviewer returns from Phase 3, verify the commit succeeded before deleting temporary files. If the commit failed, the reviewer preserves these files as evidence — do not delete them.
 
 ```bash
-rm -f {initiative_dir}/*-review-prompt-*.md {initiative_dir}/*-review-dispatch.json
-rm -f {initiative_dir}/*-review-api.md {initiative_dir}/*-review-structure.md {initiative_dir}/*-review-flow.md {initiative_dir}/*-review-requirements.md
+# Only clean up if the reviewer's commit landed
+if git log --oneline -1 | grep -q "{argument}.*PRD review"; then
+  rm -f {initiative_dir}/*-review-prompt-*.md {initiative_dir}/*-review-dispatch.json
+  rm -f {initiative_dir}/*-review-api.md {initiative_dir}/*-review-structure.md {initiative_dir}/*-review-flow.md {initiative_dir}/*-review-requirements.md
+else
+  echo "WARNING: Review commit not found — keeping sub-agent files for debugging."
+fi
 ```
 
 The reviewer now has the review file and handoff ready.
