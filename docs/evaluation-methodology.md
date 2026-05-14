@@ -165,7 +165,7 @@ Select 5 PRDs from the evaluation set. Have 3+ human evaluators (PMs and enginee
 
 - Zheng, L. et al. (2023). "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena." NeurIPS.
 - Liu, Y. et al. (2023). "G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment." EMNLP.
-- Shankar, S. et al. (2024). "Who Validates the Validators? Aligning LLM-Assisted Evaluation of LLM Outputs with Human Preferences." 
+- Shankar, S. et al. (2024). "Who Validates the Validators? Aligning LLM-Assisted Evaluation of LLM Outputs with Human Preferences." UIST.
 
 ---
 
@@ -328,23 +328,23 @@ For the seeded defect study, a custom script that maps reviewer FAILs to the def
 **Requirements engineering + AI:**
 - Berry, D.M. et al. (2012). "The Case for Dumb Requirements Engineering Tools." REFSQ.
 - Femmer, H. et al. (2017). "Rapid Quality Assurance with Requirements Smells." JSS.
-- Dalpiaz, F. et al. (2019). "Requirements Engineering in the Days of Artificial Intelligence." IEEE Software.
+- Dalpiaz, F. & Niu, N. (2020). "Requirements Engineering in the Days of Artificial Intelligence." IEEE Software.
 
 **Software inspection and review:**
 - Basili, V.R. & Selby, R.W. (1987). "Comparing the Effectiveness of Software Testing Strategies." IEEE TSE.
 - Basili, V.R. et al. (1996). "The Empirical Investigation of Perspective-Based Reading." Empirical Software Engineering.
-- Porter, A. et al. (1995). "Comparing Detection Methods for Software Requirements Inspections." IEEE TSE.
+- Porter, A. et al. (1995). "Comparing Detection Methods for Software Requirements Inspections: A Replicated Experiment." IEEE TSE.
 
 **LLM evaluation methodology:**
 - Zheng, L. et al. (2023). "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena." NeurIPS.
 - Liu, Y. et al. (2023). "G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment." EMNLP.
-- Shankar, S. et al. (2024). "Who Validates the Validators?"
+- Shankar, S. et al. (2024). "Who Validates the Validators? Aligning LLM-Assisted Evaluation of LLM Outputs with Human Preferences." UIST.
 - Chang, Y. et al. (2024). "A Survey on Evaluation of Large Language Models." ACM TIST.
 
 **LLM agents and multi-agent systems:**
 - Jimenez, C.E. et al. (2024). "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?" ICLR.
-- Liu, X. et al. (2023). "AgentBench: Evaluating LLMs as Agents." ICLR.
-- Wang, L. et al. (2024). "A Survey on Large Language Model Based Autonomous Agents."
+- Liu, X. et al. (2024). "AgentBench: Evaluating LLMs as Agents." ICLR.
+- Wang, L. et al. (2024). "A Survey on Large Language Model Based Autonomous Agents." Frontiers of Computer Science.
 
 **Defect taxonomy:**
 - IEEE 1044-2009. "Standard Classification for Software Anomalies."
