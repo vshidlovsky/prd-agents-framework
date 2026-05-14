@@ -85,7 +85,8 @@ The setup agent will:
 2. **Ask about your API docs** — "Where are your API docs?" You provide file paths, URLs, or say "none yet". It verifies each source and creates `docs/api-sources.md`.
 3. **Recommend section packs** — enables the right packs based on your project type (frontend, backend, mobile, fintech)
 4. **Ask about custom needs** — custom PRD sections your team always includes, custom research steps for cross-repo checks or external sources
-5. **Draft `project-context.md`** — you review, resolve any TODOs, confirm
+5. **Choose a model profile** — reliable (all Opus) or cost-optimized (Sonnet for mechanical agents, Opus for judgment-heavy ones). See [Model profiles](#model-profiles) below.
+6. **Draft `project-context.md`** — you review, resolve any TODOs, confirm
 
 For **greenfield projects** with no code yet: tell the setup agent your planned tech stack, conventions, and any existing specs or design docs. It will configure the framework based on your plans. The researcher will scan whatever docs exist; if there's no code, it produces a minimal research doc and the PRD writer works from your requirements directly.
 
@@ -175,6 +176,20 @@ Add domain-specific review rules under **Project-Specific Review Checks** in `pr
 | 3 | No optimistic updates on financial mutations |
 ```
 
+### Model profiles
+
+The framework runs 7 agents per PRD. Each can use Opus or Sonnet independently. Three presets are available:
+
+| Profile | Sonnet agents | Opus agents | Cost savings |
+|---------|--------------|-------------|--------------|
+| **reliable** | none | all 7 | — |
+| **cost-optimized** | researcher, review-api, review-structure | prd-writer, prd-reviewer, review-flow, review-requirements | ~40-50% |
+| **custom** | you pick | you pick | varies |
+
+The cost-optimized preset keeps Opus where judgment matters most — PRD synthesis, smell detection, flow analysis, and cross-matrix verdicts — while switching mechanical agents (file reading, endpoint comparison, checklist verification) to Sonnet.
+
+The profile is stored in the **Model Profile** table in `project-context.md`. Change it anytime by editing the table directly — no re-setup needed.
+
 ### API documentation
 
 The framework uses `docs/api-sources.md` as the index of all API documentation sources. The project-setup agent creates this by asking you where your API docs are. The researcher reads it to find API contracts and refuses to proceed if it doesn't exist.
@@ -191,7 +206,7 @@ The reviewer agent incorporates techniques from requirements engineering researc
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI or IDE extension
-- Claude Opus model (reviewer spawns parallel sub-agents that require Opus for quality)
+- Claude Opus or Sonnet model (configurable per agent via [model profiles](#model-profiles))
 
 ## Contributing
 
