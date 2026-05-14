@@ -723,6 +723,12 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
   "subAgentCells": 231,
   "orchestratorCells": 16,
   "totalCells": 247,
+  "prdSize": {
+    "frCount": "<number of FRs extracted in step 6.1>",
+    "acCount": "<number of ACs extracted>",
+    "endpointCount": "<number of API endpoints extracted>",
+    "entityCount": "<number of key entities extracted>"
+  },
   "failCount": 8,
   "failsByMatrix": {
     "A": 0, "B": 0, "C": 0, "D1": 0, "D2": 0,

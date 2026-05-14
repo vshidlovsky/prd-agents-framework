@@ -304,6 +304,12 @@ If run logging is enabled in project-context.md, write the run log before summar
          "revisionCycles": "<count>"
        }
      },
+     "prdSize": {
+       "frCount": "<from handoff>",
+       "acCount": "<from handoff>",
+       "endpointCount": "<from handoff>",
+       "entityCount": "<from handoff>"
+     },
      "quality": {
        "verdict": "<READY|NEEDS_REVISION>",
        "totalCells": "<integer>",
