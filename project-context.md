@@ -75,7 +75,7 @@
 - **PRDs**: [e.g., `docs/initiatives/{initiative}/{initiative}-prd.md`]
 - **Reviews**: [e.g., `docs/initiatives/{initiative}/{initiative}-prd-review.md`]
 - **Handoff files**: [same directory as the PRD, `.json` extension]
-- **Lessons**: `.claude/prd-lessons.md` (auto-managed — reviewer proposes, user approves)
+- **Lessons**: `.claude/prd-lessons.md` (reviewer proposes in review doc, user must explicitly approve before any lesson is written)
 
 ### PRD Versioning
 

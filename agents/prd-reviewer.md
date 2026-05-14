@@ -636,9 +636,9 @@ Gather all FAIL cells into a numbered issues list. For each:
 - Description (from the FAIL reason)
 - Suggested fix
 
-### 8.6: Proposed Lessons
+### 8.6: Proposed Lessons (proposals only — do NOT write to prd-lessons.md)
 
-For each FAIL that represents a NEW pattern not already in prd-lessons.md, propose a lesson:
+For each FAIL that represents a NEW pattern not already in prd-lessons.md, propose a lesson. These are written into the review document only — the user decides which to accept via the orchestrator.
 - Short name
 - What was caught
 - Writer rule (how to prevent)
@@ -796,9 +796,9 @@ rm -f {review_dir}/{initiative}-review-dispatch.json
 
 ## Step 12: Write Approved Lessons (called by orchestrator only)
 
-**Do NOT auto-write lessons.** This step is triggered by the create-prd orchestrator after the user approves specific lessons. The reviewer does not interact with the user directly — it returns the review to the orchestrator, which handles the approval flow.
+**Do NOT write lessons unless the user has explicitly approved them.** This step is ONLY triggered by the create-prd orchestrator after the user selects specific lessons to accept. The reviewer never writes lessons on its own — it proposes them in the review document and returns to the orchestrator, which presents them to the user for approval. If the user says "skip" or does not approve, no lessons are written.
 
-When the orchestrator calls back with approved lessons:
+When the orchestrator calls back with user-approved lessons:
 
 1. Read `.claude/prd-lessons.md` — if it doesn't exist, create it with the header below
 2. Find the next available lesson ID (L-NNN)
@@ -817,8 +817,10 @@ If creating the file for the first time, use this header:
 ```markdown
 # PRD Lessons Learned
 
-Rules discovered during past PRD reviews. Both prd-writer and prd-reviewer
-read this file. The reviewer proposes new lessons; the user approves them.
+RULE: Only the user may add lessons to this file. The reviewer PROPOSES
+lessons in the review document. The orchestrator presents proposed lessons
+to the user. The user decides which to accept. No agent — including the
+orchestrator — may write to this file without explicit user approval.
 
 ---
 ```
