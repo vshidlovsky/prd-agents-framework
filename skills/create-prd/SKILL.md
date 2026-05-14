@@ -12,6 +12,7 @@ Run the full PRD workflow for `{argument}`.
 
 1. Read `.claude/project-context.md` — confirm it exists and is filled in. If it doesn't exist, STOP and tell the user: "You need to set up `.claude/project-context.md` first. Copy the template from the framework and fill it in for your project."
 2. Confirm the initiative directory exists or create it at the output path specified in project-context.md.
+3. Read the **Model Profile** table from project-context.md. Extract the `Model` column for each agent row. Store as `MODEL_MAP` — a lookup from agent name to model (e.g., `researcher → sonnet`, `prd-writer → opus`). If the Model Profile section is missing, default all agents to `opus`.
 
 ### Handoff file naming convention
 
@@ -41,7 +42,7 @@ Pass the clarified scope to the researcher so it knows exactly what to focus on.
 
 ## Phase 1: Research
 
-Spawn an Agent using the prompt from `.claude/agents/researcher.md`:
+Spawn an Agent using the prompt from `.claude/agents/researcher.md`, with `model: MODEL_MAP[researcher]`:
 - Pass `{argument}` as the INITIATIVE
 - Pass the clarified scope from Phase 0 (if any) as additional context
 - Let it scan the codebase (or docs/specs for greenfield) and produce a research document
@@ -64,7 +65,7 @@ If feedback is given, send it back to the researcher agent for revision. Repeat 
 
 ## Phase 2: PRD Drafting (max 3 revision cycles)
 
-Spawn an Agent using the prompt from `.claude/agents/prd-writer.md`:
+Spawn an Agent using the prompt from `.claude/agents/prd-writer.md`, with `model: MODEL_MAP[prd-writer]`:
 - Pass `{argument}` as the initiative name
 - Pass the research document path as context
 
@@ -86,7 +87,7 @@ Track the revision count starting at 0.
 
 ### Step 3.1: Scaffold (reviewer Phase 1)
 
-Spawn an Agent using `.claude/agents/prd-reviewer.md` with the prompt:
+Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
 > "Run Phase 1 only for initiative '{argument}'. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-12). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
 
@@ -98,7 +99,7 @@ cat {initiative_dir}/{argument}-review-dispatch.json 2>/dev/null
 ```
 
 - **If no dispatch file**: the reviewer completed in single-agent mode. The review file and handoff are done. Skip to Gate 3.
-- **If dispatch file exists**: read it. Proceed to Step 3.3.
+- **If dispatch file exists**: read it. The dispatch JSON includes a `models` object with per-agent model assignments — use these for sub-agent dispatch (they match `MODEL_MAP` but are authoritative for this review run). Proceed to Step 3.3.
 
 ### Step 3.3: Dispatch sub-reviewers (parallel)
 
@@ -112,18 +113,18 @@ If any are missing, STOP and tell the user: "Reviewer Phase 1 failed to write al
 
 Read each prompt file. Paths in the dispatch JSON are absolute — use them directly, do not join with the initiative directory.
 
-Spawn **all four agents in parallel**, each with `model: opus`:
+Spawn **all four agents in parallel**, using the model from `MODEL_MAP` for each:
 
-- Agent 1 (API): read `{promptFiles.api}`, use its content as the agent prompt
-- Agent 2 (Structure): read `{promptFiles.structure}`, use its content as the agent prompt
-- Agent 3 (Flow): read `{promptFiles.flow}`, use its content as the agent prompt
-- Agent 4 (Requirements): read `{promptFiles.requirements}`, use its content as the agent prompt
+- Agent 1 (API): read `{promptFiles.api}`, use its content as the agent prompt, `model: MODEL_MAP[review-api]`
+- Agent 2 (Structure): read `{promptFiles.structure}`, use its content as the agent prompt, `model: MODEL_MAP[review-structure]`
+- Agent 3 (Flow): read `{promptFiles.flow}`, use its content as the agent prompt, `model: MODEL_MAP[review-flow]`
+- Agent 4 (Requirements): read `{promptFiles.requirements}`, use its content as the agent prompt, `model: MODEL_MAP[review-requirements]`
 
 Wait for all four to complete.
 
 ### Step 3.4: Assembly (reviewer Phase 3)
 
-Spawn an Agent using `.claude/agents/prd-reviewer.md` with the prompt:
+Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
 > "Run Phase 3 only for initiative '{argument}'. Sub-agents have completed. The dispatch file is at {absolute_path_to_dispatch_json}. Re-read project context, lessons, PRD, and scaffold. Assemble sub-agent outputs, fill Matrix H, run completeness verification, spot-check, dynamic findings, defect taxonomy, verdict, and commit."
 
@@ -163,10 +164,10 @@ If no lessons were proposed, say "No new lessons proposed."
 - If READY: **"Approve lessons: all / specific (e.g., '1 and 3') / skip all. Then we're done."**
 - If NEEDS_REVISION: **"For the review: 'revise' to send back to prd-writer, or 'override' to approve as-is. For the lessons: all / specific / skip."**
 
-On lesson approval, spawn a new Agent using `.claude/agents/prd-reviewer.md` with the prompt: "Run only Step 12. Write these approved lessons to `.claude/prd-lessons.md`: [list the approved lesson names and their content from the review file]. The review file is at {review_path}." This is a targeted callback — the agent reads the review, extracts the approved lessons, and appends them to the lessons file.
+On lesson approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 12. Write these approved lessons to `.claude/prd-lessons.md`: [list the approved lesson names and their content from the review file]. The review file is at {review_path}." This is a targeted callback — the agent reads the review, extracts the approved lessons, and appends them to the lessons file.
 
 If "revise": increment the revision count.
-  - If revision count < 3: spawn a new prd-writer agent with the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the review at {review_path}. Follow Step 3.5 (Revision Mode) — fix each FAIL in the review's Issues Found list. Do not rewrite the entire PRD." The writer's Step 3.5 handles versioning, targeted fixes, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review.**
+  - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the review at {review_path}. Follow Step 3.5 (Revision Mode) — fix each FAIL in the review's Issues Found list. Do not rewrite the entire PRD." The writer's Step 3.5 handles versioning, targeted fixes, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review.**
   - If revision count = 3: tell the user: **"This PRD has gone through 3 revision cycles and still has FAILs. Remaining issues: [list]. Options: 'override' to approve as-is, 'continue' to try one more cycle, or 'stop' to pause and resolve issues manually."**
 If "override": mark as approved and end.
 

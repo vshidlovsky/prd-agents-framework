@@ -142,6 +142,36 @@ END EXAMPLE — DELETE -->
 
 ---
 
+## Model Profile
+
+> GUIDE: Controls which LLM model each agent uses. Two presets are available:
+> - **reliable**: All agents use Opus. Best quality, highest cost.
+> - **cost-optimized**: Only 3 mechanical agents switch to Sonnet (researcher, review-api,
+>   review-structure). The other 4 stay on Opus because they need deeper judgment:
+>   - **prd-writer** (Opus) — synthesizes research into requirements, asks clarifying questions
+>   - **prd-reviewer** (Opus) — cross-matrix analysis, spot-checks, verdict
+>   - **review-flow** (Opus) — dead-end detection, discoverability, error recovery require judgment
+>   - **review-requirements** (Opus) — smell detection (vague verbs, loopholes, ambiguous pronouns) needs nuanced language analysis
+>   Saves ~40-50% on token costs per PRD run.
+>
+> Pick a preset, then optionally override individual agents in the table below.
+> The create-prd skill and prd-reviewer read this table when spawning agents.
+> Valid models: `opus`, `sonnet`
+
+- **Profile**: reliable
+
+| Agent | Model | What it does |
+|-------|-------|-------------|
+| researcher | opus | Codebase research and fact extraction |
+| prd-writer | opus | PRD drafting and synthesis |
+| prd-reviewer | opus | Review orchestration, cross-checks, verdict |
+| review-api | opus | Sub-reviewer: API endpoint verification |
+| review-structure | opus | Sub-reviewer: structure checklist |
+| review-flow | opus | Sub-reviewer: flow and edge case analysis |
+| review-requirements | opus | Sub-reviewer: requirements quality and smell detection |
+
+---
+
 ## Research Configuration
 
 ### Codebase Research Strategy

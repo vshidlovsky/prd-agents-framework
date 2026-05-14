@@ -201,7 +201,51 @@ If the user identifies custom research steps:
 
 If the user says no custom research steps are needed, leave "Custom Research Steps" as `- none` and move on.
 
-## Step 9: Determine Research Configuration
+## Step 9: Choose Model Profile (MANDATORY — ask the user)
+
+Ask the user:
+
+**"How should agents pick their LLM model?**
+
+- **Reliable** — all 7 agents use Opus. Best quality, highest cost.
+- **Cost-optimized** — 3 mechanical agents switch to Sonnet, 4 stay on Opus. Saves ~40-50% on token costs.
+  - Sonnet: **researcher** (reads files, extracts facts), **review-api** (compares endpoints against docs), **review-structure** (checklist verification)
+  - Stays on Opus: **prd-writer** (synthesis, judgment), **prd-reviewer** (cross-matrix analysis, verdict), **review-flow** (dead-end/discoverability checks need judgment), **review-requirements** (smell detection needs nuanced language analysis)
+- **Custom** — you pick the model for each agent individually.
+
+**You can change this anytime by editing the Model Profile table in `.claude/project-context.md`."**
+
+Fill the Model Profile table in project-context.md based on the user's choice:
+
+**Reliable preset:**
+
+| Agent | Model |
+|-------|-------|
+| researcher | opus |
+| prd-writer | opus |
+| prd-reviewer | opus |
+| review-api | opus |
+| review-structure | opus |
+| review-flow | opus |
+| review-requirements | opus |
+
+**Cost-optimized preset:**
+
+| Agent | Model |
+|-------|-------|
+| researcher | sonnet |
+| prd-writer | opus |
+| prd-reviewer | opus |
+| review-api | sonnet |
+| review-structure | sonnet |
+| review-flow | opus |
+| review-requirements | opus |
+
+**Custom:** Ask the user for each agent. Present the cost-optimized defaults as recommendations and let them override.
+
+Remove the `> GUIDE` block from the Model Profile section after filling it in.
+
+## Step 10: Determine Research Configuration
 
 Based on project type, fill in:
 - **Knowledge base**: check for `.ai-docs/`, `docs/knowledge-base/`, or similar
@@ -213,7 +257,7 @@ Research scope:
 - **Include**: source directories identified in Step 3
 - **Exclude**: test fixtures, generated code, build output, node_modules, other apps in monorepo
 
-## Step 10: Draft project-context.md
+## Step 11: Draft project-context.md
 
 Fill in `.claude/project-context.md` with everything you've gathered:
 
@@ -225,7 +269,7 @@ Fill in `.claude/project-context.md` with everything you've gathered:
 
 The finished file should read as a clean reference document, not a partially-filled template.
 
-## Step 11: Present to User
+## Step 12: Present to User
 
 Show the user a summary of what you detected and drafted:
 
@@ -239,7 +283,7 @@ TODOs remaining: {count and list}
 
 Then say: **"Review `.claude/project-context.md` and fill in any `[TODO]` markers. When you're happy with it, we can delete unused section pack files from `docs/prd-sections/` and run the setup verification."**
 
-## Step 12: Cleanup (after user confirms)
+## Step 13: Cleanup (after user confirms)
 
 When the user confirms the draft is good:
 1. Create an empty `prd-lessons.md` in the project root if it doesn't already exist. This file captures lessons learned across PRD initiatives — the reviewer and writer agents will reference it over time.

@@ -43,6 +43,7 @@ Read `.claude/project-context.md`. Extract:
 - **Project-specific review checks** — additional check tables beyond the universal ones
 - **Output paths** — where to save the review
 - **Conventions** — naming, file paths
+- **Model Profile** — the per-agent model table (used in Phase 2 for sub-agent dispatch)
 
 Verify the PRD template exists at the extracted path. If missing, STOP. Tell the orchestrator: "PRD template not found at {path}."
 
@@ -374,6 +375,12 @@ The skill prompt tells you: "If parallel mode, write prompt files and dispatch J
      "subAgentCells": 231,
      "orchestratorCells": 16,
      "totalCells": 247,
+     "models": {
+       "api": "<model from review-api row>",
+       "structure": "<model from review-structure row>",
+       "flow": "<model from review-flow row>",
+       "requirements": "<model from review-requirements row>"
+     },
      "promptFiles": {
        "api": "<absolute path>-review-prompt-api.md",
        "structure": "<absolute path>-review-prompt-structure.md",
@@ -402,7 +409,7 @@ This path only works when the user runs the reviewer directly at the top level (
 
 If you have the Agent tool and were NOT given the skill's "STOP if parallel" instruction, spawn four sub-reviewer agents yourself, all in parallel. Each writes to its own output file. Phase 3 assembles all results.
 
-**Spawn every sub-agent with `model: opus`.** Sub-agents on smaller models produce shallow smell detection and miss cross-references.
+**Read the Model Profile table from `.claude/project-context.md`** to determine each sub-agent's model. Use the `review-api`, `review-structure`, `review-flow`, and `review-requirements` rows. If the Model Profile section is missing, default all sub-agents to `opus`.
 
 ### Sub-reviewer core rules (include VERBATIM in every sub-agent prompt)
 
@@ -492,7 +499,11 @@ Prompt provides:
 ### Dispatch flow (Path B only)
 
 ```
-1. Spawn Agent 1 + Agent 2 + Agent 3 + Agent 4 in parallel (all with model: opus)
+1. Spawn all four agents in parallel, each with its model from the Model Profile table:
+   - Agent 1 (API): model from review-api row
+   - Agent 2 (Structure): model from review-structure row
+   - Agent 3 (Flow): model from review-flow row
+   - Agent 4 (Requirements): model from review-requirements row
 2. Wait for all four to complete
 ```
 
