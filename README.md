@@ -195,9 +195,9 @@ The profile is stored in the **Model Profile** table in `project-context.md`. Ch
 ### Run logs & model comparison
 
 Each `/create-prd` run produces a JSON run log capturing:
-- **Timing** — wall-clock duration per phase (research, writing, review)
+- **Timing** — per-phase and per-sub-agent durations, with human gate wait time separated from agent work time. Review phase breaks down into scaffold, sub-agent dispatch (with individual agent times), and assembly.
 - **Models used** — the full model map for that run
-- **Quality metrics** — verdict, FAIL count, defect taxonomy breakdown, spot-check overrides, revision cycles
+- **Quality metrics** — verdict, FAIL count broken down by matrix (A through P), defect taxonomy, smell detection stats (total checked vs found), spot-check overrides, revision cycles
 
 Run logs accumulate in `docs/initiatives/{initiative}/runs/`. To compare model profiles:
 

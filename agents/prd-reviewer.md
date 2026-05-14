@@ -435,6 +435,10 @@ WRITING RESULTS:
 - Meta rows (A-N, B-X, B-Y, C-X): mark per-item columns as N/A — only the final verdict column carries the check result.
 - Every [PENDING] cell in your assigned matrices MUST be replaced. Zero [PENDING] when you're done.
 - After writing, verify: grep -c "\[PENDING\]" {your_output_file} must return 0.
+
+TIMING (for run logs):
+- At the very start, before reading any files, run: echo "start=$(date +%s)" > {your_output_file}.timing
+- At the very end, after verifying zero [PENDING], run: echo "end=$(date +%s)" >> {your_output_file}.timing
 ```
 
 ### Sub-agent output files
@@ -720,6 +724,15 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
   "orchestratorCells": 16,
   "totalCells": 247,
   "failCount": 8,
+  "failsByMatrix": {
+    "A": 0, "B": 0, "C": 0, "D1": 0, "D2": 0,
+    "E": 0, "F": 0, "G": 0, "H": 0, "I": 0, "P": 0
+  },
+  "smellDetection": {
+    "totalChecked": "<number of FRs + ACs checked for smells>",
+    "smellsFound": "<number of FAIL verdicts in Smell Flags columns across Matrix B and C>"
+  },
+  "spotCheckOverrides": "<number of PASS cells overridden to FAIL during spot-check (step 8.1.3), or 0>",
   "issuesSummary": [
     {
       "id": 1,

@@ -61,6 +61,8 @@ If run logging is enabled: `echo "research_end=$(date +%s)" >> "$TIMING_FILE"`
 
 ### Gate 1: Research Review
 
+If run logging is enabled: `echo "gate1_prompt=$(date +%s)" >> "$TIMING_FILE"`
+
 Present the research findings to the user as a summary:
 - Modules/packages involved (or "greenfield — no code yet")
 - Key API endpoints found
@@ -72,6 +74,8 @@ Ask: **"Review the research above. Say 'continue' to proceed to PRD drafting, or
 For greenfield projects, also ask: **"Since there's no existing code, do you have requirements, specs, or design docs you'd like me to reference during PRD drafting?"**
 
 If feedback is given, send it back to the researcher agent for revision. Repeat until the user says "continue."
+
+If run logging is enabled: `echo "gate1_resume=$(date +%s)" >> "$TIMING_FILE"`
 
 ## Phase 2: PRD Drafting (max 3 revision cycles)
 
@@ -91,9 +95,13 @@ If run logging is enabled: `echo "writing_end=$(date +%s)" >> "$TIMING_FILE"`
 
 ### Gate 2: PRD Draft Review
 
+If run logging is enabled: `echo "gate2_prompt=$(date +%s)" >> "$TIMING_FILE"`
+
 Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."**
 
 If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
+
+If run logging is enabled: `echo "gate2_resume=$(date +%s)" >> "$TIMING_FILE"`
 
 ## Phase 3: PRD Review (max 3 revision cycles)
 
@@ -103,9 +111,13 @@ Track the revision count starting at 0.
 
 ### Step 3.1: Scaffold (reviewer Phase 1)
 
+If run logging is enabled: `echo "review_scaffold_start=$(date +%s)" >> "$TIMING_FILE"`
+
 Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
 > "Run Phase 1 only for initiative '{argument}'. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-12). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
+
+If run logging is enabled: `echo "review_scaffold_end=$(date +%s)" >> "$TIMING_FILE"`
 
 ### Step 3.2: Check review mode
 
@@ -129,6 +141,8 @@ If any are missing, STOP and tell the user: "Reviewer Phase 1 failed to write al
 
 Read each prompt file. Paths in the dispatch JSON are absolute — use them directly, do not join with the initiative directory.
 
+If run logging is enabled: `echo "review_dispatch_start=$(date +%s)" >> "$TIMING_FILE"`
+
 Spawn **all four agents in parallel**, using the model from `MODEL_MAP` for each:
 
 - Agent 1 (API): read `{promptFiles.api}`, use its content as the agent prompt, `model: MODEL_MAP[review-api]`
@@ -138,11 +152,29 @@ Spawn **all four agents in parallel**, using the model from `MODEL_MAP` for each
 
 Wait for all four to complete.
 
+If run logging is enabled: `echo "review_dispatch_end=$(date +%s)" >> "$TIMING_FILE"`
+
+If run logging is enabled, read each sub-agent's timing file before cleanup:
+```bash
+for agent in api structure flow requirements; do
+  TFILE="{initiative_dir}/{argument}-review-${agent}.md.timing"
+  if [ -f "$TFILE" ]; then
+    while IFS='=' read -r key val; do
+      echo "subagent_${agent}_${key}=${val}" >> "$TIMING_FILE"
+    done < "$TFILE"
+  fi
+done
+```
+
 ### Step 3.4: Assembly (reviewer Phase 3)
+
+If run logging is enabled: `echo "review_assembly_start=$(date +%s)" >> "$TIMING_FILE"`
 
 Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
 > "Run Phase 3 only for initiative '{argument}'. Sub-agents have completed. The dispatch file is at {absolute_path_to_dispatch_json}. Re-read project context, lessons, PRD, and scaffold. Assemble sub-agent outputs, fill Matrix H, run completeness verification, spot-check, dynamic findings, defect taxonomy, verdict, and commit."
+
+If run logging is enabled: `echo "review_assembly_end=$(date +%s)" >> "$TIMING_FILE"`
 
 ### Step 3.6: Defensive cleanup
 
@@ -153,6 +185,7 @@ After the reviewer returns from Phase 3, verify the commit succeeded before dele
 if git log --oneline -1 | grep -q "{argument}.*PRD review"; then
   rm -f {initiative_dir}/*-review-prompt-*.md {initiative_dir}/*-review-dispatch.json
   rm -f {initiative_dir}/*-review-api.md {initiative_dir}/*-review-structure.md {initiative_dir}/*-review-flow.md {initiative_dir}/*-review-requirements.md
+  rm -f {initiative_dir}/*-review-*.md.timing
 else
   echo "WARNING: Review commit not found — keeping sub-agent files for debugging."
 fi
@@ -161,6 +194,8 @@ fi
 The reviewer now has the review file and handoff ready.
 
 ### Gate 3: Review Results + Proposed Lessons
+
+If run logging is enabled: `echo "gate3_prompt=$(date +%s)" >> "$TIMING_FILE"`
 
 Present the review verdict AND proposed lessons together in one output:
 
@@ -179,6 +214,8 @@ If no lessons were proposed, say "No new lessons proposed."
 **Then**, ask for action — one prompt covering both verdict and lessons:
 - If READY: **"Approve lessons: all / specific (e.g., '1 and 3') / skip all. Then we're done."**
 - If NEEDS_REVISION: **"For the review: 'revise' to send back to prd-writer, or 'override' to approve as-is. For the lessons: all / specific / skip."**
+
+If run logging is enabled: `echo "gate3_resume=$(date +%s)" >> "$TIMING_FILE"`
 
 On lesson approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 12. Write these approved lessons to `.claude/prd-lessons.md`: [list the approved lesson names and their content from the review file]. The review file is at {review_path}." This is a targeted callback — the agent reads the review, extracts the approved lessons, and appends them to the lessons file.
 
@@ -201,16 +238,18 @@ If run logging is enabled in project-context.md, write the run log before summar
 
 2. Read the timing file and the reviewer's handoff JSON (`{initiative}-prd-review-handoff.json`).
 
-3. Compute durations from epoch timestamps (subtract `_start` from `_end` for each phase).
+3. Compute durations from epoch timestamps (subtract `_start` from `_end` for each pair). Compute human wait time from gate pairs (`gate1_resume - gate1_prompt` + `gate2_resume - gate2_prompt` + `gate3_resume - gate3_prompt`). If a gate pair is missing (e.g., pipeline ended before Gate 3), skip it.
 
-4. Extract quality metrics from the review handoff: `verdict`, `totalCells`, `failCount`, `issuesSummary` (count by category for defect taxonomy).
+4. Extract quality metrics from the review handoff: `verdict`, `totalCells`, `failCount`, `failsByMatrix`, `smellDetection`, `spotCheckOverrides`, `issuesSummary` (count by category for defect taxonomy).
 
-5. Create the run log directory if it doesn't exist:
+5. If sub-agent timing entries exist in the timing file (`subagent_api_start`, etc.), compute per-sub-agent durations.
+
+6. Create the run log directory if it doesn't exist:
    ```bash
    mkdir -p {run_log_output_path}
    ```
 
-6. Write the run log JSON to `{run_log_output_path}/run-{YYYYMMDD-HHMMSS}.json`:
+7. Write the run log JSON to `{run_log_output_path}/run-{YYYYMMDD-HHMMSS}.json`:
 
    ```json
    {
@@ -220,6 +259,8 @@ If run logging is enabled in project-context.md, write the run log before summar
      "startedAt": "<ISO8601 from pipeline_start>",
      "completedAt": "<ISO8601 from pipeline_end>",
      "totalDurationSeconds": "<pipeline_end - pipeline_start>",
+     "agentDurationSeconds": "<totalDurationSeconds minus humanWaitSeconds>",
+     "humanWaitSeconds": "<sum of all gate durations>",
      "modelMap": {
        "researcher": "<model>",
        "prd-writer": "<model>",
@@ -232,16 +273,34 @@ If run logging is enabled in project-context.md, write the run log before summar
      "phases": {
        "research": {
          "model": "<MODEL_MAP[researcher]>",
-         "durationSeconds": "<research_end - research_start>"
+         "agentDurationSeconds": "<research_end - research_start>",
+         "gateDurationSeconds": "<gate1_resume - gate1_prompt>"
        },
        "writing": {
          "model": "<MODEL_MAP[prd-writer]>",
-         "durationSeconds": "<writing_end - writing_start>"
+         "agentDurationSeconds": "<writing_end - writing_start>",
+         "gateDurationSeconds": "<gate2_resume - gate2_prompt>"
        },
        "review": {
          "orchestratorModel": "<MODEL_MAP[prd-reviewer]>",
          "reviewMode": "<parallel|single>",
-         "durationSeconds": "<review_end - review_start>",
+         "totalDurationSeconds": "<review_end - review_start, including revision cycles>",
+         "gateDurationSeconds": "<gate3_resume - gate3_prompt>",
+         "scaffold": {
+           "durationSeconds": "<review_scaffold_end - review_scaffold_start>"
+         },
+         "subAgents": {
+           "batchDurationSeconds": "<review_dispatch_end - review_dispatch_start>",
+           "agents": {
+             "api": { "model": "<model>", "durationSeconds": "<from timing file, or null>" },
+             "structure": { "model": "<model>", "durationSeconds": "<from timing file, or null>" },
+             "flow": { "model": "<model>", "durationSeconds": "<from timing file, or null>" },
+             "requirements": { "model": "<model>", "durationSeconds": "<from timing file, or null>" }
+           }
+         },
+         "assembly": {
+           "durationSeconds": "<review_assembly_end - review_assembly_start>"
+         },
          "revisionCycles": "<count>"
        }
      },
@@ -249,6 +308,10 @@ If run logging is enabled in project-context.md, write the run log before summar
        "verdict": "<READY|NEEDS_REVISION>",
        "totalCells": "<integer>",
        "failCount": "<integer>",
+       "failsByMatrix": {
+         "A": 0, "B": 0, "C": 0, "D1": 0, "D2": 0,
+         "E": 0, "F": 0, "G": 0, "H": 0, "I": 0, "P": 0
+       },
        "defectTaxonomy": {
          "omission": "<count from issuesSummary where category=Omission>",
          "ambiguity": "<count>",
@@ -257,7 +320,11 @@ If run logging is enabled in project-context.md, write the run log before summar
          "extraneousInfo": "<count>",
          "misplacedRequirement": "<count>"
        },
-       "spotCheckOverrides": "<count of spot-check overrides from review, or 0>"
+       "smellDetection": {
+         "totalChecked": "<from handoff>",
+         "smellsFound": "<from handoff>"
+       },
+       "spotCheckOverrides": "<from handoff>"
      },
      "artifacts": {
        "researchPath": "<relative path>",
@@ -267,11 +334,11 @@ If run logging is enabled in project-context.md, write the run log before summar
    }
    ```
 
-   All numeric fields must be integers. Use the Write tool to create the file.
+   All numeric fields must be integers. Use `null` for sub-agent durations if timing files were missing (e.g., single-agent mode). Use the Write tool to create the file.
 
-7. Delete the timing file: `rm -f "$TIMING_FILE"`
+8. Delete the timing file: `rm -f "$TIMING_FILE"`
 
-8. Commit the run log (do NOT push):
+9. Commit the run log (do NOT push):
    ```bash
    git add {run_log_file_path}
    git commit -m "docs: add {initiative} run log ({profile} profile)"
