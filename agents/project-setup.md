@@ -287,8 +287,25 @@ Then say: **"Review `.claude/project-context.md` and fill in any `[TODO]` marker
 
 When the user confirms the draft is good:
 1. Create an empty `prd-lessons.md` in the project root if it doesn't already exist. This file captures lessons learned across PRD initiatives — the reviewer and writer agents will reference it over time.
-2. Keep all section pack files in the section packs directory — even unchecked ones. The user may enable them later for a different initiative. Deleting them forces re-copying from the framework.
-3. Run the verification prompt on project-context.md:
+2. Copy the rule file from the framework to enforce lesson approval:
+   ```bash
+   mkdir -p .claude/rules
+   cp .claude/agents/../../../rules/prd-lessons.md .claude/rules/prd-lessons.md 2>/dev/null || true
+   ```
+   If the framework rule file isn't available, create `.claude/rules/prd-lessons.md` with this content:
+   ```markdown
+   # PRD Lessons
+
+   Never write to `.claude/prd-lessons.md` without explicit user approval.
+
+   The prd-reviewer PROPOSES lessons in the review document. The create-prd orchestrator presents proposals to the user. The user decides which to accept. Only after the user explicitly approves specific lessons (by name or number) may any agent append them to the file.
+
+   If the user says "skip", "none", or does not approve — write nothing.
+
+   This rule applies to all agents, skills, and conversations in this project.
+   ```
+3. Keep all section pack files in the section packs directory — even unchecked ones. The user may enable them later for a different initiative. Deleting them forces re-copying from the framework.
+4. Run the verification prompt on project-context.md:
    - Confirm no `[TODO]` markers remain
    - Confirm no `> GUIDE` blocks remain
    - Confirm no template scaffolding text remains (e.g., `> Fill this file once per project`)
@@ -296,4 +313,5 @@ When the user confirms the draft is good:
    - Confirm all custom research step files exist on disk
    - Confirm `docs/api-sources.md` exists and references valid files
    - Confirm `prd-lessons.md` exists in the project root
+   - Confirm `.claude/rules/prd-lessons.md` exists
 4. Report: "Setup complete. **Restart your Claude Code session** (exit and reopen) so the `/create-prd` skill gets registered. After restarting, you can run `/create-prd {initiative}` or individual agents."

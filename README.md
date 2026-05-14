@@ -36,6 +36,8 @@ prd-agents-framework/
 │       ├── monitoring.md
 │       ├── compliance.md
 │       └── platform-considerations.md
+├── rules/
+│   └── prd-lessons.md          # Rule: no lessons written without user approval
 ├── project-context.md          # Template — copied to your project during setup
 └── README.md
 ```
@@ -57,13 +59,16 @@ If you have an existing project, just `cd` into it.
 
 ```bash
 # From your project root:
-mkdir -p .claude/agents .claude/skills/create-prd docs/prd-sections
+mkdir -p .claude/agents .claude/skills/create-prd .claude/rules docs/prd-sections
 
 # Agents
 cp path/to/prd-agents-framework/agents/*.md .claude/agents/
 
 # Orchestration skill
 cp path/to/prd-agents-framework/skills/create-prd/SKILL.md .claude/skills/create-prd/
+
+# Rules (enforced across all agents and conversations)
+cp path/to/prd-agents-framework/rules/*.md .claude/rules/
 
 # PRD template + section packs
 cp path/to/prd-agents-framework/templates/prd-base.md docs/prd-base-template.md
