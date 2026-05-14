@@ -252,4 +252,4 @@ When the user confirms the draft is good:
    - Confirm all custom research step files exist on disk
    - Confirm `docs/api-sources.md` exists and references valid files
    - Confirm `prd-lessons.md` exists in the project root
-4. Report: "Setup complete. You can now run `/create-prd {initiative}` or individual agents."
+4. Report: "Setup complete. **Restart your Claude Code session** (exit and reopen) so the `/create-prd` skill gets registered. After restarting, you can run `/create-prd {initiative}` or individual agents."
