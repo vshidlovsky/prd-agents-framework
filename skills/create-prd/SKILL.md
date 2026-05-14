@@ -13,6 +13,12 @@ Run the full PRD workflow for `{argument}`.
 1. Read `.claude/project-context.md` — confirm it exists and is filled in. If it doesn't exist, STOP and tell the user: "You need to set up `.claude/project-context.md` first. Copy the template from the framework and fill it in for your project."
 2. Confirm the initiative directory exists or create it at the output path specified in project-context.md.
 3. Read the **Model Profile** table from project-context.md. Extract the `Model` column for each agent row. Store as `MODEL_MAP` — a lookup from agent name to model (e.g., `researcher → sonnet`, `prd-writer → opus`). If the Model Profile section is missing, default all agents to `opus`.
+4. Check if **Run Logs** are enabled in project-context.md. If enabled, initialize the timing file:
+   ```bash
+   TIMING_FILE="{initiative_dir}/.run-timing.tmp"
+   echo "pipeline_start=$(date +%s) $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$TIMING_FILE"
+   ```
+   Record the profile name (from the `Profile` field in Model Profile) for the run log.
 
 ### Handoff file naming convention
 
@@ -42,12 +48,16 @@ Pass the clarified scope to the researcher so it knows exactly what to focus on.
 
 ## Phase 1: Research
 
+If run logging is enabled: `echo "research_start=$(date +%s)" >> "$TIMING_FILE"`
+
 Spawn an Agent using the prompt from `.claude/agents/researcher.md`, with `model: MODEL_MAP[researcher]`:
 - Pass `{argument}` as the INITIATIVE
 - Pass the clarified scope from Phase 0 (if any) as additional context
 - Let it scan the codebase (or docs/specs for greenfield) and produce a research document
 
 The researcher will detect whether this is a greenfield project (no source code) or an existing codebase and adjust its approach automatically.
+
+If run logging is enabled: `echo "research_end=$(date +%s)" >> "$TIMING_FILE"`
 
 ### Gate 1: Research Review
 
@@ -65,6 +75,8 @@ If feedback is given, send it back to the researcher agent for revision. Repeat 
 
 ## Phase 2: PRD Drafting (max 3 revision cycles)
 
+If run logging is enabled: `echo "writing_start=$(date +%s)" >> "$TIMING_FILE"`
+
 Spawn an Agent using the prompt from `.claude/agents/prd-writer.md`, with `model: MODEL_MAP[prd-writer]`:
 - Pass `{argument}` as the initiative name
 - Pass the research document path as context
@@ -75,6 +87,8 @@ The prd-writer will:
 3. Draft the PRD
 4. Write the handoff file
 
+If run logging is enabled: `echo "writing_end=$(date +%s)" >> "$TIMING_FILE"`
+
 ### Gate 2: PRD Draft Review
 
 Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."**
@@ -82,6 +96,8 @@ Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'conti
 If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
 
 ## Phase 3: PRD Review (max 3 revision cycles)
+
+If run logging is enabled: `echo "review_start=$(date +%s)" >> "$TIMING_FILE"`
 
 Track the revision count starting at 0.
 
@@ -173,6 +189,98 @@ If "override": mark as approved and end.
 
 ## Completion
 
+### Write Run Log (if enabled)
+
+If run logging is enabled in project-context.md, write the run log before summarizing:
+
+1. Record the end time:
+   ```bash
+   echo "review_end=$(date +%s)" >> "$TIMING_FILE"
+   echo "pipeline_end=$(date +%s) $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$TIMING_FILE"
+   ```
+
+2. Read the timing file and the reviewer's handoff JSON (`{initiative}-prd-review-handoff.json`).
+
+3. Compute durations from epoch timestamps (subtract `_start` from `_end` for each phase).
+
+4. Extract quality metrics from the review handoff: `verdict`, `totalCells`, `failCount`, `issuesSummary` (count by category for defect taxonomy).
+
+5. Create the run log directory if it doesn't exist:
+   ```bash
+   mkdir -p {run_log_output_path}
+   ```
+
+6. Write the run log JSON to `{run_log_output_path}/run-{YYYYMMDD-HHMMSS}.json`:
+
+   ```json
+   {
+     "runId": "<YYYYMMDD-HHMMSS>",
+     "initiative": "<name>",
+     "profile": "<reliable|cost-optimized|custom>",
+     "startedAt": "<ISO8601 from pipeline_start>",
+     "completedAt": "<ISO8601 from pipeline_end>",
+     "totalDurationSeconds": "<pipeline_end - pipeline_start>",
+     "modelMap": {
+       "researcher": "<model>",
+       "prd-writer": "<model>",
+       "prd-reviewer": "<model>",
+       "review-api": "<model>",
+       "review-structure": "<model>",
+       "review-flow": "<model>",
+       "review-requirements": "<model>"
+     },
+     "phases": {
+       "research": {
+         "model": "<MODEL_MAP[researcher]>",
+         "durationSeconds": "<research_end - research_start>"
+       },
+       "writing": {
+         "model": "<MODEL_MAP[prd-writer]>",
+         "durationSeconds": "<writing_end - writing_start>"
+       },
+       "review": {
+         "orchestratorModel": "<MODEL_MAP[prd-reviewer]>",
+         "reviewMode": "<parallel|single>",
+         "durationSeconds": "<review_end - review_start>",
+         "revisionCycles": "<count>"
+       }
+     },
+     "quality": {
+       "verdict": "<READY|NEEDS_REVISION>",
+       "totalCells": "<integer>",
+       "failCount": "<integer>",
+       "defectTaxonomy": {
+         "omission": "<count from issuesSummary where category=Omission>",
+         "ambiguity": "<count>",
+         "inconsistency": "<count>",
+         "incorrectFact": "<count>",
+         "extraneousInfo": "<count>",
+         "misplacedRequirement": "<count>"
+       },
+       "spotCheckOverrides": "<count of spot-check overrides from review, or 0>"
+     },
+     "artifacts": {
+       "researchPath": "<relative path>",
+       "prdPath": "<relative path>",
+       "reviewPath": "<relative path>"
+     }
+   }
+   ```
+
+   All numeric fields must be integers. Use the Write tool to create the file.
+
+7. Delete the timing file: `rm -f "$TIMING_FILE"`
+
+8. Commit the run log (do NOT push):
+   ```bash
+   git add {run_log_file_path}
+   git commit -m "docs: add {initiative} run log ({profile} profile)"
+   ```
+
+> **Note on token usage and cost**: Token counts are not available programmatically during a Claude Code session. To correlate cost with run logs, check your Anthropic dashboard usage for the session's time window. The `modelMap` and phase durations in the run log provide the basis for cost estimation.
+
+### Summary
+
 Summarize what was produced:
 - Research document path
 - PRD path (with version)
@@ -180,3 +288,4 @@ Summarize what was produced:
 - Handoff file paths
 - Final verdict
 - Lessons added (if any)
+- Run log path (if logging enabled)

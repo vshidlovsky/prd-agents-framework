@@ -83,6 +83,15 @@
 
 - **Style**: [versioned filenames (`-v1`, `-v2`) / single file with changelog / none]
 
+### Run Logs
+
+> GUIDE: Captures timing, model assignments, and quality metrics for each `/create-prd` run.
+> Useful for comparing model profiles on the same initiative (e.g., reliable vs cost-optimized).
+> Each run produces a timestamped JSON file. Set to "no" to skip.
+
+- **Enabled**: yes
+- **Output path**: `docs/initiatives/{initiative}/runs/`
+
 ### Included Section Packs
 
 > GUIDE: List which section packs from `templates/sections/` apply to this project.

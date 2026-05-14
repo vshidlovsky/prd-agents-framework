@@ -129,7 +129,9 @@ Human gates between every phase. Nothing runs without your approval.
 docs/initiatives/payment-processing/
 ├── payment-processing-research.md     # Codebase research (one file, includes custom step results)
 ├── payment-processing-prd.md          # The PRD
-└── payment-processing-prd-review.md   # Review with PASS/FAIL verdicts
+├── payment-processing-prd-review.md   # Review with PASS/FAIL verdicts
+└── runs/
+    └── run-20260513-103000.json       # Run log (timing, models, quality metrics)
 ```
 
 All agents commit their output. Nothing is pushed automatically.
@@ -189,6 +191,22 @@ The framework runs 7 agents per PRD. Each can use Opus or Sonnet independently. 
 The cost-optimized preset keeps Opus where judgment matters most — PRD synthesis, smell detection, flow analysis, and cross-matrix verdicts — while switching mechanical agents (file reading, endpoint comparison, checklist verification) to Sonnet.
 
 The profile is stored in the **Model Profile** table in `project-context.md`. Change it anytime by editing the table directly — no re-setup needed.
+
+### Run logs & model comparison
+
+Each `/create-prd` run produces a JSON run log capturing:
+- **Timing** — wall-clock duration per phase (research, writing, review)
+- **Models used** — the full model map for that run
+- **Quality metrics** — verdict, FAIL count, defect taxonomy breakdown, spot-check overrides, revision cycles
+
+Run logs accumulate in `docs/initiatives/{initiative}/runs/`. To compare model profiles:
+
+1. Run `/create-prd my-feature` with the **reliable** profile
+2. Edit `project-context.md` to switch to **cost-optimized**
+3. Run `/create-prd my-feature` again
+4. Compare the two run log JSONs — did the cheaper profile miss FAILs? How much faster was it?
+
+Token usage is not captured programmatically — correlate with your Anthropic dashboard for the session time window. Run logging is enabled by default; set `Enabled: no` under **Run Logs** in `project-context.md` to skip it.
 
 ### API documentation
 
