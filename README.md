@@ -37,7 +37,8 @@ prd-agents-framework/
 │       ├── compliance.md
 │       └── platform-considerations.md
 ├── rules/
-│   └── prd-lessons.md          # Rule: no lessons written without user approval
+│   ├── prd-lessons.md          # Rule: no lessons written without user approval
+│   └── domain-glossary.md      # Rule: no glossary terms written without user approval
 ├── project-context.md          # Template — copied to your project during setup
 └── README.md
 ```
@@ -89,9 +90,10 @@ The setup agent will:
 1. **Scan your repo** — reads package.json, CLAUDE.md, README, directory structure (skips git history)
 2. **Ask about your API docs** — "Where are your API docs?" You provide file paths, URLs, or say "none yet". It verifies each source and creates `docs/api-sources.md`.
 3. **Recommend section packs** — enables the right packs based on your project type (frontend, backend, mobile, fintech)
-4. **Ask about custom needs** — custom PRD sections your team always includes, custom research steps for cross-repo checks or external sources
-5. **Choose a model profile** — reliable (all Opus) or cost-optimized (Sonnet for mechanical agents, Opus for judgment-heavy ones). See [Model profiles](#model-profiles) below.
-6. **Draft `project-context.md`** — you review, resolve any TODOs, confirm
+4. **Seed the domain glossary** — scans the codebase for domain-specific terms (model classes, feature flags, API entities), presents candidates with best-guess definitions, and asks you to confirm, edit, or add terms. You can skip this and grow the glossary through PRD runs instead.
+5. **Ask about custom needs** — custom PRD sections your team always includes, custom research steps for cross-repo checks or external sources
+6. **Choose a model profile** — reliable (all Opus) or cost-optimized (Sonnet for mechanical agents, Opus for judgment-heavy ones). See [Model profiles](#model-profiles) below.
+7. **Draft `project-context.md`** — you review, resolve any TODOs, confirm
 
 For **greenfield projects** with no code yet: tell the setup agent your planned tech stack, conventions, and any existing specs or design docs. It will configure the framework based on your plans. The researcher will scan whatever docs exist; if there's no code, it produces a minimal research doc and the PRD writer works from your requirements directly.
 
@@ -122,7 +124,7 @@ For **greenfield projects** with no code yet: tell the setup agent your planned 
     └── Phase 3: PRD Reviewer
         ├── Runs universal + project-specific checks
         ├── Produces {initiative}-prd-review.md
-        ├── 🔵 Gate 3: You review findings
+        ├── 🔵 Gate 3: You review findings + approve lessons & glossary terms
         └── Up to 3 revision cycles, then escalates
 ```
 
@@ -165,6 +167,16 @@ Section packs are modular PRD sections. Enable them with checkboxes in `project-
 ```
 
 Create **custom section packs** for project-specific needs (e.g., mobile-app discrepancy tracking, mock data strategy). The project-setup agent helps you create these.
+
+### Domain glossary
+
+The **Domain Glossary** in `project-context.md` defines business terms that agents must use correctly. It's read by the writer before every PRD (Step 0) and checked by the reviewer for consistency.
+
+**Seeding**: The project-setup agent scans your codebase for domain-specific terms and asks you to confirm definitions. You can also skip this and start with an empty glossary.
+
+**Growth**: The glossary grows through PRD runs. The writer proposes terms it needed but couldn't find during drafting. The reviewer proposes terms used inconsistently or incorrectly in the PRD. At Gate 3, the orchestrator presents both sets of proposals and you choose which to accept. No agent writes to the glossary without your explicit approval (`rules/domain-glossary.md`).
+
+This is the same approval pattern used for [lessons learned](#lessons-learned) — propose, present, approve.
 
 ### Custom research steps
 
