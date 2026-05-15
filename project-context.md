@@ -45,6 +45,7 @@
 
 > GUIDE: Business terms that agents must understand to write correct PRDs.
 > Only include terms that aren't obvious from the code — things a new team member would need explained.
+> **Adding terms**: prd-writer and prd-reviewer propose new terms; the user must approve before they are added. See `rules/domain-glossary.md`.
 
 | Term | Definition |
 |------|-----------|
@@ -76,6 +77,7 @@
 - **Reviews**: [e.g., `docs/initiatives/{initiative}/{initiative}-prd-review.md`]
 - **Handoff files**: [same directory as the PRD, `.json` extension]
 - **Lessons**: `.claude/prd-lessons.md` (reviewer proposes in review doc, user must explicitly approve before any lesson is written)
+- **Glossary**: Domain Glossary table in `project-context.md` (writer and reviewer propose terms, user must explicitly approve before any term is added — see `rules/domain-glossary.md`)
 
 ### PRD Versioning
 

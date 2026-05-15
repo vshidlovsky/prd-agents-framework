@@ -24,6 +24,8 @@ Read `.claude/project-context.md`. Extract:
 
 Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Writer rule" — these are active constraints you MUST follow during drafting. They represent patterns that caused review failures in past PRDs. Violating a lesson means the reviewer will catch it and fail the spec.
 
+Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, track terms you encounter during drafting that are missing, ambiguous, or conflated in the glossary, and propose them in Step 5.
+
 Then read the PRD template from the path specified in project-context.md under "PRD template." Also read each section pack:
 - **Built-in packs**: checked (`[x]`) items in the Included Section Packs list — read from the "Section packs directory" path
 - **Custom packs**: any files listed under "Custom Section Packs" — read from the paths specified
@@ -102,6 +104,8 @@ If the orchestrator passes a review FAIL list (from prd-reviewer), this is a rev
 ## Step 4: Draft the Spec
 
 Follow the PRD template exactly. Every Tier 1 section is required. Include the section packs listed in project-context.md. Delete any `> **GUIDE**` blocks after filling each section.
+
+**Glossary tracking**: While drafting, track any term you use that (a) isn't in the Domain Glossary but could be confused with another term, or (b) is in the glossary but the definition doesn't match how it's actually used in the codebase. These become glossary proposals in Step 5.
 
 ### Assembling the PRD
 
@@ -186,6 +190,7 @@ Provide a **HANDOFF SUMMARY** to the user:
 - Initiative area
 - Number of API endpoints involved
 - Key decisions made (and why — reference Q&A)
+- Proposed glossary terms (if any) — list each term with its proposed definition and why it's needed
 - Recommended next step: "Run prd-reviewer to validate"
 
 ## Step 6: Write Handoff File
@@ -204,6 +209,13 @@ Save to the same directory as the PRD:
   "apiEndpoints": ["GET /v1/...", "POST /v1/..."],
   "existingCodeReferenced": ["<paths>"],
   "dependencies": [],
+  "proposedGlossaryTerms": [
+    {
+      "term": "<term>",
+      "definition": "<proposed definition>",
+      "reason": "<why this term needs a glossary entry — e.g., 'used inconsistently across codebase', 'easily confused with X'>"
+    }
+  ],
   "nextAgent": "prd-reviewer"
 }
 ```

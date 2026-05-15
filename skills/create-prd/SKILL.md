@@ -211,13 +211,24 @@ Present the review verdict AND proposed lessons together in one output:
 
 If no lessons were proposed, say "No new lessons proposed."
 
-**Then**, ask for action — one prompt covering both verdict and lessons:
-- If READY: **"Approve lessons: all / specific (e.g., '1 and 3') / skip all. Then we're done."**
-- If NEEDS_REVISION: **"For the review: 'revise' to send back to prd-writer, or 'override' to approve as-is. For the lessons: all / specific / skip."**
+**Then**, show proposed glossary terms (if any). Collect proposals from BOTH the writer's handoff (`proposedGlossaryTerms`) and the reviewer's handoff/review document. Deduplicate by term name — if both proposed the same term, prefer the reviewer's definition (it has the benefit of seeing the full PRD). For each term, show:
+- Number, term
+- Proposed definition
+- Reason
+
+If no glossary terms were proposed, say "No new glossary terms proposed."
+
+**Then**, ask for action — one prompt covering verdict, lessons, and glossary terms:
+- If READY: **"Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Then we're done."**
+- If NEEDS_REVISION: **"For the review: 'revise' to send back to prd-writer, or 'override' to approve as-is. For lessons: all / specific / skip. For glossary terms: all / specific / skip."**
 
 If run logging is enabled: `echo "gate3_resume=$(date +%s)" >> "$TIMING_FILE"`
 
 On lesson approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 12. Write these approved lessons to `.claude/prd-lessons.md`: [list the approved lesson names and their content from the review file]. The review file is at {review_path}." This is a targeted callback — the agent reads the review, extracts the approved lessons, and appends them to the lessons file.
+
+On glossary term approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 13. Write these approved glossary terms to the Domain Glossary table in `.claude/project-context.md`: [list the approved terms with their definitions]. The review file is at {review_path}." This is a targeted callback — the agent reads project-context.md and appends the approved terms to the glossary table.
+
+If both lessons and glossary terms are approved, spawn both callbacks in parallel — they write to different files and don't conflict.
 
 If "revise": increment the revision count.
   - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the review at {review_path}. Follow Step 3.5 (Revision Mode) — fix each FAIL in the review's Issues Found list. Do not rewrite the entire PRD." The writer's Step 3.5 handles versioning, targeted fixes, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review.**

@@ -49,6 +49,8 @@ Verify the PRD template exists at the extracted path. If missing, STOP. Tell the
 
 Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Reviewer check" — these become rows in the Lesson Checks matrix.
 
+Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, flag terms that the PRD uses inconsistently or incorrectly and propose them in Step 8.6.
+
 Record all file paths — you will pass them to sub-reviewers.
 
 ## Step 2: Read the Spec
@@ -647,6 +649,22 @@ For each FAIL that represents a NEW pattern not already in prd-lessons.md, propo
 If all FAILs are covered by existing lessons: "None — all issues covered by existing lessons."
 If zero FAILs: "None — no issues found."
 
+### 8.6.1: Proposed Glossary Terms (proposals only — do NOT write to project-context.md)
+
+Scan the PRD for terms that are:
+- **Undefined**: used in the PRD but not in the Domain Glossary, and could be confused with another term
+- **Inconsistent**: used differently than the glossary defines them
+- **Conflated**: two distinct concepts referred to by the same name, or the same concept referred to by different names
+
+Also check the writer's handoff file for `proposedGlossaryTerms` — carry those through and add any additional terms you found.
+
+For each proposed term, include:
+- Term
+- Proposed definition
+- Reason (what confusion or inconsistency it resolves)
+
+If no glossary issues found: "None — all terms used consistently and defined."
+
 ### 8.7: Write Final Review
 
 Edit the review file to prepend the summary and verdict sections at the top:
@@ -690,6 +708,12 @@ FAIL_COUNT: [integer — count of FAIL cells across all matrices]
 - **Issue**: [What was caught]
 - **Writer rule**: [Prevention]
 - **Reviewer check**: [Detection]
+
+## Proposed Glossary Terms
+
+### Proposed: [term]
+- **Definition**: [proposed definition]
+- **Reason**: [what confusion or inconsistency this resolves]
 
 ---
 
@@ -754,6 +778,13 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
       "issue": "<what was caught>",
       "writerRule": "<prevention rule>",
       "reviewerCheck": "<detection rule>"
+    }
+  ],
+  "proposedGlossaryTerms": [
+    {
+      "term": "<term>",
+      "definition": "<proposed definition>",
+      "reason": "<what confusion or inconsistency this resolves>"
     }
   ],
   "nextAgent": "none | prd-writer"
@@ -826,3 +857,19 @@ orchestrator — may write to this file without explicit user approval.
 ```
 
 Commit the updated lessons file. Do NOT push.
+
+## Step 13: Write Approved Glossary Terms (called by orchestrator only)
+
+**Do NOT write glossary terms unless the user has explicitly approved them.** This step is ONLY triggered by the create-prd orchestrator after the user selects specific terms to accept. The reviewer never writes glossary terms on its own — it proposes them in the review document and returns to the orchestrator, which presents them to the user for approval. If the user says "skip" or does not approve, no terms are written.
+
+When the orchestrator calls back with user-approved glossary terms:
+
+1. Read `.claude/project-context.md`
+2. Find the Domain Glossary table
+3. Append each approved term as a new row in the table:
+
+```markdown
+| [Term] | [Definition] |
+```
+
+Commit the updated project-context.md. Do NOT push.
