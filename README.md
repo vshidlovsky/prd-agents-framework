@@ -38,7 +38,8 @@ prd-agents-framework/
 │       └── platform-considerations.md
 ├── rules/
 │   ├── prd-lessons.md          # Rule: no lessons written without user approval
-│   └── domain-glossary.md      # Rule: no glossary terms written without user approval
+│   ├── domain-glossary.md      # Rule: no glossary terms written without user approval
+│   └── shared-requirements.md  # Rule: no SRs modified without user approval
 ├── project-context.md          # Template — copied to your project during setup
 └── README.md
 ```
@@ -177,6 +178,16 @@ The **Domain Glossary** in `project-context.md` defines business terms that agen
 **Growth**: The glossary grows through PRD runs. The writer proposes terms it needed but couldn't find during drafting. The reviewer proposes terms used inconsistently or incorrectly in the PRD. At Gate 3, the orchestrator presents both sets of proposals and you choose which to accept. No agent writes to the glossary without your explicit approval (`rules/domain-glossary.md`).
 
 This is the same approval pattern used for [lessons learned](#lessons-learned) — propose, present, approve.
+
+### Shared requirements
+
+**Shared requirements** (`docs/shared-requirements.md`) are cross-cutting rules — authentication guards, error handling patterns, accessibility standards, security rules — that every PRD inherits by reference instead of restating inline. This prevents duplication, drift, and contradictions across PRDs.
+
+**Seeding**: The project-setup agent scans CLAUDE.md and rules files for "every page MUST..." patterns, presents candidates, and creates the file with your approved SRs. Optional — skip if you don't have cross-cutting rules yet.
+
+**In PRDs**: The writer adds a "Shared Requirements" section listing applicable SR IDs and any feature-specific overrides with justification. The reviewer verifies: SR section present (F-22), no SR content restated inline (F-23), overrides justified (F-24).
+
+**Ownership**: PM-owned. Agents reference and verify SRs but never add, modify, or remove them without your approval (`rules/shared-requirements.md`).
 
 ### Custom research steps
 

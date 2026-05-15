@@ -26,6 +26,8 @@ Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Writer rule" — 
 
 Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, track terms you encounter during drafting that are missing, ambiguous, or conflated in the glossary, and propose them in Step 5.
 
+Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements (SR-01 through SR-NN) that apply to every authenticated page/feature. You MUST NOT restate SR content inline in the PRD — instead, reference this document in the "Shared Requirements" section. If the feature needs an override or exclusion for any SR, document it explicitly with justification. If the file doesn't exist, skip the Shared Requirements section in the PRD template.
+
 Then read the PRD template from the path specified in project-context.md under "PRD template." Also read each section pack:
 - **Built-in packs**: checked (`[x]`) items in the Included Section Packs list — read from the "Section packs directory" path
 - **Custom packs**: any files listed under "Custom Section Packs" — read from the paths specified

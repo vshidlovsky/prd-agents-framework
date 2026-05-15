@@ -51,6 +51,8 @@ Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Reviewer check" �
 
 Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, flag terms that the PRD uses inconsistently or incorrectly and propose them in Step 8.6.
 
+Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements that every authenticated page must inherit. The reviewer checks that the PRD references SRs correctly — not restated, not contradicted, overrides justified. If the file doesn't exist, mark F-22/F-23/F-24 as N/A.
+
 Record all file paths — you will pass them to sub-reviewers.
 
 ## Step 2: Read the Spec
@@ -252,6 +254,9 @@ The writer generates edge cases using systematic checklists (entity × dimension
 | F-19 | No gold-plating | [PENDING] | [PENDING] |
 | F-20 | File paths follow conventions | [PENDING] | [PENDING] |
 | F-21 | No implementation details leaked | [PENDING] | [PENDING] |
+| F-22 | Shared Requirements section present and references `docs/shared-requirements.md` | [PENDING] | [PENDING] |
+| F-23 | No SR content restated inline — only referenced by ID | [PENDING] | [PENDING] |
+| F-24 | Feature-specific SR overrides are justified | [PENDING] | [PENDING] |
 
 **Matrix G: Section Pack Checks** — generate rows dynamically based on included packs
 
@@ -481,7 +486,9 @@ Prompt provides:
 - Scaffold file path + instruction: "Read your matrix scaffolds (F, G, P) from `{scaffold_file}` using the section markers"
 - Section pack check definitions for included packs (inline — these are brief check names)
 - Project-specific check items from project-context.md (inline)
-- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record.
+- Shared requirements file path: `docs/shared-requirements.md` (if it exists)
+- SR check guidance (inline): F-22: PASS if a "Shared Requirements" section exists in the PRD and references the shared-requirements doc. N/A if the project has no shared-requirements.md. F-23: PASS if no SR content is copy-pasted into the PRD body (grep for specific SR rule text appearing outside the Shared Requirements section). FAIL if cross-cutting behavior is re-described inline. F-24: PASS if every override in the "Feature-specific overrides" block includes a justification. FAIL if an SR is overridden without explanation.
+- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above.
 
 **Agent 3: Flow & Edge Case Reviewer** — Matrix D1, D2, E → `{initiative}-review-flow.md`
 

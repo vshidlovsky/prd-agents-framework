@@ -78,6 +78,7 @@
 - **Handoff files**: [same directory as the PRD, `.json` extension]
 - **Lessons**: `.claude/prd-lessons.md` (reviewer proposes in review doc, user must explicitly approve before any lesson is written)
 - **Glossary**: Domain Glossary table in `project-context.md` (writer and reviewer propose terms, user must explicitly approve before any term is added — see `rules/domain-glossary.md`)
+- **Shared requirements**: `docs/shared-requirements.md` (cross-cutting requirements every PRD inherits — see `rules/shared-requirements.md`). Set to "none" if not used.
 
 ### PRD Versioning
 

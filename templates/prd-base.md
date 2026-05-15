@@ -42,6 +42,22 @@ As a [role], I want [goal] so that [benefit].
 
 ## Contract
 
+### Shared Requirements
+
+> **GUIDE**
+> **What**: Reference to the project's shared requirements document listing which SRs this feature inherits and any feature-specific overrides.
+> **Why**: Cross-cutting requirements are centralized. Restating them causes duplication and drift.
+> **How**: List all applicable SR IDs. For overrides or exclusions, explain what's different and why. If the project has no shared requirements document, delete this section.
+> **Ownership**: PM-owned. Agents consume but never add new SRs without explicit user approval.
+
+This feature inherits all shared requirements from `docs/shared-requirements.md`:
+- [list applicable SR-NN IDs with short labels]
+
+**Feature-specific overrides:**
+- [SR-NN]: [describe override and justification, or "N/A — reason"]
+
+---
+
 ### Functional Requirements
 
 > **GUIDE**
