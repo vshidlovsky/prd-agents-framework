@@ -15,7 +15,7 @@
 > 4. **Group keys by screen/flow area**: Include keys for labels, errors, empty states, buttons, tooltips.
 > 5. Before translating, read existing localization files to match tone, terminology, and phrasing.
 > 6. Use PRD context (screen flow, user story) to ensure translations fit the UI context.
-> 7. Flag uncertain translations with `[VERIFY]`.
+> 7. **Attempt real translations first.** Only flag with `[VERIFY]` when genuinely uncertain about correctness — this should be rare, not the default. Tables full of `[VERIFY]` defeat the purpose of including translations in the PRD.
 
 | Key | en | [column per supported language] | Notes |
 |-----|----|----|-------|
