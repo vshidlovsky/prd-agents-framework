@@ -105,6 +105,37 @@ Read `CLAUDE.md` if it exists — extract:
 
 Read `README.md` for project description if CLAUDE.md doesn't cover it.
 
+## Step 5.5: Seed Domain Glossary (MANDATORY — ask the user)
+
+The Domain Glossary in project-context.md is read by the writer before every PRD. An empty glossary means the first several PRDs will use inconsistent terminology. Seed it now.
+
+**Auto-detect candidates** by scanning the codebase for domain-specific names:
+- **Model/entity class names**: search source directories for class definitions, data classes, or type definitions that look domain-specific (not framework types like `Controller`, `Repository`, `Widget`)
+- **Feature flag names**: search for feature flag constants or remote config keys
+- **API entity names**: scan API docs (from Step 4) for request/response object names that differ from what the UI or code calls them
+- **Constants and enums**: look for domain-specific constants (status codes, transaction types, user roles)
+
+Compile a candidate list of terms that appear domain-specific. For each, note where you found it and whether multiple names seem to refer to the same concept (e.g., `IMTU` in code vs "mobile recharge" in UI copy vs "top up" in user-facing strings).
+
+**Present candidates and ask the user:**
+
+**"I found these domain-specific terms in the codebase. Which ones should go in the glossary? For each, I need a one-line definition — what it means in this project's context.**
+
+| # | Term | Found in | My best guess at definition |
+|---|------|----------|----------------------------|
+| 1 | [term] | [where] | [guess] |
+| 2 | [term] | [where] | [guess] |
+
+**Add any terms I missed — especially:**
+- **Product feature names** that get confused (e.g., internal name vs marketing name vs user-facing label)
+- **Abbreviations** your team uses that a new member wouldn't know
+- **Terms that mean different things** in different parts of the codebase
+- **API vs UI naming mismatches** (e.g., the API calls it X but the app shows Y)
+
+**Say 'skip' if you want to start with an empty glossary and grow it through PRD runs."**
+
+If the user provides terms, fill the Domain Glossary table in project-context.md. If they say skip, leave the placeholder row.
+
 ## Step 6: Detect Conventions
 
 From the files already read (CLAUDE.md, README, source files, config), extract:
@@ -287,18 +318,34 @@ Then say: **"Review `.claude/project-context.md` and fill in any `[TODO]` marker
 
 When the user confirms the draft is good:
 1. Create an empty `prd-lessons.md` in the project root if it doesn't already exist. This file captures lessons learned across PRD initiatives — the reviewer and writer agents will reference it over time.
-2. Copy the rule file from the framework to enforce lesson approval:
+2. Copy rule files from the framework to enforce approval guardrails:
    ```bash
    mkdir -p .claude/rules
    cp .claude/agents/../../../rules/prd-lessons.md .claude/rules/prd-lessons.md 2>/dev/null || true
+   cp .claude/agents/../../../rules/domain-glossary.md .claude/rules/domain-glossary.md 2>/dev/null || true
    ```
-   If the framework rule file isn't available, create `.claude/rules/prd-lessons.md` with this content:
+   If the framework rule files aren't available, create them manually:
+
+   `.claude/rules/prd-lessons.md`:
    ```markdown
    # PRD Lessons
 
    Never write to `.claude/prd-lessons.md` without explicit user approval.
 
    The prd-reviewer PROPOSES lessons in the review document. The create-prd orchestrator presents proposals to the user. The user decides which to accept. Only after the user explicitly approves specific lessons (by name or number) may any agent append them to the file.
+
+   If the user says "skip", "none", or does not approve — write nothing.
+
+   This rule applies to all agents, skills, and conversations in this project.
+   ```
+
+   `.claude/rules/domain-glossary.md`:
+   ```markdown
+   # Domain Glossary
+
+   Never write to the Domain Glossary in `project-context.md` without explicit user approval.
+
+   The prd-writer PROPOSES glossary terms when it encounters undefined or ambiguous terms during drafting. The prd-reviewer PROPOSES glossary terms when it finds terms used inconsistently or incorrectly in the PRD. The create-prd orchestrator collects both sets of proposals and presents them to the user. The user decides which to accept. Only after the user explicitly approves specific terms (by name or number) may any agent add them to the Domain Glossary.
 
    If the user says "skip", "none", or does not approve — write nothing.
 
@@ -314,4 +361,5 @@ When the user confirms the draft is good:
    - Confirm `docs/api-sources.md` exists and references valid files
    - Confirm `prd-lessons.md` exists in the project root
    - Confirm `.claude/rules/prd-lessons.md` exists
+   - Confirm `.claude/rules/domain-glossary.md` exists
 4. Report: "Setup complete. **Restart your Claude Code session** (exit and reopen) so the `/create-prd` skill gets registered. After restarting, you can run `/create-prd {initiative}` or individual agents."
