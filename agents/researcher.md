@@ -99,6 +99,23 @@ When you encounter named constants (e.g., `MAX_RETRY_COUNT`, `KSize.fieldLengthM
 2. Report the resolved value, not just the constant name
 3. Format: `MAX_RETRY_COUNT` = `3` (defined at `src/config/constants.java:42`)
 
+### Display Formatting Rules (frontend/mobile only)
+
+For every visible text field that transforms raw API data into a displayed string (amounts, dates, timestamps, statuses, phone numbers, names, counts), trace the full transformation and document:
+
+1. **The raw API value** — field name, type, and example value from the response shape
+2. **The transformation** — which function or pipeline converts it. Do NOT just name the function — document its output pattern with concrete examples (e.g., "timestamp < 1h → '5 min ago', timestamp < 24h → '3 hours ago', timestamp > 24h → 'Mar 15'")
+3. **Thresholds and branching** — if the formatting changes based on value ranges, document every branch
+4. **Fallback values** — what's displayed when the field is null, empty, or missing
+5. **Locale sensitivity** — does the formatting change per locale (e.g., currency symbol position, date order)?
+
+After documenting each transformation, cross-check against existing utilities:
+- Does a shared utility (in `utils/`, `helpers/`, `formatters/`, or equivalent) already handle this transformation?
+- If the initiative ports behavior from another platform (e.g., mobile → web), does the target platform's existing formatter produce the same output? Flag mismatches.
+- If design system components show fixture/placeholder values, do they match the formatting rules in the code?
+
+Document findings in the "Display Formatting" section of the output.
+
 ## Commit SHA Capture
 
 Capture the HEAD commit SHA before starting research:
@@ -160,6 +177,14 @@ Use this structure:
 - **Request**: [fields with types]
 - **Response**: [fields with types]
 - **Errors**: [status codes and handling]
+
+## Display Formatting
+
+[For frontend/mobile: how raw API values are transformed into displayed strings. Skip for backend-only initiatives.]
+
+| Field | Raw API Value | Transformation | Output Examples | Utility | Mismatches |
+|-------|--------------|----------------|-----------------|---------|------------|
+| `{field}` | `{type}` from `{endpoint}` | [{formatter function}](permalink) | `{concrete examples with thresholds}` | [{shared utility}](permalink) or "none" | [{mismatch description}] or "none" |
 
 ## Configuration
 
