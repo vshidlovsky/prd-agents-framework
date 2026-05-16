@@ -15,3 +15,4 @@ Source: Femmer et al., TU Munich, 2017 — adapted for PRD review.
 - **Superlative/comparative**: "fastest", "better", "optimal" — unmeasurable without baseline
 - **Incomplete conditional**: "if X then Y" without specifying what happens when X is false
 - **Subjective language**: "user-friendly", "intuitive", "clean", "simple", "seamless" — not testable
+- **Implementation delegation**: "via someFunction()", "using utilityName", "formatted by formatTime", "whatever X returns", "as returned by" — delegates the requirement to current code instead of defining expected behavior. Replace with the observable output (format, thresholds, concrete examples).
