@@ -188,7 +188,7 @@ Also add a meta row (mark per-item columns as `N/A`):
 - **Testable**: Can be verified by using the running application, not by reading code
 - **FR Link**: Which FR(s) does this AC verify? If none = orphan AC = FAIL
 - **Loading/Error/Empty State**: Mark `N/A` if not applicable to this AC, `PASS` if covered, `FAIL` if missing and should be present
-- **Implementation Detail Leak**: Does the AC reference class names, architecture decisions, file paths? FAIL if yes
+- **Implementation Detail Leak**: Does the AC reference class names, architecture decisions, file paths, function/utility names, or "via someFunction()" patterns? FAIL if yes. ACs must define expected observable behavior, not delegate to a function name.
 - **Smell Flags**: Same smell patterns as Matrix B. Record any hits.
 
 **Matrix D1: Flow Completeness** — one row per screen/state (or request flow for backend services)
@@ -253,7 +253,7 @@ The writer generates edge cases using systematic checklists (entity × dimension
 | F-18 | Scope is focused (reasonable ticket count) | [PENDING] | [PENDING] |
 | F-19 | No gold-plating | [PENDING] | [PENDING] |
 | F-20 | File paths follow conventions | [PENDING] | [PENDING] |
-| F-21 | No implementation details leaked | [PENDING] | [PENDING] |
+| F-21 | No implementation details leaked (architecture, file paths, function/utility names, "via someFunction()" patterns) | [PENDING] | [PENDING] |
 | F-22 | Shared Requirements section present and references `docs/shared-requirements.md` | [PENDING] | [PENDING] |
 | F-23 | No SR content restated inline — only referenced by ID | [PENDING] | [PENDING] |
 | F-24 | Feature-specific SR overrides are justified | [PENDING] | [PENDING] |
@@ -507,7 +507,7 @@ Prompt provides:
 - File paths: PRD at `{prd_path}`, smell patterns at `{smell_patterns_path}`
 - Scaffold file path + instruction: "Read your matrix scaffolds (B, C) from `{scaffold_file}` using the section markers"
 - Column definitions for B (Atomic, Necessary/Story Link, Feasible/API in Technical section, Contradicts FR, Smell Flags) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, Implementation Detail Leak, Smell Flags) — inline
-- Instruction: read the smell patterns file. For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), contradictions, and all smell patterns. For each AC, check testability, FR linkage, state coverage, implementation detail leaks, and smells. Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake).
+- Instruction: read the smell patterns file. For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), contradictions, and all smell patterns. Also check FRs for implementation detail leaks — function/utility names and "via someFunction()" patterns are FAILs (FRs must define observable behavior, not delegate to code). For each AC, check testability, FR linkage, state coverage, implementation detail leaks (same rule — function names are FAILs), and smells. Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake).
 
 ### Dispatch flow (Path B only)
 
