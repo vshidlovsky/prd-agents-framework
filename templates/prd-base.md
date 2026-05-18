@@ -110,7 +110,10 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 #### Loading States
 
-> **GUIDE**: What the user/caller sees while processing. Cover: initial load, subsequent loads, mutation in-flight.
+> **GUIDE**: What the user/caller sees while processing. Cover three distinct cases:
+> - **Initial load**: no cached data exists — what placeholder/skeleton does the user see?
+> - **Background refetch with cached data**: stale time elapsed, refetch in flight, but previous data is on screen — does the UI show cached data unchanged (no skeleton, no spinner), or does it overlay a loading indicator?
+> - **Mutation in-flight**: a write operation is pending — what disables, what spins?
 > For backend services: cover async processing indicators, queue states, or in-flight request states if applicable. Mark `N/A` if the service is purely synchronous with no user-visible wait states.
 
 - [ ] **AC-NNN**: [Loading behavior] [TC-CM].
@@ -322,8 +325,8 @@ None — all questions resolved.
 > **Insert into**: Behavioral Contract (after Edge Cases)
 
 > **GUIDE**
-> **When**: Any feature touching auth, tokens, PII, payments, or sensitive data.
-> **What**: Security requirements specific to this initiative.
+> **When**: Any feature that reads, displays, transmits, or stores auth tokens, PII (names, phone numbers, emails, avatars, account numbers), payment data, or sensitive state. "Touching" includes read-only display — a dashboard showing user names and passing recipient data via router state triggers this section.
+> **What**: Security requirements specific to this initiative — what must NOT be logged, exposed in URLs, persisted in browser storage, or sent in analytics.
 
 ---
 

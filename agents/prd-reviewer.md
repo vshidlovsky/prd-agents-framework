@@ -277,7 +277,7 @@ Section pack check definitions (add rows only for included packs):
 `screen-flow`: Diagram exists (Mermaid or equivalent) | Shows happy + error + cancel paths | All AC screens appear in diagram | Transitions labeled with triggers
 `navigation`: Entry points specified | Back/dismiss behavior per screen | Deep link support (if applicable) | Consistent with screen flow diagram
 `analytics-events`: Every screen has a view event | Names follow convention | No duplicates vs codebase | Properties documented
-`localization`: Every user-facing string has a key | All required languages covered | No duplicate keys vs codebase
+`localization`: Every user-facing string has a key | All required languages covered | No duplicate keys vs codebase | No duplicate string values across namespaces (reuse existing keys when the same translation already exists under another namespace)
 `component-mapping`: Every UI element maps to a design system component | Referenced components exist
 `feature-flags`: Flag name and convention documented | Fallback behavior specified | Reuse check performed
 `accessibility`: Focus management for modals/dialogs | Screen reader labels for non-text | Keyboard navigation for forms

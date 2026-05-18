@@ -204,6 +204,7 @@ If project-context.md specifies versioned filenames:
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
 14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API field names, enum values, URL patterns, UI copy, analytics event names, pixel breakpoints, or framework terminology in the behavioral layer. Use semantic concept names with `[TC-*]` cross-references. See `rules/behavioral-separation.md`.
+15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `transactions.status.paid` already maps to "Paid" in all supported languages, don't create `home.status.paid` with the same translations.
 
 ## Step 5: Save and Summarize
 
