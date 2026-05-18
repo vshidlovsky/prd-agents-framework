@@ -1,6 +1,6 @@
 # Section Pack: Compliance
 
-> **Insert into**: Contract (after Edge Cases)
+> **Insert into**: Behavioral Contract (after Edge Cases)
 > **When**: Any feature touching money movement, identity verification, transaction monitoring, or regulated data.
 
 ### Compliance / Regulatory Requirements

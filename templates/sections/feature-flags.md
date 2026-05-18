@@ -1,6 +1,6 @@
 # Section Pack: Feature Flags
 
-> **Insert into**: Technical (after API Endpoints)
+> **Insert into**: Technical Contract [TC-FF]
 > **When**: Any new feature that should be gated behind a feature flag or remote config.
 
 ### Feature Flags / Remote Config

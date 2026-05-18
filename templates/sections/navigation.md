@@ -1,6 +1,6 @@
 # Section Pack: Navigation
 
-> **Insert into**: Contract (after Screen Flow, or after Acceptance Criteria if no Screen Flow)
+> **Insert into**: Technical Contract [TC-SF]
 > **When**: Any feature with user-facing navigation — screens, pages, routes.
 
 ### Navigation

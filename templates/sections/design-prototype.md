@@ -1,6 +1,6 @@
 # Section Pack: Visual Design References
 
-> **Insert into**: Contract (after Acceptance Criteria, before Screen Flow)
+> **Insert into**: Technical Contract [TC-VR]
 > **When**: Projects with a design system (`src/components/ui/` or equivalent) and/or Figma mockups.
 
 ### Visual References

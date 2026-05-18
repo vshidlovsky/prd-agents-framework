@@ -1,6 +1,6 @@
 # Section Pack: Service Integration
 
-> **Insert into**: Technical (after API Endpoints)
+> **Insert into**: Technical Contract
 > **When**: Any feature that calls or is called by other services, message queues, or external APIs.
 
 ### Service Integration Points

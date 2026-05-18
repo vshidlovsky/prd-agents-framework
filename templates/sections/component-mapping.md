@@ -1,6 +1,6 @@
 # Section Pack: Component Mapping
 
-> **Insert into**: Technical (after API Endpoints)
+> **Insert into**: Technical Contract [TC-CM]
 > **When**: Any frontend/mobile feature using a design system or component library.
 
 ### Component Mapping

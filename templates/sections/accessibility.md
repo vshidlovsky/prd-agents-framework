@@ -1,6 +1,6 @@
 # Section Pack: Accessibility
 
-> **Insert into**: Contract (after Edge Cases)
+> **Insert into**: Behavioral Contract (after Edge Cases)
 > **When**: Features with forms, modals/dialogs/sheets, or complex interactions. Recommended for all user-facing features.
 
 ### Accessibility

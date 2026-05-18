@@ -1,7 +1,8 @@
 # Section Pack: Analytics Events
 
-> **Insert into**: Contract (after Acceptance Criteria, within the AC section)
+> **Insert into**: Behavioral Contract (after Acceptance Criteria)
 > **When**: Any feature that should be instrumented with analytics events.
+> **Separation note**: This table is the source of truth for event names and properties. FRs and ACs in the Behavioral Contract reference events using semantic trigger names (e.g., "the page-viewed analytics event") — not raw event names. The table itself holds the actual `event_name` values.
 
 #### Analytics Events
 

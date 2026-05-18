@@ -1,6 +1,6 @@
 # Section Pack: Responsive Layout
 
-> **Insert into**: Contract (within Acceptance Criteria section, after Empty States)
+> **Insert into**: Technical Contract [TC-CM]
 > **When**: Web applications that must work across viewport sizes.
 
 #### Responsive Layout

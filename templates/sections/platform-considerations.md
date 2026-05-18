@@ -1,6 +1,6 @@
 # Section Pack: Platform Considerations
 
-> **Insert into**: Contract (after Navigation)
+> **Insert into**: Behavioral Contract (after Edge Cases)
 > **When**: Mobile apps where iOS and Android UX should intentionally differ, or features using platform-specific capabilities.
 
 ### Platform Considerations

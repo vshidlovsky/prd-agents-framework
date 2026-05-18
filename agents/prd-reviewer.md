@@ -235,11 +235,11 @@ The writer generates edge cases using systematic checklists (entity × dimension
 |----|-------|---------|-------|
 | F-1 | Context: "What" section states capability | [PENDING] | [PENDING] |
 | F-2 | Context: "User Story" present | [PENDING] | [PENDING] |
-| F-3 | Contract: FRs with numbered IDs | [PENDING] | [PENDING] |
-| F-4 | Contract: Key Entities defined | [PENDING] | [PENDING] |
-| F-5 | Contract: ACs with testable checkboxes | [PENDING] | [PENDING] |
-| F-6 | Contract: Edge Cases table | [PENDING] | [PENDING] |
-| F-7 | Technical: API Endpoints with request/response details | [PENDING] | [PENDING] |
+| F-3 | Behavioral Contract: FRs with numbered IDs | [PENDING] | [PENDING] |
+| F-4 | Behavioral Contract: Key Entities defined | [PENDING] | [PENDING] |
+| F-5 | Behavioral Contract: ACs with testable checkboxes | [PENDING] | [PENDING] |
+| F-6 | Behavioral Contract: Edge Cases table | [PENDING] | [PENDING] |
+| F-7 | Technical Contract: Data Sources [TC-DS] with endpoint details | [PENDING] | [PENDING] |
 | F-8 | Boundaries: Dependencies section | [PENDING] | [PENDING] |
 | F-9 | Boundaries: Out of Scope section | [PENDING] | [PENDING] |
 | F-10 | Boundaries: Open Questions is empty | [PENDING] | [PENDING] |
@@ -257,6 +257,10 @@ The writer generates edge cases using systematic checklists (entity × dimension
 | F-22 | Shared Requirements section present and references `docs/shared-requirements.md` | [PENDING] | [PENDING] |
 | F-23 | No SR content restated inline — only referenced by ID | [PENDING] | [PENDING] |
 | F-24 | Feature-specific SR overrides are justified | [PENDING] | [PENDING] |
+| F-25 | Behavioral/Technical separation: FRs and ACs use semantic concept names with `[TC-*]` references — no API fields, enums, URLs, copy, event names, breakpoints, or framework terms | [PENDING] | [PENDING] |
+| F-26 | Technical Contract: Cross-cutting tables defined (TC-DS, TC-EC, TC-RT at minimum) | [PENDING] | [PENDING] |
+| F-27 | Technical Contract: Per-endpoint blocks have Field Mapping + Behavioral Mapping + Error Handling | [PENDING] | [PENDING] |
+| F-28 | `[TC-*]` cross-references in behavioral layer resolve to existing Technical Contract sections | [PENDING] | [PENDING] |
 
 **Matrix G: Section Pack Checks** — generate rows dynamically based on included packs
 
@@ -321,7 +325,10 @@ Read the "Project-Specific Review Checks" section. Each check becomes a row:
 
 ### Smell Pattern Reference
 
-Smell patterns are defined in `.claude/agents/prd-smell-patterns.md`. Sub-agents read that file directly — do not paste the patterns into sub-agent prompts. The patterns cover: vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, and subjective language.
+Smell patterns are defined in `.claude/agents/prd-smell-patterns.md`. Sub-agents read that file directly — do not paste the patterns into sub-agent prompts. The patterns cover two categories:
+
+1. **Linguistic smells** (9 patterns): vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, subjective language, and implementation delegation.
+2. **Behavioral/technical separation smells** (7 patterns): API field leaks, enum leaks, URL pattern leaks, UI copy in requirements, analytics event names inline, framework terminology, and design decisions in requirements. See `rules/behavioral-separation.md` for the separation rules these patterns enforce.
 
 If the smell patterns file doesn't exist, all Smell Flags cells in Matrix B and C should be marked `N/A — no smell patterns configured`.
 
@@ -488,7 +495,9 @@ Prompt provides:
 - Project-specific check items from project-context.md (inline)
 - Shared requirements file path: `docs/shared-requirements.md` (if it exists)
 - SR check guidance (inline): F-22: PASS if a "Shared Requirements" section exists in the PRD and references the shared-requirements doc. N/A if the project has no shared-requirements.md. F-23: PASS if no SR content is copy-pasted into the PRD body (grep for specific SR rule text appearing outside the Shared Requirements section). FAIL if cross-cutting behavior is re-described inline. F-24: PASS if every override in the "Feature-specific overrides" block includes a justification. FAIL if an SR is overridden without explanation.
-- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above.
+- Behavioral/technical separation rule file path: `rules/behavioral-separation.md`
+- Separation check guidance (inline): F-25: Scan every FR and AC for API field names, enum values, URL patterns, UI copy, analytics event names, pixel breakpoints, and framework terminology. PASS if all use semantic concept names with `[TC-*]` references. FAIL if any raw technical detail appears in behavioral layer — quote the offending text. F-26: PASS if Technical Contract has at minimum Data Sources `[TC-DS]`, Error Classification `[TC-EC]`, and Route Mapping `[TC-RT]` tables. FAIL if any cross-cutting table is missing. F-27: PASS if each API endpoint has a per-endpoint block with Field Mapping, Behavioral Mapping, and Error Handling subsections. FAIL if any endpoint lacks one of these. F-28: Collect all `[TC-*]` references from the Behavioral Contract. For each, verify a corresponding section exists in the Technical Contract. PASS if all resolve. FAIL with list of dangling references.
+- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above. For separation checks (F-25/F-26/F-27/F-28), read the separation rule file and verify compliance per the guidance above.
 
 **Agent 3: Flow & Edge Case Reviewer** — Matrix D1, D2, E → `{initiative}-review-flow.md`
 
@@ -507,7 +516,7 @@ Prompt provides:
 - File paths: PRD at `{prd_path}`, smell patterns at `{smell_patterns_path}`
 - Scaffold file path + instruction: "Read your matrix scaffolds (B, C) from `{scaffold_file}` using the section markers"
 - Column definitions for B (Atomic, Necessary/Story Link, Feasible/API in Technical section, Contradicts FR, Smell Flags) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, Implementation Detail Leak, Smell Flags) — inline
-- Instruction: read the smell patterns file. For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), contradictions, and all smell patterns. Also check FRs for implementation detail leaks — function/utility names and "via someFunction()" patterns are FAILs (FRs must define observable behavior, not delegate to code). For each AC, check testability, FR linkage, state coverage, implementation detail leaks (same rule — function names are FAILs), and smells. Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake).
+- Instruction: read the smell patterns file (both linguistic smells AND behavioral/technical separation smells). For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), contradictions, and all smell patterns. Also check FRs for implementation detail leaks — function/utility names and "via someFunction()" patterns are FAILs (FRs must define observable behavior, not delegate to code). Check FRs and ACs for behavioral/technical separation violations — API field names, enum values, URL patterns, UI copy, analytics event names, framework terminology, and design decisions are FAILs in FRs/ACs (see `rules/behavioral-separation.md`). For each AC, check testability, FR linkage, state coverage, implementation detail leaks (same rule — function names are FAILs), and smells. Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake).
 
 ### Dispatch flow (Path B only)
 

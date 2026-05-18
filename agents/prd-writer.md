@@ -111,10 +111,31 @@ Follow the PRD template exactly. Every Tier 1 section is required. Include the s
 ### Assembling the PRD
 
 Build the PRD in this order:
-1. Start with the base template sections (Context, Contract, Technical, Boundaries)
-2. For each section pack listed in project-context.md, read the section pack file. Find its `Insert into` tag (e.g., `Insert into: Contract (after Acceptance Criteria)`). In the base template, locate the matching HTML comment marker (e.g., `<!-- Section packs with "Insert into: Contract (after Acceptance Criteria)" go here -->`). Insert the filled section pack content at that marker. Remove the HTML comment after insertion.
+1. Start with the base template sections (Context, Behavioral Contract, Technical Contract, Boundaries)
+2. For each section pack listed in project-context.md, read the section pack file. Find its `Insert into` tag (e.g., `Insert into: Behavioral Contract (after Acceptance Criteria)`). In the base template, locate the matching HTML comment marker (e.g., `<!-- Section packs with "Insert into: Behavioral Contract (after Acceptance Criteria)" go here -->`). Insert the filled section pack content at that marker. Remove the HTML comment after insertion.
 3. For Tier 2 sections (Success Criteria, Security Constraints, Cross-Initiative Alignment): check if their condition applies. If yes, move the section from the Tier 2 block at the bottom of the template to the insertion point specified in its `Insert into` tag. If no, delete the section entirely.
 4. For backend/API projects with no UI: mark AC sub-sections (Loading States, Error States, Empty States) as `N/A — backend service` if they don't apply. Loading States may still apply (e.g., async processing indicators). Only include sub-sections that are meaningful for the project type.
+
+### Behavioral/Technical Separation
+
+The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Key Entities) describes *what* the system does — observable by users and testers. The **Technical Contract** describes *how* it's built — readable by engineers. A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `rules/behavioral-separation.md` for the full rules.
+
+**When writing the Behavioral Contract (FRs, ACs, Edge Cases, Key Entities):**
+- Use **semantic concept names** for data attributes — "transaction identifier", not `tx_id`
+- Add **`[TC-*]` cross-reference anchors** to link every concept to its Technical Contract definition
+- Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
+- **Never embed**: API field names, endpoint paths, query keys, enum values, URL patterns, UI copy strings, analytics event names, pixel breakpoints, CSS class names, framework terminology
+- Edge cases can be slightly more specific (concrete data scenarios), but should still use semantic names and reference ACs/TC sections
+
+**When writing the Technical Contract:**
+- **Cross-cutting tables defined once**: Data Sources `[TC-DS]`, Error Classification `[TC-EC]`, Query Configuration `[TC-QC]`, Route Mapping `[TC-RT]` — each lives in one table, referenced everywhere via anchors
+- **Per-endpoint blocks**: For each API endpoint, create a block with Field Mapping (semantic name → API field → type), Behavioral Mapping (which FRs/ACs each field drives + transformation rules), and Error Handling (HTTP status → behavior)
+- **Flexible anchors**: Create a 2-letter mnemonic per endpoint (e.g., `[TC-AM]` for Activity Mapping, `[TC-RM]` for Recipient Mapping)
+- Every API field in a Field Mapping table SHOULD have a Behavioral Mapping entry tracing back to FRs/ACs
+
+**Cross-reference discipline:**
+- Every semantic concept in the behavioral layer MUST have a `[TC-*]` anchor linking to its definition
+- Every `[TC-*]` anchor referenced in the behavioral layer MUST have a corresponding section in the Technical Contract
 
 ### Systematic Edge Case Generation
 
@@ -182,6 +203,7 @@ If project-context.md specifies versioned filenames:
 11. **Config-driven behavior must read as config-driven** — when behavior is determined by remote config or feature flags, describe it as config-driven. Never frame it as a hardcoded business rule.
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
+14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API field names, enum values, URL patterns, UI copy, analytics event names, pixel breakpoints, or framework terminology in the behavioral layer. Use semantic concept names with `[TC-*]` cross-references. See `rules/behavioral-separation.md`.
 
 ## Step 5: Save and Summarize
 

@@ -1,6 +1,6 @@
 # Section Pack: Database Changes
 
-> **Insert into**: Technical (after API Endpoints)
+> **Insert into**: Technical Contract
 > **When**: Any feature that requires database schema changes, new tables, or data migrations.
 
 ### Database Changes

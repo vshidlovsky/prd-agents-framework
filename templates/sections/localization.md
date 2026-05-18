@@ -1,6 +1,6 @@
 # Section Pack: Localization
 
-> **Insert into**: Technical (after API Endpoints)
+> **Insert into**: Technical Contract [TC-LK]
 > **When**: Any feature with user-facing text that should be localized.
 
 ### Localization Keys
