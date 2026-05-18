@@ -1,6 +1,6 @@
 ---
 name: prd-reviewer
-description: Reviews PRDs for completeness, API accuracy, and implementation readiness. Orchestrates parallel sub-reviewers with a three-phase matrix-driven process — scaffold, fill (parallel agents), verify — to guarantee full coverage. Use after a PRD draft exists and before approval.
+description: Reviews PRDs for completeness, API accuracy, and implementation readiness. Orchestrates parallel sub-reviewers with a three-phase matrix-driven process — scaffold, fill (parallel agents including a dedicated smell pass), verify — to guarantee full coverage. Use after a PRD draft exists and before approval.
 tools: Read, Grep, Glob, Bash, Write, Edit, Agent
 model: opus
 ---
@@ -137,8 +137,8 @@ From the PRD, extract these indexed lists:
 After extraction, count total extracted items (FRs + ACs + endpoints + screens/states + entities).
 
 **Review mode selection:**
-- If total items < 20: use **single-agent mode** in Phase 2 — skip sub-agent dispatch entirely and fill all matrices yourself in one pass. Four parallel Opus agents are overkill for a small PRD.
-- If total items >= 20: use **parallel mode** (4 sub-agents as described in Phase 2).
+- If total items < 20: use **single-agent mode** in Phase 2 — skip sub-agent dispatch entirely and fill all matrices yourself in one pass. Five parallel Opus agents are overkill for a small PRD.
+- If total items >= 20: use **parallel mode** (5 sub-agents as described in Phase 2).
 - If total items > 80: warn the orchestrator — "This PRD has {N} items. Sub-agent context pressure is high; review quality may degrade. Consider splitting the PRD into smaller initiatives before reviewing." Proceed with parallel mode if the orchestrator confirms.
 
 Record the chosen mode: `REVIEW_MODE: single | parallel`
@@ -161,9 +161,9 @@ Also add a final meta row: `A-N | Missing endpoints check | [PENDING]` — are t
 
 **Matrix B: FR Quality** — one row per FR
 
-| ID | FR | Atomic | Necessary (Story Link) | Feasible (API/Data in Spec) | Contradicts FR | Smell Flags |
-|----|-----|--------|------------------------|-----------------------------|----------------|-------------|
-| B-1 | FR-001: [text] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
+| ID | FR | Atomic | Necessary (Story Link) | Feasible (API/Data in Spec) | Contradicts FR |
+|----|-----|--------|------------------------|-----------------------------|----------------|
+| B-1 | FR-001: [text] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
 
 Also add meta rows (mark per-item columns as `N/A`):
 - `B-X | Orphan entity check | [PENDING]` — list any Key Entities not referenced by any FR
@@ -174,13 +174,12 @@ Column definitions:
 - **Necessary**: Which user story does it serve? No link = orphan = FAIL
 - **Feasible**: Does the API/data it requires appear in the Technical section? If not = FAIL
 - **Contradicts FR**: Does it conflict with any other FR? If yes, cite the other FR
-- **Smell Flags**: Scan the FR text against ALL smell patterns listed in the Smell Pattern Reference below. `PASS` if clean. `FAIL` if any smell detected — list each smell with the offending text quoted.
 
 **Matrix C: AC Quality** — one row per AC
 
-| ID | AC | Testable (Running App) | FR Link | Has Loading State | Has Error State | Has Empty State | Implementation Detail Leak | Smell Flags |
-|----|-----|------------------------|---------|-------------------|-----------------|-----------------|----------------------------|-------------|
-| C-1 | AC-001: [text] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
+| ID | AC | Testable (Running App) | FR Link | Has Loading State | Has Error State | Has Empty State | Implementation Detail Leak |
+|----|-----|------------------------|---------|-------------------|-----------------|-----------------|----------------------------|
+| C-1 | AC-001: [text] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
 
 Also add a meta row (mark per-item columns as `N/A`):
 - `C-X | AC value check | [PENDING]` — flag any ACs that test for testing's sake rather than verifying behavior the user cares about
@@ -189,7 +188,19 @@ Also add a meta row (mark per-item columns as `N/A`):
 - **FR Link**: Which FR(s) does this AC verify? If none = orphan AC = FAIL
 - **Loading/Error/Empty State**: Mark `N/A` if not applicable to this AC, `PASS` if covered, `FAIL` if missing and should be present
 - **Implementation Detail Leak**: Does the AC reference class names, architecture decisions, file paths, function/utility names, or "via someFunction()" patterns? FAIL if yes. ACs must define expected observable behavior, not delegate to a function name.
-- **Smell Flags**: Same smell patterns as Matrix B. Record any hits.
+
+**Matrix S: Smell Detection** — one row per FR, then one row per AC
+
+This matrix runs as a **dedicated adversarial pass** separate from Matrix B/C. The smell agent operates as red team — its job is to catch every violation the writer tried to sneak past. No other quality judgments compete for attention. The agent reads each FR/AC text against all 16 smell patterns (9 linguistic + 7 separation) with nothing else in working memory. Default is FAIL; PASS only when no pattern can be matched.
+
+| ID | Item | Linguistic Smells | Separation Smells |
+|----|------|-------------------|-------------------|
+| S-1 | FR-001: [text] | [PENDING] | [PENDING] |
+| S-N+1 | AC-001: [text] | [PENDING] | [PENDING] |
+
+Column definitions:
+- **Linguistic Smells**: Scan against the 9 linguistic patterns (vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, subjective language, implementation delegation). `PASS` if clean. `FAIL` if any pattern detected — list each pattern with the offending text quoted.
+- **Separation Smells**: Scan against the 7 behavioral/technical separation patterns (API field leak, enum leak, URL pattern leak, UI copy in requirement, analytics event name inline, framework terminology, design decision in requirement). `PASS` if clean. `FAIL` if any pattern detected — list each pattern with the offending text quoted. See `rules/behavioral-separation.md`.
 
 **Matrix D1: Flow Completeness** — one row per screen/state (or request flow for backend services)
 
@@ -325,12 +336,14 @@ Read the "Project-Specific Review Checks" section. Each check becomes a row:
 
 ### Smell Pattern Reference
 
-Smell patterns are defined in `.claude/agents/prd-smell-patterns.md`. Sub-agents read that file directly — do not paste the patterns into sub-agent prompts. The patterns cover two categories:
+Smell patterns are defined in `.claude/agents/prd-smell-patterns.md`. The smell agent reads that file directly — do not paste the patterns into sub-agent prompts. The patterns cover two categories:
 
 1. **Linguistic smells** (9 patterns): vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, subjective language, and implementation delegation.
 2. **Behavioral/technical separation smells** (7 patterns): API field leaks, enum leaks, URL pattern leaks, UI copy in requirements, analytics event names inline, framework terminology, and design decisions in requirements. See `rules/behavioral-separation.md` for the separation rules these patterns enforce.
 
-If the smell patterns file doesn't exist, all Smell Flags cells in Matrix B and C should be marked `N/A — no smell patterns configured`.
+Smell detection is handled exclusively by **Matrix S** via a dedicated agent (Agent 5: Smell Reviewer). This separation ensures smell patterns get full attention — the agent reads each FR/AC against all 16 patterns with no other quality judgments competing. Matrix B and C do NOT check smells.
+
+If the smell patterns file doesn't exist, all cells in Matrix S should be marked `N/A — no smell patterns configured`.
 
 ### 6.3: Write Scaffold
 
@@ -350,9 +363,9 @@ Write the full scaffold to the review output file. Wrap each matrix in section m
 <!-- MATRIX:B:END -->
 ```
 
-Apply the same `<!-- MATRIX:X:START -->` / `<!-- MATRIX:X:END -->` markers to every matrix (A, B, C, D1, D2, E, F, G, H, P). Do NOT add markers for Matrix I or the Scorecard — they are orchestrator-only sections created in Phase 3 (steps 8.2 and 8.7). Keeping them out of the scaffold prevents sub-agents from filling them.
+Apply the same `<!-- MATRIX:X:START -->` / `<!-- MATRIX:X:END -->` markers to every matrix (A, B, C, S, D1, D2, E, F, G, H, P). Do NOT add markers for Matrix I or the Scorecard — they are orchestrator-only sections created in Phase 3 (steps 8.2 and 8.7). Keeping them out of the scaffold prevents sub-agents from filling them.
 
-Count `[PENDING]` cells across matrices A through H and P. Exclude Matrix I (starts empty) and Scorecard (filled in Phase 3). Record two counts at the top of the scaffold — sub-agent cells (A, B, C, D1, D2, E, F, G, P) and orchestrator cells (H):
+Count `[PENDING]` cells across matrices A through H, S, and P. Exclude Matrix I (starts empty) and Scorecard (filled in Phase 3). Record two counts at the top of the scaffold — sub-agent cells (A, B, C, S, D1, D2, E, F, G, P) and orchestrator cells (H):
 
 ```
 SUB_AGENT_CELLS: 231
@@ -360,13 +373,13 @@ ORCHESTRATOR_CELLS: 16
 TOTAL_CELLS: 247
 ```
 
-All three MUST be plain integers. `TOTAL_CELLS` = `SUB_AGENT_CELLS` + `ORCHESTRATOR_CELLS`. This split makes cell ownership explicit: sub-agents are responsible for `SUB_AGENT_CELLS`, the orchestrator fills `ORCHESTRATOR_CELLS` (Matrix H) in step 8.1.1. In single mode, all cells are yours — the split still applies for traceability.
+All three MUST be plain integers. `TOTAL_CELLS` = `SUB_AGENT_CELLS` + `ORCHESTRATOR_CELLS`. This split makes cell ownership explicit: sub-agents (including the smell agent) are responsible for `SUB_AGENT_CELLS`, the orchestrator fills `ORCHESTRATOR_CELLS` (Matrix H) in step 8.1.1. In single mode, all cells are yours — the split still applies for traceability.
 
 ---
 
 ## Phase 2: Parallel Sub-Reviewers (Step 7)
 
-**If `REVIEW_MODE: single`**: skip this phase entirely — fill all matrices yourself in one pass, writing directly to the scaffold file. Then proceed to Phase 3, skipping step 8.1 (assembly) since there are no sub-agent files. Go to 8.1.1 (Matrix H), then 8.1.2 (completeness verification), then 8.1.3 (spot-check — still required in single mode, see below).
+**If `REVIEW_MODE: single`**: skip this phase entirely — fill all matrices yourself in one pass (including Matrix S smell detection), writing directly to the scaffold file. Then proceed to Phase 3, skipping step 8.1 (assembly) since there are no sub-agent files. Go to 8.1.1 (Matrix H), then 8.1.2 (completeness verification), then 8.1.3 (spot-check — still required in single mode, see below).
 
 **If `REVIEW_MODE: parallel`**: there are two dispatch paths depending on how you were invoked:
 
@@ -380,6 +393,7 @@ The skill prompt tells you: "If parallel mode, write prompt files and dispatch J
    - `{initiative}-review-prompt-structure.md`
    - `{initiative}-review-prompt-flow.md`
    - `{initiative}-review-prompt-requirements.md`
+   - `{initiative}-review-prompt-smells.md`
 3. Write `{initiative}-review-dispatch.json`:
    ```json
    {
@@ -393,19 +407,22 @@ The skill prompt tells you: "If parallel mode, write prompt files and dispatch J
        "api": "<model from review-api row>",
        "structure": "<model from review-structure row>",
        "flow": "<model from review-flow row>",
-       "requirements": "<model from review-requirements row>"
+       "requirements": "<model from review-requirements row>",
+       "smells": "<model from review-smells row>"
      },
      "promptFiles": {
        "api": "<absolute path>-review-prompt-api.md",
        "structure": "<absolute path>-review-prompt-structure.md",
        "flow": "<absolute path>-review-prompt-flow.md",
-       "requirements": "<absolute path>-review-prompt-requirements.md"
+       "requirements": "<absolute path>-review-prompt-requirements.md",
+       "smells": "<absolute path>-review-prompt-smells.md"
      },
      "outputFiles": {
        "api": "<absolute path>-review-api.md",
        "structure": "<absolute path>-review-structure.md",
        "flow": "<absolute path>-review-flow.md",
-       "requirements": "<absolute path>-review-requirements.md"
+       "requirements": "<absolute path>-review-requirements.md",
+       "smells": "<absolute path>-review-smells.md"
      },
      "previousReview": {
        "exists": false,
@@ -421,7 +438,7 @@ The skill prompt tells you: "If parallel mode, write prompt files and dispatch J
 
 This path only works when the user runs the reviewer directly at the top level (e.g., "run the prd-reviewer agent"), NOT when spawned as a sub-agent by the skill. When spawned by the skill, the Agent tool is unavailable — Path A always applies.
 
-If you have the Agent tool and were NOT given the skill's "STOP if parallel" instruction, spawn four sub-reviewer agents yourself, all in parallel. Each writes to its own output file. Phase 3 assembles all results.
+If you have the Agent tool and were NOT given the skill's "STOP if parallel" instruction, spawn five sub-reviewer agents yourself, all in parallel. Each writes to its own output file. Phase 3 assembles all results.
 
 **Read the Model Profile table from `.claude/project-context.md`** to determine each sub-agent's model. Use the `review-api`, `review-structure`, `review-flow`, and `review-requirements` rows. If the Model Profile section is missing, default all sub-agents to `opus`.
 
@@ -465,6 +482,7 @@ Each sub-agent writes to the **same directory as the review output file** (from 
 | Agent 2: Structure Reviewer | `{initiative}-review-structure.md` | F, G, P |
 | Agent 3: Flow & Edge Case Reviewer | `{initiative}-review-flow.md` | D1, D2, E |
 | Agent 4: Requirements Reviewer | `{initiative}-review-requirements.md` | B, C |
+| Agent 5: Smell Reviewer | `{initiative}-review-smells.md` | S |
 
 ### Sub-agent prompt construction
 
@@ -513,30 +531,40 @@ Prompt provides:
 
 Prompt provides:
 - Core rules with output file path
-- File paths: PRD at `{prd_path}`, smell patterns at `{smell_patterns_path}`
+- File paths: PRD at `{prd_path}`
 - Scaffold file path + instruction: "Read your matrix scaffolds (B, C) from `{scaffold_file}` using the section markers"
-- Column definitions for B (Atomic, Necessary/Story Link, Feasible/API in Technical section, Contradicts FR, Smell Flags) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, Implementation Detail Leak, Smell Flags) — inline
-- Instruction: read the smell patterns file (both linguistic smells AND behavioral/technical separation smells). For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), contradictions, and all smell patterns. Also check FRs for implementation detail leaks — function/utility names and "via someFunction()" patterns are FAILs (FRs must define observable behavior, not delegate to code). Check FRs and ACs for behavioral/technical separation violations — API field names, enum values, URL patterns, UI copy, analytics event names, framework terminology, and design decisions are FAILs in FRs/ACs (see `rules/behavioral-separation.md`). For each AC, check testability, FR linkage, state coverage, implementation detail leaks (same rule — function names are FAILs), and smells. Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake).
+- Column definitions for B (Atomic, Necessary/Story Link, Feasible/API in Technical section, Contradicts FR) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, Implementation Detail Leak) — inline
+- Instruction: For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), and contradictions. Also check FRs for implementation detail leaks — function/utility names and "via someFunction()" patterns are FAILs (FRs must define observable behavior, not delegate to code). For each AC, check testability, FR linkage, state coverage, and implementation detail leaks (same rule — function names are FAILs). Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake). **Do NOT check smell patterns** — smell detection is handled by Agent 5 in Matrix S.
+
+**Agent 5: Smell Reviewer** — Matrix S → `{initiative}-review-smells.md`
+
+Prompt provides:
+- Core rules with output file path
+- File paths: PRD at `{prd_path}`, smell patterns at `{smell_patterns_path}`, separation rules at `rules/behavioral-separation.md`
+- Scaffold file path + instruction: "Read your matrix scaffold (S) from `{scaffold_file}` using the section markers `<!-- MATRIX:S:START -->` / `<!-- MATRIX:S:END -->`"
+- Column definitions for S (Linguistic Smells, Separation Smells) — inline
+- Instruction: You are **red team**. Your job is to destroy the PRD writer's work by finding every smell violation. The writer is your opponent — they will try to sneak technical details into behavioral requirements using clever phrasing, semantic-sounding wrappers, and "it's just a description" rationalizations. Your success is measured by catches, not by fairness. A PASS means you failed to find the violation, not that the writer did well. Assume every FR and AC is guilty until you cannot find any pattern match. Read the smell patterns file cover to cover — these are your weapons. Then for each FR and AC in the PRD: (1) Read the full text of the item. (2) Attack with all 9 linguistic smell patterns. If ANY word or phrase triggers a pattern, it's a FAIL — quote the offending text and name the pattern. Do not accept justifications like "it's descriptive" or "it's an identifier." (3) Attack with all 7 behavioral/technical separation smell patterns (see `rules/behavioral-separation.md`). Same standard — any match is a FAIL. A button label is UI copy. A layout description is a design decision. An observable format that happens to match an API field is still a leak. (4) Only mark PASS if you genuinely cannot connect the text to any of the 16 patterns. Work through one item at a time. Do NOT batch or skim.
 
 ### Dispatch flow (Path B only)
 
 ```
-1. Spawn all four agents in parallel, each with its model from the Model Profile table:
+1. Spawn all five agents in parallel, each with its model from the Model Profile table:
    - Agent 1 (API): model from review-api row
    - Agent 2 (Structure): model from review-structure row
    - Agent 3 (Flow): model from review-flow row
    - Agent 4 (Requirements): model from review-requirements row
-2. Wait for all four to complete
+   - Agent 5 (Smells): model from review-smells row (default: opus)
+2. Wait for all five to complete
 ```
 
-Agent 4's "Feasible" column checks PRD internal consistency (does the Technical section list the required API?). Agent 1 checks external accuracy (does the API actually exist and match?). Phase 3's Dynamic Findings (step 8.2) catches cross-agent contradictions — e.g., Agent 1 finds an endpoint doesn't exist while Agent 4 marks its FR as Feasible.
+Agent 4's "Feasible" column checks PRD internal consistency (does the Technical section list the required API?). Agent 1 checks external accuracy (does the API actually exist and match?). Agent 5 handles all smell detection independently — Agents 1-4 do NOT check smells. Phase 3's Dynamic Findings (step 8.2) catches cross-agent contradictions — e.g., Agent 1 finds an endpoint doesn't exist while Agent 4 marks its FR as Feasible.
 
 ### Sub-agent failure handling
 
 After all agents complete, check each output file:
 
 ```bash
-for f in {initiative}-review-api.md {initiative}-review-structure.md {initiative}-review-flow.md {initiative}-review-requirements.md; do
+for f in {initiative}-review-api.md {initiative}-review-structure.md {initiative}-review-flow.md {initiative}-review-requirements.md {initiative}-review-smells.md; do
   echo "$f: $(grep -c '\[PENDING\]' "$f" 2>/dev/null || echo 'MISSING')"
 done
 ```
@@ -544,7 +572,7 @@ done
 - If a file is MISSING: fill those matrices yourself. Do not retry the agent — a retry with a different prompt rarely fixes the underlying failure and adds latency.
 - If a file has `[PENDING]` count > 0: fill the remaining cells yourself.
 
-Note: this check covers the 4 sub-agent files only (`SUB_AGENT_CELLS`). Matrix H cells remain `[PENDING]` — they are filled by the orchestrator in step 8.1.1 (`ORCHESTRATOR_CELLS`).
+Note: this check covers the 5 sub-agent files only (`SUB_AGENT_CELLS`). Matrix H cells remain `[PENDING]` — they are filled by the orchestrator in step 8.1.1 (`ORCHESTRATOR_CELLS`).
 
 ---
 
@@ -573,6 +601,7 @@ Assembly order:
 2. Read `{initiative}-review-structure.md` → replace Matrix F, G, P in scaffold
 3. Read `{initiative}-review-flow.md` → replace Matrix D1, D2, E in scaffold
 4. Read `{initiative}-review-requirements.md` → replace Matrix B, C in scaffold
+5. Read `{initiative}-review-smells.md` → replace Matrix S in scaffold
 
 ### 8.1.1: Fill Matrix H (Lesson Checks) — you do this yourself
 
@@ -595,13 +624,13 @@ grep -c "\[PENDING\]" {review_file}
 
 ### 8.1.3: Spot-Check Quality
 
-**Parallel mode**: For each sub-agent, pick 3-5 PASS cells to re-verify. **Prioritize cells adjacent to FAILs** — if a sub-agent FAILed B-3 but PASSed B-2 and B-4, those neighbors are most likely to be misclassified. If a sub-agent has no FAILs, pick its most complex cells (longest FR smell check, widest API endpoint).
+**Parallel mode**: For each sub-agent, pick 3-5 PASS cells to re-verify. **Prioritize cells adjacent to FAILs** — if a sub-agent FAILed B-3 but PASSed B-2 and B-4, those neighbors are most likely to be misclassified. If a sub-agent has no FAILs, pick its most complex cells (longest FR/AC text, widest API endpoint).
 
 **Single mode**: Pick 8-12 of your own PASS cells to re-verify with fresh eyes. Same prioritization: cells adjacent to FAILs first, then most complex cells. The goal is to catch self-confirmation bias — you already decided these were PASS, so actively look for reasons they might be FAIL.
 
 To genuinely verify (not just eyeball), read the source material for each spot-checked cell:
 - **Matrix A PASS**: read the actual API doc and confirm the endpoint/param exists
-- **Matrix B/C PASS (Smell Flags)**: read the FR/AC text and the smell patterns file, scan for each pattern
+- **Matrix S PASS**: read the FR/AC text and the smell patterns file, scan for each of the 16 patterns individually
 - **Matrix D1/D2 PASS**: read the PRD's flow section and confirm the transition/state is specified
 - **Matrix F PASS**: read the PRD section the check references and confirm it exists
 
@@ -621,7 +650,7 @@ Fill Matrix I in the review file. If no cross-matrix findings: add one row: `I-0
 
 Count FAIL findings by defect category across ALL matrices:
 - **Omission**: FAILs where something should exist but doesn't (missing AC, missing endpoint, missing edge case, missing state)
-- **Ambiguity**: Smell detection FAILs + vague ACs + ambiguous pronouns + passive voice
+- **Ambiguity**: Smell detection FAILs (Matrix S) + vague ACs + ambiguous pronouns + passive voice
 - **Inconsistency**: FR contradictions + cross-section mismatches + cross-matrix contradictions
 - **Incorrect Fact**: API mismatches + wrong claims about behavior
 - **Extraneous Info**: Implementation details + dead requirements + gold-plating
@@ -632,7 +661,7 @@ Fill the Defect Taxonomy Scorecard (replace the `—` placeholders with actual c
 | Category | Second Pass: Re-examine |
 |----------|------------------------|
 | Omission | In Matrix C, check that every entity from Matrix E has at least one AC with an FR Link. In Matrix D1, check every screen has loading + error rows. |
-| Ambiguity | In Matrix B, re-read the 3 longest Smell Flags PASS cells — verify the FR text was actually scanned. |
+| Ambiguity | In Matrix S, re-read the 3 longest PASS cells — verify the FR/AC text was scanned against all 16 patterns. |
 | Inconsistency | In Matrix B, cross-check all "Contradicts FR: PASS" cells — verify the sub-agent compared against ALL other FRs, not just adjacent ones. |
 | Incorrect Fact | In Matrix A, verify any PASS cell where the Notes column is empty — a PASS with no evidence may be unchecked. |
 | Extraneous Info | In Matrix C, re-check all "Implementation Detail Leak: PASS" cells for the 3 longest ACs. |
@@ -642,7 +671,7 @@ Record whether the second pass found anything. If it did, add findings to Matrix
 
 ### 8.4: Generate Verdict
 
-Count total FAIL cells across all matrices (A through P, plus I):
+Count total FAIL cells across all matrices (A through S, P, plus I):
 - ZERO FAILs → `READY`
 - Any FAILs → `NEEDS_REVISION`
 
@@ -771,12 +800,13 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
   },
   "failCount": 8,
   "failsByMatrix": {
-    "A": 0, "B": 0, "C": 0, "D1": 0, "D2": 0,
+    "A": 0, "B": 0, "C": 0, "S": 0, "D1": 0, "D2": 0,
     "E": 0, "F": 0, "G": 0, "H": 0, "I": 0, "P": 0
   },
   "smellDetection": {
-    "totalChecked": "<number of FRs + ACs checked for smells>",
-    "smellsFound": "<number of FAIL verdicts in Smell Flags columns across Matrix B and C>"
+    "totalChecked": "<number of FRs + ACs checked for smells in Matrix S>",
+    "linguisticSmellsFound": "<number of FAIL verdicts in Linguistic Smells column>",
+    "separationSmellsFound": "<number of FAIL verdicts in Separation Smells column>"
   },
   "spotCheckOverrides": "<number of PASS cells overridden to FAIL during spot-check (step 8.1.3), or 0>",
   "issuesSummary": [
@@ -836,8 +866,8 @@ Only run cleanup if the Step 10 commit succeeded (verified by `git log --oneline
 Delete sub-agent output files, prompt files, and the dispatch file from the working tree. Use the same directory as the review output file for all paths:
 
 ```bash
-rm -f {review_dir}/{initiative}-review-api.md {review_dir}/{initiative}-review-structure.md {review_dir}/{initiative}-review-flow.md {review_dir}/{initiative}-review-requirements.md
-rm -f {review_dir}/{initiative}-review-prompt-api.md {review_dir}/{initiative}-review-prompt-structure.md {review_dir}/{initiative}-review-prompt-flow.md {review_dir}/{initiative}-review-prompt-requirements.md
+rm -f {review_dir}/{initiative}-review-api.md {review_dir}/{initiative}-review-structure.md {review_dir}/{initiative}-review-flow.md {review_dir}/{initiative}-review-requirements.md {review_dir}/{initiative}-review-smells.md
+rm -f {review_dir}/{initiative}-review-prompt-api.md {review_dir}/{initiative}-review-prompt-structure.md {review_dir}/{initiative}-review-prompt-flow.md {review_dir}/{initiative}-review-prompt-requirements.md {review_dir}/{initiative}-review-prompt-smells.md
 rm -f {review_dir}/{initiative}-review-dispatch.json
 ```
 

@@ -1,6 +1,6 @@
 # Plan: Behavioral/Technical Separation in PRD Framework
 
-**Status**: Complete
+**Status**: Complete (Phase 6 added 2026-05-18)
 **Created**: 2026-05-17
 **Source**: v5 refactoring of `home-dashboard` PRD — 15 rules discovered through iterative review
 
@@ -158,7 +158,7 @@ Phase 5 (section packs)
     ↓ final cleanup
 ```
 
-Each phase is independently shippable. Phase 1 alone improves review quality. Phase 1+2 enables manual separation. Phase 1+2+3 produces separated PRDs automatically. Phase 4 closes the loop. Phase 5 is polish.
+Each phase is independently shippable. Phase 1 alone improves review quality. Phase 1+2 enables manual separation. Phase 1+2+3 produces separated PRDs automatically. Phase 4 closes the loop. Phase 5 is polish. Phase 6 fixes reviewer non-determinism.
 
 ---
 
@@ -167,6 +167,24 @@ Each phase is independently shippable. Phase 1 alone improves review quality. Ph
 After each phase, re-run the framework against the home-dashboard PRD (v2 as input) and compare output to v5. The v5 file is the reference implementation:
 - `home-dashboard-prd-v5.md` — what the output should look like
 - `v5-refactoring-rules.md` — the 15 rules that produced it
+
+---
+
+### Phase 6: Dedicated Smell Pass (Reviewer Non-Determinism Fix)
+**File**: `agents/prd-reviewer.md`
+**Effort**: Medium
+**Added**: 2026-05-18
+
+**Problem**: Validation runs (v6, v7) revealed non-deterministic smell detection. The reviewer fills ~6 columns per row simultaneously across Matrix B and C (~1,200 micro-judgments). Different runs miss different violations — v6 caught "carousel" but missed "See all"; v7 caught "See all" but missed "carousel". Root cause: smell checking competes with atomicity, feasibility, FR link, state coverage, and implementation detail leak in the same cognitive pass.
+
+**Solution**: Separate smell detection into its own dedicated pass.
+
+1. **New Matrix S (Smell Detection)**: One row per FR + one row per AC. Two columns: Linguistic Smells (9 patterns), Separation Smells (7 patterns). No other quality judgments in this matrix.
+2. **New Agent 5 (Smell Reviewer)**: Handles Matrix S exclusively. Reads each FR/AC against all 16 patterns with nothing else in working memory. One item at a time, full attention.
+3. **Remove Smell Flags from Matrix B and C**: Agent 4 focuses on requirement quality only (atomicity, feasibility, FR link, contradictions, implementation detail leak). No smell checking.
+4. **Updated dispatch**: 5 parallel agents instead of 4. Updated scaffold, assembly, cleanup, handoff JSON.
+
+**Rationale**: Attention is probabilistic. When 6+ judgment types compete per row, accuracy degrades. A dedicated pass with 2 judgments per row (linguistic + separation) produces deterministic results.
 
 ---
 
