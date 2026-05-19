@@ -369,6 +369,10 @@ Each line in `.claude/prd-run-log.jsonl` is one of these entry types:
 
 **`"terminated"`** (abandoned runs): `diedInPhase`, `completedPhases` (array of phase summaries), `reason` ("abandoned")
 
+**`"judge"`** (LLM-as-Judge scores, appended after evaluation runs): `judgeModel`, `prdPath`, `reviewPath`, `scores` (object with dimensions: `completeness`, `precision`, `apiAccuracy`, `edgeCaseCoverage`, `testability`, `consistency`, `implementability` — each 1-5), `totalScore` (sum), `reasoning` (object with per-dimension explanation + evidence quotes)
+
+**Optional field — all entries**: `experiment` (object, present only during `/evaluate` runs): `experimentId` (e.g., "exp6"), `batchId` (groups all runs in one evaluation session), `swapId` (e.g., "baseline", "swap-d"), `swapAgent` (agent name that was swapped, or null for baseline), `swapFrom` (original model), `swapTo` (new model), `runNumber` (1-based, for repeated runs), `fixtureSet` (path to fixtures used)
+
 ### Summary
 
 Summarize what was produced:

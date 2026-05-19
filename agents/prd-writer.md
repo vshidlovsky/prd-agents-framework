@@ -88,6 +88,34 @@ Present questions with your recommended answer based on codebase and API researc
 
 If a research document exists, skip questions already answered by the research. Still ask about UX decisions, scope boundaries, and business rules the research doesn't cover.
 
+### Q&A Log
+
+After all questions are answered and before proceeding to Step 4, save the complete Q&A exchange as a JSON file in the initiative directory:
+
+**File**: `{initiative}-writer-qa.json`
+
+```json
+{
+  "agent": "prd-writer",
+  "initiative": "<name>",
+  "timestamp": "<ISO8601>",
+  "researchPath": "<path to research doc used>",
+  "questionsFromResearch": "<count of questions already answered by research>",
+  "qaExchange": [
+    {
+      "id": "Q1",
+      "question": "<exact question text>",
+      "resolutionMethod": "ASK:PM",
+      "recommendedAnswer": "<your recommendation>",
+      "userAnswer": "<exact user response>",
+      "resolvedValue": "<the concrete value used in the PRD>"
+    }
+  ]
+}
+```
+
+This file enables Q&A replay in evaluation runs. Commit it alongside the PRD.
+
 ## Step 3.5: Revision Mode (when called with review feedback)
 
 If the orchestrator passes a review FAIL list (from prd-reviewer), this is a revision cycle — not a fresh draft.
