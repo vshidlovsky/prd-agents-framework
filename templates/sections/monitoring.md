@@ -1,6 +1,6 @@
 # Section Pack: Monitoring
 
-> **Insert into**: Technical Contract
+> **Insert into**: Technical Contract [position: 4]
 > **When**: Backend services or critical features that need observability, alerting, or SLA targets.
 
 ### Monitoring & Alerting

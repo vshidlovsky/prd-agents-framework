@@ -1,6 +1,6 @@
 # Section Pack: Localization
 
-> **Insert into**: Technical Contract [TC-LK]
+> **Insert into**: Technical Contract [position: 2] [TC-LK]
 > **When**: Any feature with user-facing text that should be localized.
 
 ### Localization Keys

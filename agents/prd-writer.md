@@ -139,10 +139,12 @@ Follow the PRD template exactly. Every Tier 1 section is required. Include the s
 ### Assembling the PRD
 
 Build the PRD in this order:
-1. Start with the base template sections (Context, Behavioral Contract, Technical Contract, Boundaries)
-2. For each section pack listed in project-context.md, read the section pack file. Find its `Insert into` tag (e.g., `Insert into: Behavioral Contract (after Acceptance Criteria)`). In the base template, locate the matching HTML comment marker (e.g., `<!-- Section packs with "Insert into: Behavioral Contract (after Acceptance Criteria)" go here -->`). Insert the filled section pack content at that marker. Remove the HTML comment after insertion.
-3. For Tier 2 sections (Success Criteria, Security Constraints, Cross-Initiative Alignment): check if their condition applies. If yes, move the section from the Tier 2 block at the bottom of the template to the insertion point specified in its `Insert into` tag. If no, delete the section entirely.
-4. For backend/API projects with no UI: mark AC sub-sections (Loading States, Error States, Empty States) as `N/A — backend service` if they don't apply. Loading States may still apply (e.g., async processing indicators). Only include sub-sections that are meaningful for the project type.
+1. **Title**: Use the format `# {Initiative Name} — PRD`. Do not vary this format.
+2. Start with the base template sections (Context, Behavioral Contract, Technical Contract, Boundaries). Use the exact section names from the template: `## Behavioral Contract`, `## Technical Contract`, `## Boundaries`. Do not abbreviate (e.g., never use `## Contract` or `## Technical`).
+3. For each section pack listed in project-context.md, read the section pack file. Find its `Insert into` tag with a `[position: N]` number. Insert packs at the matching HTML comment marker in the template. **Ordering rule**: within each insertion point, insert packs in ascending position number. Packs sharing the same position number go in alphabetical order by section name. Remove the HTML comment after insertion.
+4. For Tier 2 sections (Success Criteria, Security Constraints, Cross-Initiative Alignment): check if their condition applies. If yes, move the section from the Tier 2 block at the bottom of the template to the insertion point specified in its `Insert into` tag, respecting position order. If no, delete the section entirely.
+5. For backend/API projects with no UI: mark AC sub-sections (Loading States, Error States, Empty States) as `N/A — backend service` if they don't apply. Loading States may still apply (e.g., async processing indicators). Only include sub-sections that are meaningful for the project type.
+6. **Changelog**: If the PRD is v2 or later, add a `## Changelog` section immediately after the title (before Context). First drafts (v1) do not include a Changelog.
 
 ### Behavioral/Technical Separation
 

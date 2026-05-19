@@ -1,6 +1,6 @@
 # Section Pack: Service Integration
 
-> **Insert into**: Technical Contract
+> **Insert into**: Technical Contract [position: 4]
 > **When**: Any feature that calls or is called by other services, message queues, or external APIs.
 
 ### Service Integration Points

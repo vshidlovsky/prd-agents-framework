@@ -1,6 +1,6 @@
 # Section Pack: Database Changes
 
-> **Insert into**: Technical Contract
+> **Insert into**: Technical Contract [position: 4]
 > **When**: Any feature that requires database schema changes, new tables, or data migrations.
 
 ### Database Changes

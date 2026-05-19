@@ -1,6 +1,6 @@
 # Section Pack: Screen Flow
 
-> **Insert into**: Technical Contract [TC-SF]
+> **Insert into**: Technical Contract [position: 3] [TC-SF]
 > **When**: Any feature with multiple screens, pages, or steps.
 
 ### Screen Flow

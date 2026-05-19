@@ -1,6 +1,6 @@
 # Section Pack: Feature Flags
 
-> **Insert into**: Technical Contract [TC-FF]
+> **Insert into**: Technical Contract [position: 4] [TC-FF]
 > **When**: Any new feature that should be gated behind a feature flag or remote config.
 
 ### Feature Flags / Remote Config

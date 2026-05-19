@@ -1,6 +1,6 @@
 # Section Pack: Visual Design References
 
-> **Insert into**: Technical Contract [TC-VR]
+> **Insert into**: Technical Contract [position: 2] [TC-VR]
 > **When**: Projects with a design system (`src/components/ui/` or equivalent) and/or Figma mockups.
 
 ### Visual References

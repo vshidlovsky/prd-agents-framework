@@ -1,16 +1,18 @@
-# PRD Template — Base
+# {Initiative Name} — PRD
 
 > This is the base template for all Product Requirements Documents.
 > Both `prd-writer` and `prd-reviewer` agents reference this file.
 >
+> **Title**: Replace `{Initiative Name}` with the initiative name. Always use the format `# {Initiative Name} — PRD`.
+>
 > **How to use**: Copy this template, fill in every Tier 1 section, include section packs listed in project-context.md.
 > Delete the `> **GUIDE**` blocks after filling each section.
 >
-> **Section order**: Context (what, who) → Behavioral Contract (requirements, verification, edge cases) → Technical Contract (APIs, mappings, config) → Boundaries (dependencies, scope, questions).
+> **Section order**: Context (what, who) → Behavioral Contract (requirements, verification, edge cases) → Technical Contract (APIs, mappings, config) → Boundaries (dependencies, scope, questions). Within each area, follow the numbered insertion-point markers for section pack placement.
 >
 > **Separation principle**: The Behavioral Contract describes *what* the system does (observable by users and testers). The Technical Contract describes *how* it's built (readable by engineers). A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `rules/behavioral-separation.md` for the full rules.
 >
-> **Section packs**: The prd-writer inserts additional sections from `templates/sections/` based on what's listed in `project-context.md`. Each section pack has an `Insert into` tag that specifies where it goes.
+> **Section packs**: The prd-writer inserts additional sections from `templates/sections/` based on what's listed in `project-context.md`. Each section pack has an `Insert into` tag with a numbered position (e.g., `Insert into: Technical Contract [position: 1]`). Insert packs in ascending position order. Packs sharing the same position number should be inserted in alphabetical order by section name.
 
 ---
 
@@ -40,7 +42,7 @@ As a [role], I want [goal] so that [benefit].
 
 ---
 
-<!-- Section packs with "Insert into: Context" go here (e.g., user-journey) -->
+<!-- Section packs: Context [position: 1] (e.g., user-journey) -->
 
 ## Behavioral Contract
 
@@ -134,7 +136,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-<!-- Section packs with "Insert into: Behavioral Contract (after Acceptance Criteria)" go here (e.g., analytics-events) -->
+<!-- Section packs: Behavioral Contract — after Acceptance Criteria [position: 1] (e.g., analytics-events) -->
 
 ### Edge Cases
 
@@ -150,7 +152,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-<!-- Section packs with "Insert into: Behavioral Contract (after Edge Cases)" go here (e.g., accessibility, compliance, platform-considerations, success-criteria, security-constraints, support-observability) -->
+<!-- Section packs: Behavioral Contract — after Edge Cases [position: 1] (e.g., accessibility, compliance, platform-considerations) -->
 
 ## Technical Contract
 
@@ -259,9 +261,15 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-<!-- Section packs with "Insert into: Technical Contract" go here (e.g., component-mapping, localization, design-prototype, screen-flow, navigation, responsive-layout, feature-flags, database-changes, service-integration, monitoring) -->
+<!-- Section packs: Technical Contract [position: 1] — UI structure (component-mapping, responsive-layout) -->
+<!-- Section packs: Technical Contract [position: 2] — content & visuals (localization, design-prototype/visual-references) -->
+<!-- Section packs: Technical Contract [position: 3] — navigation & flow (screen-flow, navigation) -->
+<!-- Section packs: Technical Contract [position: 4] — infrastructure (database-changes, service-integration, monitoring) -->
 
 ## Boundaries
+
+> **Sub-section order**: Always use this order: Dependencies → Out of Scope → [section packs: position 1] → Open Questions.
+> Section packs inserted into Boundaries go between Out of Scope and Open Questions, in position order.
 
 ### Dependencies
 
@@ -283,6 +291,8 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
+<!-- Section packs: Boundaries [position: 1] (e.g., cross-initiative-alignment) -->
+
 ### Open Questions
 
 > **GUIDE**
@@ -297,10 +307,6 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 None — all questions resolved.
 
----
-
-<!-- Section packs with "Insert into: Boundaries" go here (e.g., cross-initiative-alignment) -->
-
 ## Tier 2 — Include When Applicable
 
 > Include these when conditions apply. Each has an **Insert into** tag.
@@ -310,7 +316,7 @@ None — all questions resolved.
 
 ### Success Criteria
 
-> **Insert into**: Behavioral Contract (after Edge Cases)
+> **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
 
 > **GUIDE**
 > **When**: Features with user-facing flows where quality bar matters.
@@ -322,7 +328,7 @@ None — all questions resolved.
 
 ### Security Constraints
 
-> **Insert into**: Behavioral Contract (after Edge Cases)
+> **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
 
 > **GUIDE**
 > **When**: Any feature that reads, displays, transmits, or stores auth tokens, PII (names, phone numbers, emails, avatars, account numbers), payment data, or sensitive state. "Touching" includes read-only display — a dashboard showing user names and passing recipient data via router state triggers this section.
@@ -332,7 +338,7 @@ None — all questions resolved.
 
 ### Support / Observability
 
-> **Insert into**: Behavioral Contract (after Edge Cases)
+> **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
 
 > **GUIDE**
 > **When**: Features with degraded states that have no user-visible distinguisher (e.g., silent background failures, identical error copy for different failure classes).
@@ -342,7 +348,7 @@ None — all questions resolved.
 
 ### Cross-Initiative Alignment Notes
 
-> **Insert into**: Boundaries (after Out of Scope)
+> **Insert into**: Boundaries [position: 1]
 
 > **GUIDE**
 > **When**: Feature overlaps with or depends on other initiatives.

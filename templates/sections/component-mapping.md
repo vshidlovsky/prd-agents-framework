@@ -1,6 +1,6 @@
 # Section Pack: Component Mapping
 
-> **Insert into**: Technical Contract [TC-CM]
+> **Insert into**: Technical Contract [position: 1] [TC-CM]
 > **When**: Any frontend/mobile feature using a design system or component library.
 
 ### Component Mapping

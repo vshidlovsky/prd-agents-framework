@@ -1,6 +1,6 @@
 # Section Pack: User Journey
 
-> **Insert into**: Context (after User Story)
+> **Insert into**: Context [position: 1]
 > **When**: Any feature with a user-facing flow — helps designers and developers understand spatial context.
 
 ### User Journey
