@@ -233,6 +233,16 @@ Save to the same directory as the PRD:
   "apiEndpoints": ["GET /v1/...", "POST /v1/..."],
   "existingCodeReferenced": ["<paths>"],
   "dependencies": [],
+  "prdMetrics": {
+    "frCount": "<number of FR-NNN items in the PRD>",
+    "acCount": "<number of AC-NNN items in the PRD>",
+    "edgeCaseCount": "<number of edge case rows>",
+    "keyEntityCount": "<number of Key Entities>",
+    "version": "<v1, v2, etc.>",
+    "sectionPacksUsed": "<count of section packs included>",
+    "isFreshDraft": true,
+    "failsAddressed": 0
+  },
   "proposedGlossaryTerms": [
     {
       "term": "<term>",

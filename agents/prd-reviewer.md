@@ -808,7 +808,18 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
     "linguisticSmellsFound": "<number of FAIL verdicts in Linguistic Smells column>",
     "separationSmellsFound": "<number of FAIL verdicts in Separation Smells column>"
   },
+  "reviewMode": "single | parallel",
+  "isReReview": false,
+  "previousFailsVerified": 0,
   "spotCheckOverrides": "<number of PASS cells overridden to FAIL during spot-check (step 8.1.3), or 0>",
+  "defectTaxonomy": {
+    "omission": "<count from Scorecard>",
+    "ambiguity": "<count>",
+    "inconsistency": "<count>",
+    "incorrectFact": "<count>",
+    "extraneousInfo": "<count>",
+    "misplacedRequirement": "<count>"
+  },
   "issuesSummary": [
     {
       "id": 1,
