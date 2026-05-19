@@ -146,6 +146,17 @@ Build the PRD in this order:
 5. For backend/API projects with no UI: mark AC sub-sections (Loading States, Error States, Empty States) as `N/A — backend service` if they don't apply. Loading States may still apply (e.g., async processing indicators). Only include sub-sections that are meaningful for the project type.
 6. **Changelog**: If the PRD is v2 or later, add a `## Changelog` section immediately after the title (before Context). First drafts (v1) do not include a Changelog.
 
+### Drafting Order: Technical Contract First
+
+**Draft the Technical Contract BEFORE the Behavioral Contract.** This is mandatory, not a suggestion.
+
+1. **First**: Write Context (What, User Story, section packs)
+2. **Second**: Write the full Technical Contract — Data Sources, Field Mappings, Error Classification, Route Mapping, per-endpoint blocks, Component Mapping, Localization Keys, etc. This creates the `[TC-*]` vocabulary.
+3. **Third**: Write the Behavioral Contract — FRs, Key Entities, ACs, Edge Cases — using ONLY the semantic names and `[TC-*]` anchors established in the TC. If you need a concept that isn't in the TC yet, go back and add it to the TC first.
+4. **Fourth**: Write Boundaries.
+
+Why: When you draft FRs while looking at API research, you naturally leak field names, endpoint paths, and implementation details. Writing the TC first forces you to create the semantic-name vocabulary before writing behavioral requirements. The TC is your glossary — the Behavioral Contract consumes it.
+
 ### Behavioral/Technical Separation
 
 The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Key Entities) describes *what* the system does — observable by users and testers. The **Technical Contract** describes *how* it's built — readable by engineers. A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `rules/behavioral-separation.md` for the full rules.
@@ -154,7 +165,13 @@ The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Ke
 - Use **semantic concept names** for data attributes — "transaction identifier", not `tx_id`
 - Add **`[TC-*]` cross-reference anchors** to link every concept to its Technical Contract definition
 - Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
-- **Never embed**: API field names, endpoint paths, query keys, enum values, URL patterns, UI copy strings, analytics event names, pixel breakpoints, CSS class names, framework terminology
+- **Never embed** (categories of prohibited terms):
+  - **API/code**: field names, endpoint paths, query keys, enum values, URL patterns, framework terminology, implementation format specs (e.g., "v4 UUID" → "globally-unique identifier [TC-*]")
+  - **UI copy**: exact strings, localization key names — reference `[TC-LK]` instead
+  - **Analytics**: event names, property names — reference `[TC-AE]` or the analytics section pack instead
+  - **Layout/CSS**: pixel breakpoints, rem values, CSS class names, spatial positioning words ("alongside", "centered across", "above", "below", "inline") — reference `[TC-VR]` or `[TC-CM]` instead
+  - **Component types**: never name the UI component pattern — "carousel", "hyperlink", "toast", "modal", "dropdown", "inline progress indicator". Use the semantic role instead: "marketing surface [TC-CM]", "terms affordance [TC-CM]", "progress indicator [TC-CM]", "notification [TC-CM]", "error message [TC-LK] shown per [TC-VR]"
+- **Test each FR/AC**: Can a QA engineer verify this by looking at the running app without knowing what component is used? If the requirement says "inline progress indicator alongside the OTP input" — that prescribes component type + spatial position. "Progress indicator shown on the verify view [TC-CM] [TC-VR]" describes the same observable behavior without prescribing layout.
 - Edge cases can be slightly more specific (concrete data scenarios), but should still use semantic names and reference ACs/TC sections
 
 **When writing the Technical Contract:**
@@ -235,6 +252,25 @@ If project-context.md specifies versioned filenames:
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
 14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API field names, enum values, URL patterns, UI copy, analytics event names, pixel breakpoints, or framework terminology in the behavioral layer. Use semantic concept names with `[TC-*]` cross-references. See `rules/behavioral-separation.md`.
 15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `transactions.status.paid` already maps to "Paid" in all supported languages, don't create `home.status.paid` with the same translations.
+16. **Separation self-check (MANDATORY before saving)** — after completing the Behavioral Contract, scan every FR and AC for these patterns. Any match MUST be rewritten before proceeding to Step 5:
+    - **Backtick-wrapped values** (`` `something` ``) → likely API field or code reference. Replace with semantic name + `[TC-*]`.
+    - **URL paths** (`/v1/...`, `/api/...`) → endpoint leak. Replace with semantic operation name + `[TC-DS]`.
+    - **camelCase or snake_case words** (`firstName`, `date_to`) → field name. Replace with semantic name + `[TC-*]`.
+    - **HTTP methods** (GET, POST, PUT, DELETE) → endpoint leak. Use "request" or "call" + `[TC-DS]`.
+    - **Quoted strings** ("Click here", "Error occurred") → UI copy. Reference `[TC-LK]`.
+    - **px/rem/breakpoint values** (1024px, 375px) → CSS. Reference `[TC-CM]` or `[TC-VR]`.
+    - **Underscore-delimited event names** (`brclub_popup_viewed`) → analytics. Reference analytics section or `[TC-AE]`.
+    - **Component type names** (carousel, modal, toast, dropdown, hyperlink, inline indicator) → UI implementation. Use semantic role + `[TC-CM]`.
+    - **Spatial positioning** (alongside, centered across, above, below, inline, left of) → layout. Reference `[TC-VR]` or drop entirely.
+    - **Implementation format specs** (v4 UUID, Base64, JWT, ISO 8601) → move format to TC; use semantic name in behavioral.
+17. **Structure conformance check** — after completing the full draft, verify:
+    - Title matches `# {Initiative Name} — PRD`
+    - Section names are exact: `## Behavioral Contract`, `## Technical Contract`, `## Boundaries`
+    - Section packs inserted in position order
+    - Boundaries sub-sections follow template order (Dependencies → Out of Scope → [packs by position] → Open Questions)
+    - No duplicate sections
+    - Every `[TC-*]` anchor in the behavioral layer has a matching TC section
+    - Changelog present only if v2+
 
 ## Step 5: Save and Summarize
 
