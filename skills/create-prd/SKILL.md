@@ -17,7 +17,7 @@ Run the full PRD workflow for `{argument}`.
    ```bash
    RUN_ID=$(date -u +%Y%m%d-%H%M%S)
    LOG_FILE=".claude/prd-run-log.jsonl"
-   STATE_FILE=".claude/prd-run-state.json"
+   STATE_FILE="{initiative_dir}/.run-state.json"
    TIMING_FILE="{initiative_dir}/.run-timing.tmp"
    echo "pipeline_start=$(date +%s) $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$TIMING_FILE"
    ```
