@@ -300,9 +300,17 @@ If no lessons were proposed, say "No new lessons proposed."
 
 If no glossary terms were proposed, say "No new glossary terms proposed."
 
-**Then**, ask for action — one prompt covering verdict, lessons, and glossary terms:
-- If READY: **"Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Then we're done."**
-- If NEEDS_REVISION: **"For the review: 'revise' to send back to prd-writer, or 'override' to approve as-is. For lessons: all / specific / skip. For glossary terms: all / specific / skip."**
+**Then**, show proposed vocabulary entries (if any). Collect proposals from BOTH the writer's handoff (`proposedVocabularyEntries`, `proposedDesignVocabulary`) and the reviewer's handoff/review document. Deduplicate by endpoint + field — if both proposed the same field mapping, prefer the reviewer's semantic name. Group entries by endpoint file. For new files, note "(new file)". For each entry, show:
+- Number, endpoint (or "design vocabulary")
+- API field / design term
+- Proposed semantic name
+- Reason
+
+If no vocabulary entries were proposed, say "No new vocabulary entries proposed."
+
+**Then**, ask for action — one prompt covering verdict, lessons, glossary terms, and vocabulary:
+- If READY: **"Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Approve vocabulary entries: all / specific / skip. Then we're done."**
+- If NEEDS_REVISION: **"For the review: 'revise' to send back to prd-writer, or 'override' to approve as-is. For lessons: all / specific / skip. For glossary terms: all / specific / skip. For vocabulary entries: all / specific / skip."**
 
 If run logging is enabled:
 ```bash
@@ -313,7 +321,9 @@ On lesson approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, wi
 
 On glossary term approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 13. Write these approved glossary terms to the Domain Glossary table in `.claude/project-context.md`: [list the approved terms with their definitions]. The review file is at {review_path}." This is a targeted callback — the agent reads project-context.md and appends the approved terms to the glossary table.
 
-If both lessons and glossary terms are approved, spawn both callbacks in parallel — they write to different files and don't conflict.
+On vocabulary entry approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 14. Write these approved vocabulary entries: [list the approved entries grouped by endpoint, with file paths and actions]. The initiative is {argument}." This is a targeted callback — the agent creates or updates vocabulary files in `semantic-vocabulary/`.
+
+If lessons, glossary terms, and vocabulary entries are all approved, spawn all three callbacks in parallel — they write to different files and don't conflict.
 
 If "revise": increment the revision count. If run logging is enabled, increment `cycle` in the state file and set `currentPhase: "revision"`.
   - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the review at {review_path}. Follow Step 3.5 (Revision Mode) — fix each FAIL in the review's Issues Found list. Do not rewrite the entire PRD." The writer's Step 3.5 handles versioning, targeted fixes, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review.**

@@ -25,6 +25,10 @@ Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Writer rule" — 
 
 Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, track terms you encounter during drafting that are missing, ambiguous, or conflated in the glossary, and propose them in Step 5.
 
+Read `rules/semantic-vocabulary.md` if it exists. You must NOT write to vocabulary files directly. Instead, track fields that need semantic names and propose them in Step 5.
+
+Read `semantic-vocabulary/_design-vocabulary.md` if it exists. This provides project-wide semantic names for design/UI component terms (e.g., "toast" → "transient notification"). Use these semantic names instead of component type names in the behavioral layer.
+
 Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements (SR-01 through SR-NN) that apply to every authenticated page/feature. You MUST NOT restate SR content inline in the PRD — instead, reference this document in the "Shared Requirements" section. If the feature needs an override or exclusion for any SR, document it explicitly with justification. If the file doesn't exist, skip the Shared Requirements section in the PRD template.
 
 Then read the PRD template from the path specified in project-context.md under "PRD template." Also read each section pack:
@@ -63,6 +67,15 @@ Check for a research document first — look for `{initiative}-research.md` in t
    - Learn the naming convention from existing flags
 
 **Do NOT write requirements that reference endpoints you haven't verified in API docs, code, or the research document.**
+
+**After identifying API endpoints** (from research doc or your own research):
+
+7. Load semantic vocabulary files for each identified endpoint:
+   - Convert each endpoint to a filename: lowercase HTTP method + path with `/` replaced by `-` and `{param}` replaced by param name (e.g., `GET /v1/transactions/{id}` → `semantic-vocabulary/get-v1-transactions-id.md`)
+   - Read each matching vocabulary file that exists
+   - Record which endpoints have vocabulary files and which don't
+   - For endpoints with vocabulary files: use the semantic names from the file when writing FRs, ACs, Edge Cases, and Key Entities
+   - For endpoints without vocabulary files: invent semantic names during drafting and propose them as new vocabulary entries in Step 5
 
 ## Step 3: Ask Clarifying Questions (MANDATORY)
 
@@ -135,6 +148,13 @@ If the orchestrator passes a review FAIL list (from prd-reviewer), this is a rev
 Follow the PRD template exactly. Every Tier 1 section is required. Include the section packs listed in project-context.md. Delete any `> **GUIDE**` blocks after filling each section.
 
 **Glossary tracking**: While drafting, track any term you use that (a) isn't in the Domain Glossary but could be confused with another term, or (b) is in the glossary but the definition doesn't match how it's actually used in the codebase. These become glossary proposals in Step 5.
+
+**Vocabulary tracking**: While drafting, track every API field you reference via a semantic name. For each field:
+- If a vocabulary file exists for the endpoint and the field has a semantic name: use it exactly
+- If a vocabulary file exists but the field is not in it: propose adding the entry
+- If no vocabulary file exists for the endpoint: propose creating the file with all entries
+- If a design component term (toast, modal, etc.) is not in the design vocabulary file: propose adding it
+Also track any existing vocabulary entry whose semantic name you believe is wrong or misleading — propose a change with justification.
 
 ### Assembling the PRD
 
@@ -246,6 +266,8 @@ Provide a **HANDOFF SUMMARY** to the user:
 - Number of API endpoints involved
 - Key decisions made (and why — reference Q&A)
 - Proposed glossary terms (if any) — list each term with its proposed definition and why it's needed
+- Proposed vocabulary entries (if any) — list each endpoint and its new/changed entries with semantic names and justification
+- Proposed design vocabulary entries (if any) — list each design term with its semantic name and why it's needed
 - Recommended next step: "Run prd-reviewer to validate"
 
 ## Step 6: Write Handoff File
@@ -279,6 +301,30 @@ Save to the same directory as the PRD:
       "term": "<term>",
       "definition": "<proposed definition>",
       "reason": "<why this term needs a glossary entry — e.g., 'used inconsistently across codebase', 'easily confused with X'>"
+    }
+  ],
+  "proposedVocabularyEntries": [
+    {
+      "endpoint": "<METHOD /path>",
+      "file": "<semantic-vocabulary/filename.md>",
+      "isNewFile": "<true if no vocabulary file existed for this endpoint>",
+      "entries": [
+        {
+          "apiField": "<field_name>",
+          "semanticName": "<proposed semantic name>",
+          "action": "add | change",
+          "previousName": "<current semantic name, only if action=change>",
+          "reason": "<which FRs/ACs use this, or why the name should change>"
+        }
+      ]
+    }
+  ],
+  "proposedDesignVocabulary": [
+    {
+      "designTerm": "<component/layout term>",
+      "semanticName": "<behavioral description>",
+      "action": "add | change",
+      "reason": "<why this entry is needed>"
     }
   ],
   "nextAgent": "prd-reviewer"

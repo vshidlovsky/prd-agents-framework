@@ -48,6 +48,8 @@ As a [role], I want [goal] so that [benefit].
 
 > **Notation**: This section uses semantic concept names for data attributes, data sources, and destinations. All concept-to-API-field and concept-to-endpoint mappings are defined in the [Technical Contract](#technical-contract) section. Cross-references use `[TC-*]` anchors — see the Technical Contract for the full anchor index.
 >
+> **Vocabulary files**: If `semantic-vocabulary/` files exist for the endpoints in this initiative, semantic names MUST match the vocabulary entries. For new fields not yet in vocabulary, the writer proposes entries in the handoff file.
+>
 > **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only. Never include API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) or design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does, not how the API returns it or how the UI renders it. Technical details belong in the Technical Contract, referenced via `[TC-*]` anchors. See `rules/behavioral-separation.md`.
 
 ### Shared Requirements

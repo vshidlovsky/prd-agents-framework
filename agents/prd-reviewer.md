@@ -51,6 +51,10 @@ Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Reviewer check" �
 
 Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, flag terms that the PRD uses inconsistently or incorrectly and propose them in Step 8.6.
 
+Read `rules/semantic-vocabulary.md` if it exists. You must NOT write vocabulary entries directly — propose them in Step 8.6.2.
+
+Read `semantic-vocabulary/_design-vocabulary.md` if it exists. Record the design term mappings — the smell reviewer uses these to verify the behavioral layer avoids design component terms.
+
 Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements that every authenticated page must inherit. The reviewer checks that the PRD references SRs correctly — not restated, not contradicted, overrides justified. If the file doesn't exist, mark F-22/F-23/F-24 as N/A.
 
 Record all file paths — you will pass them to sub-reviewers.
@@ -98,6 +102,11 @@ If no previous review exists, proceed with full analysis (all cells `[PENDING]`,
 
 If a handoff file exists from the prd-writer, read it. Extract key fields: `prdPath`, `apiEndpoints`, `existingCodeReferenced`. Use `apiEndpoints` to pre-populate Matrix A rows in Phase 1 (one row per listed endpoint). Use `existingCodeReferenced` paths as additional inputs for Agent 1 when verifying endpoints against code.
 
+Use `apiEndpoints` to load vocabulary files for each endpoint:
+- Convert each endpoint to a vocabulary filename (lowercase method + path with `/` → `-`, `{param}` → param name)
+- Read each vocabulary file that exists in `semantic-vocabulary/`
+- Record vocabulary file paths as `VOCABULARY_PATHS` — pass to sub-agents that check behavioral/technical separation (Agent 2: Structure, Agent 5: Smells)
+
 ## Step 4: Read the PRD Template
 
 Read the PRD template at the path specified in project-context.md under "PRD template."
@@ -111,6 +120,7 @@ Record as `RESEARCH_PATHS`:
 - Existing PRD file paths (for scope overlap checking)
 - Section pack file paths referenced in project-context.md
 - Smell patterns file: `.claude/agents/prd-smell-patterns.md`
+- Semantic vocabulary file paths: `VOCABULARY_PATHS` (from Step 3) + `semantic-vocabulary/_design-vocabulary.md`
 
 ---
 
@@ -272,6 +282,7 @@ The writer generates edge cases using systematic checklists (entity × dimension
 | F-26 | Technical Contract: Cross-cutting tables defined (TC-DS, TC-EC, TC-RT at minimum) | [PENDING] | [PENDING] |
 | F-27 | Technical Contract: Per-endpoint blocks have Field Mapping + Behavioral Mapping + Error Handling | [PENDING] | [PENDING] |
 | F-28 | `[TC-*]` cross-references in behavioral layer resolve to existing Technical Contract sections | [PENDING] | [PENDING] |
+| F-29 | Semantic vocabulary compliance: FRs and ACs use semantic names from vocabulary files for endpoints that have them — no invented alternatives for already-mapped fields | [PENDING] | [PENDING] |
 
 **Matrix G: Section Pack Checks** — generate rows dynamically based on included packs
 
@@ -514,8 +525,9 @@ Prompt provides:
 - Shared requirements file path: `docs/shared-requirements.md` (if it exists)
 - SR check guidance (inline): F-22: PASS if a "Shared Requirements" section exists in the PRD and references the shared-requirements doc. N/A if the project has no shared-requirements.md. F-23: PASS if no SR content is copy-pasted into the PRD body (grep for specific SR rule text appearing outside the Shared Requirements section). FAIL if cross-cutting behavior is re-described inline. F-24: PASS if every override in the "Feature-specific overrides" block includes a justification. FAIL if an SR is overridden without explanation.
 - Behavioral/technical separation rule file path: `rules/behavioral-separation.md`
-- Separation check guidance (inline): F-25: Scan every FR and AC for API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) and design decisions (component types, layout arrangements, visual treatments — any language that chooses how the UI renders something rather than describing what the user sees or does). PASS if all use semantic concept names with `[TC-*]` references and describe behavior without prescribing presentation. FAIL if any API vocabulary or design decision appears in behavioral layer — quote the offending text. F-26: PASS if Technical Contract has at minimum Data Sources `[TC-DS]`, Error Classification `[TC-EC]`, and Route Mapping `[TC-RT]` tables. FAIL if any cross-cutting table is missing. F-27: PASS if each API endpoint has a per-endpoint block with Field Mapping, Behavioral Mapping, and Error Handling subsections. FAIL if any endpoint lacks one of these. F-28: Collect all `[TC-*]` references from the Behavioral Contract. For each, verify a corresponding section exists in the Technical Contract. PASS if all resolve. FAIL with list of dangling references.
-- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above. For separation checks (F-25/F-26/F-27/F-28), read the separation rule file and verify compliance per the guidance above.
+- Separation check guidance (inline): F-25: Scan every FR and AC for API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) and design decisions (component types, layout arrangements, visual treatments — any language that chooses how the UI renders something rather than describing what the user sees or does). PASS if all use semantic concept names with `[TC-*]` references and describe behavior without prescribing presentation. FAIL if any API vocabulary or design decision appears in behavioral layer — quote the offending text. F-26: PASS if Technical Contract has at minimum Data Sources `[TC-DS]`, Error Classification `[TC-EC]`, and Route Mapping `[TC-RT]` tables. FAIL if any cross-cutting table is missing. F-27: PASS if each API endpoint has a per-endpoint block with Field Mapping, Behavioral Mapping, and Error Handling subsections. FAIL if any endpoint lacks one of these. F-28: Collect all `[TC-*]` references from the Behavioral Contract. For each, verify a corresponding section exists in the Technical Contract. PASS if all resolve. FAIL with list of dangling references. F-29: For each endpoint that has a vocabulary file (paths provided below), verify every API field referenced in the behavioral layer uses the exact semantic name from the vocabulary file. If the writer invented a new name for a field that already has a vocabulary entry, FAIL with the mismatch. If no vocabulary file exists for an endpoint, PASS. Check that no design component terms from the design vocabulary file appear raw in the behavioral layer.
+- Vocabulary file paths: `{vocabulary_file_paths}`, design vocabulary: `semantic-vocabulary/_design-vocabulary.md`
+- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above. For separation checks (F-25/F-26/F-27/F-28/F-29), read the separation rule file and vocabulary files, then verify compliance per the guidance above.
 
 **Agent 3: Flow & Edge Case Reviewer** — Matrix D1, D2, E → `{initiative}-review-flow.md`
 
@@ -540,7 +552,7 @@ Prompt provides:
 
 Prompt provides:
 - Core rules with output file path
-- File paths: PRD at `{prd_path}`, smell patterns at `{smell_patterns_path}`, separation rules at `rules/behavioral-separation.md`
+- File paths: PRD at `{prd_path}`, smell patterns at `{smell_patterns_path}`, separation rules at `rules/behavioral-separation.md`, vocabulary files at `{vocabulary_file_paths}`, design vocabulary at `semantic-vocabulary/_design-vocabulary.md`
 - Scaffold file path + instruction: "Read your matrix scaffold (S) from `{scaffold_file}` using the section markers `<!-- MATRIX:S:START -->` / `<!-- MATRIX:S:END -->`"
 - Column definitions for S (Linguistic Smells, Separation Smells) — inline
 - Instruction: You are **red team**. Your job is to destroy the PRD writer's work by finding every smell violation. The writer is your opponent — they will try to sneak technical details into behavioral requirements using clever phrasing, semantic-sounding wrappers, and "it's just a description" rationalizations. Your success is measured by catches, not by fairness. A PASS means you failed to find the violation, not that the writer did well. Assume every FR and AC is guilty until you cannot find any pattern match. Read the smell patterns file cover to cover — these are your weapons. Then for each FR and AC in the PRD: (1) Read the full text of the item. (2) Attack with all 9 linguistic smell patterns. If ANY word or phrase triggers a pattern, it's a FAIL — quote the offending text and name the pattern. Do not accept justifications like "it's descriptive" or "it's an identifier." (3) Attack with all 7 behavioral/technical separation smell patterns (see `rules/behavioral-separation.md`). Same standard — any match is a FAIL. A button label is UI copy. Any word that chooses how the UI renders something — a component type (toast, carousel, modal), a layout arrangement (inline, sticky, full-surface), or a visual treatment (pixel values, color variants) — is a design decision. The test: could a designer reasonably choose a different component or layout? If yes, it's a FAIL. An observable format that happens to match an API field is still a leak. (4) Only mark PASS if you genuinely cannot connect the text to any of the 16 patterns. Work through one item at a time. Do NOT batch or skim.
@@ -710,6 +722,23 @@ For each proposed term, include:
 
 If no glossary issues found: "None — all terms used consistently and defined."
 
+### 8.6.2: Proposed Vocabulary Entries (proposals only — do NOT write to vocabulary files)
+
+Scan the PRD for semantic names that should be in vocabulary files:
+- **Missing**: API fields referenced in the Technical Contract that have no vocabulary file entry
+- **Inconsistent**: Semantic names used in the behavioral layer that don't match the vocabulary file for the endpoint
+- **Design terms**: UI component or layout terms used in the behavioral layer that aren't in the design vocabulary file
+
+Also check the writer's handoff file for `proposedVocabularyEntries` and `proposedDesignVocabulary` — carry those through and add any additional entries you found.
+
+For each proposed entry, include:
+- Endpoint (or "design vocabulary" for design terms)
+- API field / design term
+- Proposed semantic name
+- Reason
+
+If no vocabulary issues found: "None — all semantic names consistent with vocabulary files."
+
 ### 8.7: Write Final Review
 
 Edit the review file to prepend the summary and verdict sections at the top:
@@ -844,6 +873,29 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
       "reason": "<what confusion or inconsistency this resolves>"
     }
   ],
+  "proposedVocabularyEntries": [
+    {
+      "endpoint": "<METHOD /path>",
+      "file": "<semantic-vocabulary/filename.md>",
+      "isNewFile": "<true if file doesn't exist yet>",
+      "entries": [
+        {
+          "apiField": "<field>",
+          "semanticName": "<name>",
+          "action": "add | change",
+          "reason": "<why>"
+        }
+      ]
+    }
+  ],
+  "proposedDesignVocabulary": [
+    {
+      "designTerm": "<term>",
+      "semanticName": "<name>",
+      "action": "add | change",
+      "reason": "<why>"
+    }
+  ],
   "nextAgent": "none | prd-writer"
 }
 ```
@@ -930,3 +982,48 @@ When the orchestrator calls back with user-approved glossary terms:
 ```
 
 Commit the updated project-context.md. Do NOT push.
+
+## Step 14: Write Approved Vocabulary Entries (called by orchestrator only)
+
+**Do NOT write vocabulary entries unless the user has explicitly approved them.** This step is ONLY triggered by the create-prd orchestrator after the user selects specific entries to accept. The reviewer never writes vocabulary entries on its own — it proposes them in the review document and returns to the orchestrator, which presents them to the user for approval. If the user says "skip" or does not approve, no entries are written.
+
+When the orchestrator calls back with user-approved vocabulary entries:
+
+1. For each endpoint with approved entries:
+   a. Convert the endpoint to a filename: lowercase method + path with `/` → `-`, `{param}` → param name
+   b. Check if the vocabulary file exists at `semantic-vocabulary/{filename}.md`
+   c. If it doesn't exist, create it:
+      ```markdown
+      ---
+      endpoint: METHOD /path
+      service: [extracted from endpoint path]
+      created-by: {initiative}
+      last-updated-by: {initiative}
+      ---
+
+      # METHOD /path
+
+      | API Field | Semantic Name | Notes |
+      |-----------|--------------|-------|
+      ```
+   d. If it exists, update `last-updated-by` in frontmatter to the current initiative
+   e. For each approved entry with action "add": append a row to the table
+   f. For each approved entry with action "change": find the existing row and update the Semantic Name column
+
+2. For approved design vocabulary entries:
+   a. Read `semantic-vocabulary/_design-vocabulary.md`
+   b. If it doesn't exist, create it:
+      ```markdown
+      ---
+      type: design-vocabulary
+      last-updated-by: {initiative}
+      ---
+
+      # Design Vocabulary
+
+      | Design Term | Semantic Name | Notes |
+      |-------------|--------------|-------|
+      ```
+   c. For each approved entry: add or update the row
+
+3. Commit all modified vocabulary files. Do NOT push.

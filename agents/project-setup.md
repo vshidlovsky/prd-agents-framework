@@ -179,6 +179,46 @@ If the user wants shared requirements:
 
 If the user says skip, set the "Shared requirements" path in project-context.md to "none" and move on.
 
+## Step 5.7: Initialize Semantic Vocabulary (OPTIONAL — ask the user)
+
+Ask the user:
+
+**"Would you like to set up semantic vocabulary files? These map API field names to human-readable names used in PRD requirements — preventing writers from using raw API terms like `tx_id` in behavioral requirements.**
+
+**If yes, I'll create the `semantic-vocabulary/` directory and a design vocabulary file with common UI component term mappings.**
+
+**If no, the directory will be created automatically when the first PRD proposes vocabulary entries."**
+
+If the user wants to initialize:
+1. Create `semantic-vocabulary/` directory
+2. Create `semantic-vocabulary/_design-vocabulary.md` with common design term mappings:
+
+   ```markdown
+   ---
+   type: design-vocabulary
+   last-updated-by: project-setup
+   ---
+
+   # Design Vocabulary
+
+   | Design Term | Semantic Name | Notes |
+   |-------------|--------------|-------|
+   | toast | transient notification | Brief message that appears and auto-dismisses |
+   | snackbar | transient notification | Same as toast — project may distinguish |
+   | modal | overlay dialog | Blocks interaction with the page behind it |
+   | popover | contextual overlay | Small overlay anchored to a trigger element |
+   | tooltip | contextual hint | Appears on hover/focus |
+   | carousel | scrollable content gallery | Horizontally swipeable set of items |
+   | accordion | expandable section | Section that reveals content on interaction |
+   | spinner | loading indicator | Visual indicator that processing is in progress |
+   | skeleton | content placeholder | Visual placeholder shown before data loads |
+   ```
+
+3. Let the user review and customize these before saving
+4. Copy `rules/semantic-vocabulary.md` to `.claude/rules/semantic-vocabulary.md`
+
+If the user says skip, move on. The vocabulary system activates when the first PRD proposes entries.
+
 ## Step 6: Detect Conventions
 
 From the files already read (CLAUDE.md, README, source files, config), extract:
@@ -367,6 +407,7 @@ When the user confirms the draft is good:
    cp .claude/agents/../../../rules/prd-lessons.md .claude/rules/prd-lessons.md 2>/dev/null || true
    cp .claude/agents/../../../rules/domain-glossary.md .claude/rules/domain-glossary.md 2>/dev/null || true
    cp .claude/agents/../../../rules/shared-requirements.md .claude/rules/shared-requirements.md 2>/dev/null || true
+   cp .claude/agents/../../../rules/semantic-vocabulary.md .claude/rules/semantic-vocabulary.md 2>/dev/null || true
    ```
    If the framework rule files aren't available, create them manually:
 
@@ -417,6 +458,19 @@ When the user confirms the draft is good:
 
    This rule applies to all agents, skills, and conversations in this project.
    ```
+
+   `.claude/rules/semantic-vocabulary.md`:
+   ```markdown
+   # Semantic Vocabulary
+
+   Never write to vocabulary files in `semantic-vocabulary/` without explicit user approval.
+
+   The prd-writer PROPOSES vocabulary entries when it encounters API fields during research that need semantic names. The prd-reviewer PROPOSES vocabulary entries when it finds the PRD using raw API field names instead of semantic names. The create-prd orchestrator collects both sets of proposals and presents them to the user. The user decides which to accept. Only after the user explicitly approves specific entries (by name or number) may any agent write them to vocabulary files.
+
+   If the user says "skip", "none", or does not approve — write nothing.
+
+   This rule applies to all agents, skills, and conversations in this project.
+   ```
 3. Keep all section pack files in the section packs directory — even unchecked ones. The user may enable them later for a different initiative. Deleting them forces re-copying from the framework.
 4. Run the verification prompt on project-context.md:
    - Confirm no `[TODO]` markers remain
@@ -429,5 +483,7 @@ When the user confirms the draft is good:
    - Confirm `.claude/rules/prd-lessons.md` exists
    - Confirm `.claude/rules/domain-glossary.md` exists
    - Confirm `.claude/rules/shared-requirements.md` exists
+   - Confirm `.claude/rules/semantic-vocabulary.md` exists
+   - If semantic vocabulary initialized: confirm `semantic-vocabulary/_design-vocabulary.md` exists
    - If shared requirements enabled: confirm `docs/shared-requirements.md` exists
 4. Report: "Setup complete. **Restart your Claude Code session** (exit and reopen) so the `/create-prd` skill gets registered. After restarting, you can run `/create-prd {initiative}` or individual agents."
