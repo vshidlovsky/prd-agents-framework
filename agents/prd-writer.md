@@ -173,8 +173,9 @@ The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Ke
 - Use **semantic concept names** for data attributes — "transaction identifier", not `tx_id`
 - Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract. Do not repeat the marker on subsequent uses of the same term
 - Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
-- **Never embed API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names, framework terminology — these belong in the Technical Contract
-- **Never make design decisions**: Do not specify UI components, layout arrangements, or visual treatments — describe what the user sees, learns, or does, and let design agents decide how to render it. If the interaction pattern *is* the product requirement (e.g., drag-to-reorder), state it
+- **Do not assign V-numbers to non-API concepts** — routing destinations, configuration URLs, client-side state, and other concepts that don't map to an API field do not get `[V#]` markers. Use a consistent semantic name and reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)")
+- **Never embed API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names — these belong in the Technical Contract. Framework-specific terms (library names, config keys like "staleTime") also belong in TC. CS jargon describing testable behavior ("atomically replace", "first-expiry-wins") stays in FRs but must be rephrased to what QA would actually verify. Product decisions and platform concepts that sound technical ("replacing the current history entry", "proactive refresh", "browser's reported language") are acceptable as-is
+- **Never make design decisions**: Do not specify layout arrangements that prescribe CSS structure (sticky, full-surface, grid-3-column) or visual treatments (pixel values, color variants, spacing tokens). Acceptable product language: shipped DS component names when chosen by PM; behavioral placement ("inline beneath the input") to distinguish feedback strategies; PM-decided display formats ("MM:SS", "zero-padded"); "new browser tab"; platform concepts ("browser's one-time-code autofill"); generic UI vocabulary ("indicator", "grid", "notification"); enum values in analytics ACs. If the interaction pattern *is* the product requirement (e.g., drag-to-reorder), state it
 - Edge cases can be slightly more specific (concrete data scenarios), but should still use semantic names
 
 **When writing the Technical Contract:**
@@ -183,6 +184,7 @@ The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Ke
 - **Per-endpoint error handling**: For each endpoint, include an Error Handling table (HTTP status → behavior)
 
 **V-number discipline:**
+- V-numbers are for API field mappings only — never assign a V-number to a routing destination, configuration URL, client-side state, or any concept that doesn't map to an API request/response field
 - Every `[V#]` marker in the behavioral layer MUST resolve to a row in a vocabulary table
 - Every vocabulary table row SHOULD correspond to a semantic name used in the behavioral layer
 
@@ -252,7 +254,7 @@ If project-context.md specifies versioned filenames:
 11. **Config-driven behavior must read as config-driven** — when behavior is determined by remote config or feature flags, describe it as config-driven. Never frame it as a hardcoded business rule.
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
-14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) and no design decisions (component types, layout arrangements, visual treatments) in the behavioral layer. Describe what the user sees and does, not how the UI renders it or what the API returns. Use semantic concept names with `[V#]` vocabulary references. See `rules/behavioral-separation.md`.
+14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names) and no CSS-level design decisions (layout arrangements prescribing CSS structure, visual treatments) in the behavioral layer. Framework-specific terms belong in TC, but CS jargon describing testable behavior should be rephrased to QA-verifiable language, not relocated. Acceptable: shipped DS component names, behavioral placement ("inline beneath the input"), PM-decided display formats ("MM:SS"), "new browser tab", platform concepts, generic UI vocabulary, enum values in analytics ACs. Use semantic concept names with `[V#]` vocabulary references. See `rules/behavioral-separation.md`.
 15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `transactions.status.paid` already maps to "Paid" in all supported languages, don't create `home.status.paid` with the same translations.
 
 ## Step 5: Save and Summarize

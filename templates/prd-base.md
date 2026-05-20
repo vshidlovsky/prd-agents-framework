@@ -46,11 +46,11 @@ As a [role], I want [goal] so that [benefit].
 
 ## Behavioral Contract
 
-> **Notation**: This section uses semantic concept names for data attributes, data sources, and destinations. Each semantic name is linked to its API field via a `[V#]` marker on first use, pointing to a row in the per-endpoint vocabulary tables in the [Technical Contract](#technical-contract).
+> **Notation**: This section uses semantic concept names for data attributes. Each semantic name that maps to an API field is linked via a `[V#]` marker on first use, pointing to a row in the per-endpoint vocabulary tables in the [Technical Contract](#technical-contract). Non-API concepts (routing destinations, configuration URLs, client-side state) use consistent semantic names without V-markers and reference their TC section on first use (e.g., "post-sign-in destination (see Route Mapping)").
 >
 > **Vocabulary files**: If `semantic-vocabulary/` files exist for the endpoints in this initiative, semantic names MUST match the vocabulary entries. For new fields not yet in vocabulary, the writer proposes entries in the handoff file.
 >
-> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only. Never include API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) or design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does, not how the API returns it or how the UI renders it. See `rules/behavioral-separation.md`.
+> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only. Never include API vocabulary (field names, enum values, URL patterns, analytics event names, framework-specific terminology) or CSS-level design decisions (layout arrangements prescribing CSS structure, visual treatments). Acceptable product language: shipped DS component names, behavioral placement ("inline beneath the input"), PM-decided display formats, "new browser tab", platform concepts, generic UI vocabulary, enum values in analytics ACs. CS jargon must be rephrased to QA-verifiable terms but stays in behavioral layer. See `rules/behavioral-separation.md`.
 
 ### Shared Requirements
 
@@ -79,7 +79,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - Number sequentially: FR-001, FR-002, etc.
 > - Every FR should map to one or more ACs below.
 > - Aim for 10-20 FRs. More suggests the scope is too broad.
-> **Separation check**: No API vocabulary (field names, enum values, URL paths, analytics event names, framework terms) and no design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does. Use semantic names with `[V#]` markers on first use.
+> **Separation check**: No API vocabulary (field names, enum values, URL paths, analytics event names, framework-specific terms) and no CSS-level design decisions (layout arrangements prescribing CSS structure, visual treatments). Acceptable: shipped DS component names, behavioral placement, PM-decided display formats, "new browser tab", platform concepts, generic UI vocab. CS jargon must be rephrased to QA-verifiable terms. Use semantic names with `[V#]` markers on first use.
 
 - **FR-001**: System MUST [capability using semantic names with [V#] markers].
 - **FR-002**: System MUST [capability].
@@ -105,7 +105,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - Every criterion gets a stable ID: AC-001, AC-002, ...
 > - Every criterion starts with a user-visible action or state.
 > - Must include sub-sections for: Loading States, Error States, Empty States (when applicable).
-> **Separation check**: Use semantic concept names with `[V#]` markers on first use. No API vocabulary and no design decisions — describe what the user sees and does, not how it's rendered or what the API returns.
+> **Separation check**: Use semantic concept names with `[V#]` markers on first use. No API vocabulary and no CSS-level design decisions (layout prescribing CSS structure, visual treatments). Acceptable: shipped DS components, behavioral placement, PM-decided display formats, "new browser tab", platform concepts, enum values in analytics ACs. Describe what the user sees and does.
 
 #### [Screen / Flow Area]
 
@@ -146,7 +146,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **What**: Boundary conditions, nullable fields, concurrent actions, failure modes.
 > **Why**: Edge cases are where bugs live. The #1 complaint about AI-generated PRDs is missing edge cases.
 > **How**: Generate systematically, not from intuition. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data. For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: indeterminate condition, rapid toggle mid-flow. Then deduplicate and remove impossible scenarios.
-> **Separation check**: Use semantic names with `[V#]` markers where applicable. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but should still avoid API vocabulary and design decisions where possible.
+> **Separation check**: Use semantic names with `[V#]` markers where applicable. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but should still avoid API vocabulary and CSS-level design decisions where possible. Same exceptions apply (DS components, behavioral placement, display formats, etc.).
 
 | # | Condition | Expected Behavior |
 |---|-----------|-------------------|

@@ -4,7 +4,7 @@ PRDs MUST separate behavioral requirements from technical implementation details
 
 ## Core Principle
 
-A requirement passes the behavioral test if a QA engineer can verify it without reading source code. If a requirement would break when an API field is renamed — but the observable behavior hasn't changed — it belongs in the Technical Contract.
+A requirement passes the behavioral test if a QA engineer can verify it without reading source code. QA verification includes browser dev tools (Network tab, Application tab, Console) — a requirement verifiable with dev tools is still behavioral, even if it sounds technical. If a requirement would break when an API field is renamed — but the observable behavior hasn't changed — it belongs in the Technical Contract. CS jargon that describes testable behavior should be rephrased to how QA would actually verify it, but it stays in the Behavioral Contract.
 
 ## Behavioral Contract
 
@@ -15,8 +15,8 @@ Rules for this layer:
 - Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract
 - Each semantic name maps to exactly one API field — if ambiguous, make it more specific
 - **Use vocabulary files when they exist** — if `semantic-vocabulary/` contains a file for an endpoint, use the semantic names defined there. Do not invent alternatives for fields that already have vocabulary entries. See `rules/semantic-vocabulary.md`
-- **Never include API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names, constructor signatures, framework-specific terminology
-- **Never make design decisions**: Do not specify UI components (toast, modal, carousel), layout arrangements (inline, sticky, full-surface), or visual treatments (pixel values, color variants, spacing). Describe what the user sees, learns, or does — let design decide how to render it. Exception: interaction patterns that *are* the product requirement (drag-to-reorder, swipe-to-dismiss) are behavioral
+- **Never include API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names, constructor signatures, framework-specific terminology (library names, config keys). CS jargon describing testable behavior ("atomically replace", "first-expiry-wins") is not API vocabulary — it stays in FRs but should be rephrased to QA-verifiable language. Product decisions and platform concepts that sound technical ("replacing the current history entry", "proactive refresh", "browser's reported language") are acceptable as-is
+- **Never make design decisions**: Do not specify layout arrangements that prescribe CSS structure (sticky, full-surface, grid-3-column) or visual treatments (pixel values, color variants, spacing). Describe what the user sees, learns, or does — let design decide how to render it. Exceptions — these are product language, not design decisions: (a) interaction patterns that *are* the product requirement (drag-to-reorder, swipe-to-dismiss); (b) shipped DS component names when explicitly chosen by PM; (c) behavioral placement ("inline beneath the input") when it distinguishes feedback strategies (field-level vs page-level); (d) PM-decided display formats ("MM:SS", "zero-padded"); (e) "new browser tab" (user-visible navigation); (f) platform concepts ("browser's one-time-code autofill"); (g) generic UI vocabulary ("indicator", "grid", "notification"); (h) enum values in analytics ACs when they make the AC testable
 
 ## Technical Contract
 
@@ -29,6 +29,8 @@ Rules for this layer:
 ## `[V#]` Vocabulary References
 
 FRs and ACs use `[V#]` markers to link semantic names to their definitions in per-endpoint vocabulary tables inside the Technical Contract.
+
+**Scope**: V-numbers are exclusively for API field mappings — concepts that resolve to a field in an endpoint's request or response. Non-API concepts (routing destinations, configuration URLs, client-side state) do not get V-numbers. Use a consistent semantic name and reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)").
 
 **Format**: `[V1]`, `[V2]`, `[V3]`, etc. — sequential across all endpoints in the PRD.
 
