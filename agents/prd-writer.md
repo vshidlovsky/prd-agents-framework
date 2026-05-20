@@ -97,7 +97,7 @@ Present questions with your recommended answer based on codebase and API researc
 
 **Do NOT proceed to Step 4 until all questions are answered.**
 
-If a research document exists, skip questions already answered by the research. Still ask about UX decisions, scope boundaries, and business rules the research doesn't cover.
+If a research document exists, skip questions already resolved (`RESOLVED`) by the research. Carry forward all unresolved `ASK:role` items from the research — these are product/scope decisions the researcher surfaced but was not allowed to resolve. Present each with the researcher's recommended answer and ask the PM to decide. Also ask about UX decisions, scope boundaries, and business rules the research doesn't cover.
 
 ### Q&A Log
 

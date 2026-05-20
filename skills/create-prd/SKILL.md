@@ -103,11 +103,13 @@ echo "gate1_prompt=$(date +%s)" >> "$TIMING_FILE"
 ```
 Update state file — set `currentPhase: "gate1"`.
 
+**Validate ambiguity table**: Read the Inconsistencies & Ambiguities table. If any `ASK:role` items have been marked `RESOLVED` by the researcher, this is a violation — the researcher must not self-resolve product/scope/rule decisions. Send the research back for correction before presenting to the user.
+
 Present the research findings to the user as a summary:
 - Modules/packages involved (or "greenfield — no code yet")
 - Key API endpoints found
 - Business logic discovered
-- Any flagged inconsistencies or ambiguities
+- All flagged inconsistencies and ambiguities — list every `ASK:role` item with the researcher's recommended answer so the user can decide
 
 Ask: **"Review the research above. Say 'continue' to proceed to PRD drafting, or provide feedback to adjust the research."**
 

@@ -196,14 +196,18 @@ Use this structure:
 
 Tag each item with a **resolution method** so the person reading knows HOW to find the answer:
 
-| # | Issue | Resolution | Owner |
-|---|-------|-----------|-------|
-| 1 | [what's unclear] | `ASK:PM` / `ASK:DESIGN` / `ASK:BACKEND` / `CHECK:ANALYTICS` / `CHECK:DOCS` / `CHECK:CODE` / `TEST:STAGING` | [who should resolve] |
+| # | Issue | Resolution | Recommended | Owner |
+|---|-------|-----------|-------------|-------|
+| 1 | [what's unclear] | `ASK:PM` / `CHECK:DOCS` / etc. | [your best guess] | [who should resolve] |
 
 Resolution method tags:
 - `ASK:role` — needs a human answer (PM, design, backend, legal, etc.)
 - `CHECK:source` — answer exists somewhere, go look (analytics, docs, code, competitor)
 - `TEST:env` — requires running/testing something (staging, prod)
+
+**Resolution rules**:
+- `CHECK:source` and `TEST:env` items: you MAY self-resolve after verification. Change the Resolution cell to `RESOLVED` and explain what you found.
+- `ASK:role` items: you MUST NOT self-resolve. The Resolution cell must stay as `ASK:PM` / `ASK:DESIGN` / etc. Put your best guess in the Recommended column — but the human decides. Even if you're confident in the answer, surface it. Product decisions, scope decisions, and rule overrides are never yours to make.
 ```
 
 Commit the research document with message: `docs: add {INITIATIVE} research`. Do NOT push.
