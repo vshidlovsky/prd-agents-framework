@@ -14,7 +14,8 @@ Rules for this layer:
 - Use **semantic concept names** for data attributes (e.g., "transaction identifier" not `tx_id`)
 - Use **`[TC-*]` cross-reference anchors** to link concepts to their technical definitions
 - Each semantic name maps to exactly one API field — if ambiguous, make it more specific
-- **Never include**: API field names, endpoint paths, query keys, enum values, URL patterns, UI copy strings, analytics event names, pixel breakpoints, CSS class names, constructor signatures, framework-specific terminology
+- **Never include API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names, constructor signatures, framework-specific terminology
+- **Never make design decisions**: Do not specify UI components (toast, modal, carousel), layout arrangements (inline, sticky, full-surface), or visual treatments (pixel values, color variants, spacing). Describe what the user sees, learns, or does — let design decide how to render it. Exception: interaction patterns that *are* the product requirement (drag-to-reorder, swipe-to-dismiss) are behavioral
 
 ## Technical Contract
 

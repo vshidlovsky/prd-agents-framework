@@ -48,7 +48,7 @@ As a [role], I want [goal] so that [benefit].
 
 > **Notation**: This section uses semantic concept names for data attributes, data sources, and destinations. All concept-to-API-field and concept-to-endpoint mappings are defined in the [Technical Contract](#technical-contract) section. Cross-references use `[TC-*]` anchors — see the Technical Contract for the full anchor index.
 >
-> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only. Never include: API field names, endpoint paths, query keys, enum values, URL patterns, UI copy strings, analytics event names, pixel breakpoints, CSS class names, constructor signatures, or framework-specific terminology. These belong in the Technical Contract, referenced via `[TC-*]` anchors. See `rules/behavioral-separation.md`.
+> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only. Never include API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) or design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does, not how the API returns it or how the UI renders it. Technical details belong in the Technical Contract, referenced via `[TC-*]` anchors. See `rules/behavioral-separation.md`.
 
 ### Shared Requirements
 
@@ -77,7 +77,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - Number sequentially: FR-001, FR-002, etc.
 > - Every FR should map to one or more ACs below.
 > - Aim for 10-20 FRs. More suggests the scope is too broad.
-> **Separation check**: No API field names, no URL paths, no enum values, no UI copy, no analytics event names, no pixel breakpoints, no framework terms. Replace with semantic names + `[TC-*]` references.
+> **Separation check**: No API vocabulary (field names, enum values, URL paths, analytics event names, framework terms) and no design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does. Use semantic names + `[TC-*]` references.
 
 - **FR-001**: System MUST [capability] [TC-*].
 - **FR-002**: System MUST [capability] [TC-*].
@@ -103,7 +103,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - Every criterion gets a stable ID: AC-001, AC-002, ...
 > - Every criterion starts with a user-visible action or state.
 > - Must include sub-sections for: Loading States, Error States, Empty States (when applicable).
-> **Separation check**: Use semantic concept names. Reference `[TC-*]` for technical details. Don't embed API enums, URL paths, UI copy, analytics event names, or breakpoints — point to the relevant TC section or table instead.
+> **Separation check**: Use semantic concept names. Reference `[TC-*]` for technical details. No API vocabulary and no design decisions — describe what the user sees and does, not how it's rendered or what the API returns.
 
 #### [Screen / Flow Area]
 
@@ -144,7 +144,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **What**: Boundary conditions, nullable fields, concurrent actions, failure modes.
 > **Why**: Edge cases are where bugs live. The #1 complaint about AI-generated PRDs is missing edge cases.
 > **How**: Generate systematically, not from intuition. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data. For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: indeterminate condition, rapid toggle mid-flow. Then deduplicate and remove impossible scenarios.
-> **Separation check**: Use semantic names and reference ACs/TC sections. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but should still avoid raw API field names and enum values where possible.
+> **Separation check**: Use semantic names and reference ACs/TC sections. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but should still avoid API vocabulary and design decisions where possible.
 
 | # | Condition | Expected Behavior |
 |---|-----------|-------------------|

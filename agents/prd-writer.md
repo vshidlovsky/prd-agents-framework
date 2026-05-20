@@ -154,7 +154,8 @@ The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Ke
 - Use **semantic concept names** for data attributes — "transaction identifier", not `tx_id`
 - Add **`[TC-*]` cross-reference anchors** to link every concept to its Technical Contract definition
 - Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
-- **Never embed**: API field names, endpoint paths, query keys, enum values, URL patterns, UI copy strings, analytics event names, pixel breakpoints, CSS class names, framework terminology
+- **Never embed API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names, framework terminology — these belong in the Technical Contract
+- **Never make design decisions**: Do not specify UI components, layout arrangements, or visual treatments — describe what the user sees, learns, or does, and let design agents decide how to render it. If the interaction pattern *is* the product requirement (e.g., drag-to-reorder), state it; otherwise describe the behavior and route presentation to `[TC-CM]` / `[TC-VR]`
 - Edge cases can be slightly more specific (concrete data scenarios), but should still use semantic names and reference ACs/TC sections
 
 **When writing the Technical Contract:**
@@ -233,7 +234,7 @@ If project-context.md specifies versioned filenames:
 11. **Config-driven behavior must read as config-driven** — when behavior is determined by remote config or feature flags, describe it as config-driven. Never frame it as a hardcoded business rule.
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
-14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API field names, enum values, URL patterns, UI copy, analytics event names, pixel breakpoints, or framework terminology in the behavioral layer. Use semantic concept names with `[TC-*]` cross-references. See `rules/behavioral-separation.md`.
+14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) and no design decisions (component types, layout arrangements, visual treatments) in the behavioral layer. Describe what the user sees and does, not how the UI renders it or what the API returns. Use semantic concept names with `[TC-*]` cross-references. See `rules/behavioral-separation.md`.
 15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `transactions.status.paid` already maps to "Paid" in all supported languages, don't create `home.status.paid` with the same translations.
 
 ## Step 5: Save and Summarize
