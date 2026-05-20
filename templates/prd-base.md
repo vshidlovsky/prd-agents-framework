@@ -46,11 +46,11 @@ As a [role], I want [goal] so that [benefit].
 
 ## Behavioral Contract
 
-> **Notation**: This section uses semantic concept names for data attributes, data sources, and destinations. All concept-to-API-field and concept-to-endpoint mappings are defined in the [Technical Contract](#technical-contract) section. Cross-references use `[TC-*]` anchors — see the Technical Contract for the full anchor index.
+> **Notation**: This section uses semantic concept names for data attributes, data sources, and destinations. Each semantic name is linked to its API field via a `[V#]` marker on first use, pointing to a row in the per-endpoint vocabulary tables in the [Technical Contract](#technical-contract).
 >
 > **Vocabulary files**: If `semantic-vocabulary/` files exist for the endpoints in this initiative, semantic names MUST match the vocabulary entries. For new fields not yet in vocabulary, the writer proposes entries in the handoff file.
 >
-> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only. Never include API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) or design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does, not how the API returns it or how the UI renders it. Technical details belong in the Technical Contract, referenced via `[TC-*]` anchors. See `rules/behavioral-separation.md`.
+> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only. Never include API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) or design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does, not how the API returns it or how the UI renders it. See `rules/behavioral-separation.md`.
 
 ### Shared Requirements
 
@@ -75,24 +75,24 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **Why**: Scannable contract at a higher level than ACs. FRs answer "what must the system do?" while ACs answer "how do I verify it?"
 > **How**:
 > - Each starts with "System MUST" and describes a single capability.
-> - One sentence each. Use semantic concept names with `[TC-*]` anchors for data and destinations.
+> - One sentence each. Use semantic concept names with `[V#]` markers on first use.
 > - Number sequentially: FR-001, FR-002, etc.
 > - Every FR should map to one or more ACs below.
 > - Aim for 10-20 FRs. More suggests the scope is too broad.
-> **Separation check**: No API vocabulary (field names, enum values, URL paths, analytics event names, framework terms) and no design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does. Use semantic names + `[TC-*]` references.
+> **Separation check**: No API vocabulary (field names, enum values, URL paths, analytics event names, framework terms) and no design decisions (component types, layout arrangements, visual treatments). Describe what the user sees and does. Use semantic names with `[V#]` markers on first use.
 
-- **FR-001**: System MUST [capability] [TC-*].
-- **FR-002**: System MUST [capability] [TC-*].
+- **FR-001**: System MUST [capability using semantic names with [V#] markers].
+- **FR-002**: System MUST [capability].
 
 #### Key Entities
 
 > **GUIDE**
 > **What**: Core domain objects this initiative introduces or depends on.
 > **Why**: Names domain concepts explicitly. Helps devs name types consistently.
-> **How**: One bullet per entity. Include: what it is, format/constraints, how it's used. Reference `[TC-*]` for field-level details.
+> **How**: One bullet per entity. Include: what it is, format/constraints, how it's used. Reference the vocabulary table for field-level details.
 > **Business-level only**: NO language-specific types, NO file paths, NO enum names, NO API field names. Use semantic concept names.
 
-- **[Entity Name]**: [What it is, format, how it's used in this initiative. See [TC-XX] for the full field mapping.]
+- **[Entity Name]**: [What it is, format, how it's used in this initiative. See the vocabulary table for the endpoint's field mapping.]
 
 ---
 
@@ -105,11 +105,11 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - Every criterion gets a stable ID: AC-001, AC-002, ...
 > - Every criterion starts with a user-visible action or state.
 > - Must include sub-sections for: Loading States, Error States, Empty States (when applicable).
-> **Separation check**: Use semantic concept names. Reference `[TC-*]` for technical details. No API vocabulary and no design decisions — describe what the user sees and does, not how it's rendered or what the API returns.
+> **Separation check**: Use semantic concept names with `[V#]` markers on first use. No API vocabulary and no design decisions — describe what the user sees and does, not how it's rendered or what the API returns.
 
 #### [Screen / Flow Area]
 
-- [ ] **AC-001**: [Specific, testable criterion using semantic names and [TC-*] references]
+- [ ] **AC-001**: [Specific, testable criterion using semantic names with [V#] markers on first use]
 - [ ] **AC-002**: [Another criterion]
 
 #### Loading States
@@ -120,21 +120,21 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - **Mutation in-flight**: a write operation is pending — what disables, what spins?
 > For backend services: cover async processing indicators, queue states, or in-flight request states if applicable. Mark `N/A` if the service is purely synchronous with no user-visible wait states.
 
-- [ ] **AC-NNN**: [Loading behavior] [TC-CM].
+- [ ] **AC-NNN**: [Loading behavior].
 
 #### Error States
 
 > **GUIDE**: What happens when something fails. Cover: API errors, auth errors, network failures, validation errors.
-> Applies to all project types — every system has failure modes. Reference `[TC-EC]` for error classification details. Don't hardcode error copy — reference `[TC-LK]`.
+> Applies to all project types — every system has failure modes. Describe error behavior semantically. Don't hardcode error copy.
 
-- [ ] **AC-NNN**: [Error behavior] [TC-EC] [TC-LK].
+- [ ] **AC-NNN**: [Error behavior].
 
 #### Empty States
 
 > **GUIDE**: What happens when there's no data. Only include if the feature has data lists or query results that can be empty.
-> For backend services without user-facing data displays: mark `N/A` and remove this sub-section. Don't hardcode empty-state copy — reference `[TC-LK]`.
+> For backend services without user-facing data displays: mark `N/A` and remove this sub-section. Don't hardcode empty-state copy.
 
-- [ ] **AC-NNN**: [Empty state behavior] [TC-LK].
+- [ ] **AC-NNN**: [Empty state behavior].
 
 ---
 
@@ -146,7 +146,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **What**: Boundary conditions, nullable fields, concurrent actions, failure modes.
 > **Why**: Edge cases are where bugs live. The #1 complaint about AI-generated PRDs is missing edge cases.
 > **How**: Generate systematically, not from intuition. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data. For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: indeterminate condition, rapid toggle mid-flow. Then deduplicate and remove impossible scenarios.
-> **Separation check**: Use semantic names and reference ACs/TC sections. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but should still avoid API vocabulary and design decisions where possible.
+> **Separation check**: Use semantic names with `[V#]` markers where applicable. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but should still avoid API vocabulary and design decisions where possible.
 
 | # | Condition | Expected Behavior |
 |---|-----------|-------------------|
@@ -161,33 +161,33 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > This section maps the behavioral concepts used in the [Behavioral Contract](#behavioral-contract) to their API implementations. If the API changes, update this section — the behavioral requirements above should not need modification unless the change alters observable behavior.
 >
 > **Organization**:
-> 1. Cross-cutting tables — defined once, referenced everywhere via `[TC-*]` anchors
-> 2. Per-endpoint blocks — Field Mapping + Behavioral Mapping + Error Handling
+> 1. Cross-cutting tables — Data Sources, Query Configuration, Error Classification, Route Mapping
+> 2. Per-endpoint blocks — Vocabulary table (V-numbered rows mapping semantic names to API fields) + Error Handling
 > 3. UI/config sections — Component Mapping, Localization Keys, Visual References, etc.
 
-### Data Sources [TC-DS]
+### Data Sources
 
 > **GUIDE**
 > **What**: Every API endpoint this initiative consumes or exposes, with full URL patterns, methods, auth, and canonical reference links.
 
 | ID | Semantic Name | Endpoint | Method | Full URL Pattern | Canonical Ref | Auth |
 |---|---|---|---|---|---|---|
-| TC-DS-001 | [name] | `METHOD /path` | [METHOD] | `<BASE_URL>/path` | [link] | [auth method] |
+| DS-001 | [name] | `METHOD /path` | [METHOD] | `<BASE_URL>/path` | [link] | [auth method] |
 
 ---
 
-### Query Configuration [TC-QC]
+### Query Configuration
 
 > **GUIDE**
 > **What**: Cache/query settings for each data source. One row per data source.
 
 | Data Source | Query Key | staleTime | retry | Invalidation Trigger | Owner |
 |---|---|---|---|---|---|
-| TC-DS-001 | `['key']` | [value] | [value] | [trigger] | [owner] |
+| DS-001 | `['key']` | [value] | [value] | [trigger] | [owner] |
 
 ---
 
-### Error Classification [TC-EC]
+### Error Classification
 
 > **GUIDE**
 > **What**: How errors are categorized for analytics and UI behavior. Defined once, referenced by all error-handling ACs.
@@ -200,7 +200,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-### Route Mapping [TC-RT]
+### Route Mapping
 
 > **GUIDE**
 > **What**: Maps semantic destination names (used in behavioral layer) to actual URLs and code constants.
@@ -211,26 +211,18 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-### [Endpoint Name] [TC-DS-NNN]
+### [Endpoint Name]
 
 > **GUIDE**
-> **What**: Per-endpoint detail block. Create one of these for each data source. The `[TC-XX]` anchor (e.g., `[TC-AM]` for Activity Mapping) is a 2-letter mnemonic for the endpoint's semantic name.
+> **What**: Per-endpoint detail block. Create one of these for each data source.
 
-#### Field Mapping [TC-XX]
+#### Vocabulary
 
-> **GUIDE**: Maps semantic concept names (used in behavioral layer) to actual API fields.
+> **GUIDE**: Maps semantic concept names (used in behavioral layer with `[V#]` markers) to actual API fields. V-numbers are sequential across all endpoints in the PRD. Copy entries from vocabulary files (`semantic-vocabulary/`) when they exist; add new rows for fields not yet mapped.
 
-| Semantic Name | API Field | Type | Required | Notes |
-|---|---|---|---|---|
-| [concept name] | `field_name` | [type] | [yes/no] | [which FRs/ACs use this] |
-
-#### Behavioral Mapping
-
-> **GUIDE**: Traces which FRs and ACs each API field drives. Includes transformation rules, normalization, and fallback chains. This answers: "why does this field exist in the contract?"
-
-**[Behavior name]** (FR-NNN, AC-NNN):
-- Field: `field_name`
-- Rule: [transformation / normalization / fallback]
+| V# | Semantic Name | API Field | Type | Required | Notes |
+|----|---------------|-----------|------|----------|-------|
+| V1 | [concept name] | `field_name` | [type] | [yes/no] | [optional clarification] |
 
 #### Error Handling
 
@@ -242,7 +234,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-### Configuration Attributes [TC-CA]
+### Configuration Attributes
 
 > **GUIDE**: Environment-specific config (base URLs, feature endpoints, etc.)
 
@@ -252,7 +244,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-### Feature Flags / Remote Config [TC-FF]
+### Feature Flags / Remote Config
 
 > **GUIDE**: Feature flags, remote config, rollout settings. If no flags, state "None" and explain why.
 
@@ -264,7 +256,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 ---
 
 <!-- Section packs: Technical Contract [position: 1] — UI structure (component-mapping, responsive-layout) -->
-<!-- Section packs: Technical Contract [position: 2] — content & visuals (localization, design-prototype/visual-references) -->
+<!-- Section packs: Technical Contract [position: 2] — content & visuals (localization, design-prototype) -->
 <!-- Section packs: Technical Contract [position: 3] — navigation & flow (screen-flow, navigation) -->
 <!-- Section packs: Technical Contract [position: 4] — infrastructure (database-changes, service-integration, monitoring) -->
 

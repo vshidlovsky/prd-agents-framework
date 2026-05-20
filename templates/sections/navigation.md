@@ -1,6 +1,6 @@
 # Section Pack: Navigation
 
-> **Insert into**: Technical Contract [position: 3] [TC-SF]
+> **Insert into**: Technical Contract [position: 3]
 > **When**: Any feature with user-facing navigation — screens, pages, routes.
 
 ### Navigation

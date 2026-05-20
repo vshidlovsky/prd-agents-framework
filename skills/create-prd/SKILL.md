@@ -300,9 +300,9 @@ If no lessons were proposed, say "No new lessons proposed."
 
 If no glossary terms were proposed, say "No new glossary terms proposed."
 
-**Then**, show proposed vocabulary entries (if any). Collect proposals from BOTH the writer's handoff (`proposedVocabularyEntries`, `proposedDesignVocabulary`) and the reviewer's handoff/review document. Deduplicate by endpoint + field — if both proposed the same field mapping, prefer the reviewer's semantic name. Group entries by endpoint file. For new files, note "(new file)". For each entry, show:
-- Number, endpoint (or "design vocabulary")
-- API field / design term
+**Then**, show proposed vocabulary entries (if any). Collect proposals from BOTH the writer's handoff (`proposedVocabularyEntries`) and the reviewer's handoff/review document. Deduplicate by endpoint + field — if both proposed the same field mapping, prefer the reviewer's semantic name. Group entries by endpoint file. For new files, note "(new file)". For each entry, show:
+- Number, endpoint
+- API field
 - Proposed semantic name
 - Reason
 

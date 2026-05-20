@@ -25,9 +25,7 @@ Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Writer rule" — 
 
 Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, track terms you encounter during drafting that are missing, ambiguous, or conflated in the glossary, and propose them in Step 5.
 
-Read `rules/semantic-vocabulary.md` if it exists. You must NOT write to vocabulary files directly. Instead, track fields that need semantic names and propose them in Step 5.
-
-Read `semantic-vocabulary/_design-vocabulary.md` if it exists. This provides project-wide semantic names for design/UI component terms (e.g., "toast" → "transient notification"). Use these semantic names instead of component type names in the behavioral layer.
+Read `rules/semantic-vocabulary.md` if it exists. You must NOT write to vocabulary files directly. Instead, track fields that need semantic names and propose them in Step 5. When drafting the PRD, you will copy vocabulary entries into per-endpoint vocabulary tables inside the Technical Contract, assigning V-numbers.
 
 Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements (SR-01 through SR-NN) that apply to every authenticated page/feature. You MUST NOT restate SR content inline in the PRD — instead, reference this document in the "Shared Requirements" section. If the feature needs an override or exclusion for any SR, document it explicitly with justification. If the file doesn't exist, skip the Shared Requirements section in the PRD template.
 
@@ -74,8 +72,8 @@ Check for a research document first — look for `{initiative}-research.md` in t
    - Convert each endpoint to a filename: lowercase HTTP method + path with `/` replaced by `-` and `{param}` replaced by param name (e.g., `GET /v1/transactions/{id}` → `semantic-vocabulary/get-v1-transactions-id.md`)
    - Read each matching vocabulary file that exists
    - Record which endpoints have vocabulary files and which don't
-   - For endpoints with vocabulary files: use the semantic names from the file when writing FRs, ACs, Edge Cases, and Key Entities
-   - For endpoints without vocabulary files: invent semantic names during drafting and propose them as new vocabulary entries in Step 5
+   - For endpoints with vocabulary files: use the semantic names from the file when writing FRs, ACs, Edge Cases, and Key Entities. These entries will be copied into the PRD's per-endpoint vocabulary tables with V-numbers in Step 4
+   - For endpoints without vocabulary files: invent semantic names during drafting, use them in the PRD vocabulary tables, and propose them as new vocabulary entries in Step 5
 
 ## Step 3: Ask Clarifying Questions (MANDATORY)
 
@@ -149,12 +147,13 @@ Follow the PRD template exactly. Every Tier 1 section is required. Include the s
 
 **Glossary tracking**: While drafting, track any term you use that (a) isn't in the Domain Glossary but could be confused with another term, or (b) is in the glossary but the definition doesn't match how it's actually used in the codebase. These become glossary proposals in Step 5.
 
-**Vocabulary tracking**: While drafting, track every API field you reference via a semantic name. For each field:
-- If a vocabulary file exists for the endpoint and the field has a semantic name: use it exactly
-- If a vocabulary file exists but the field is not in it: propose adding the entry
-- If no vocabulary file exists for the endpoint: propose creating the file with all entries
-- If a design component term (toast, modal, etc.) is not in the design vocabulary file: propose adding it
+**Vocabulary tracking**: While drafting, build the per-endpoint vocabulary tables in the Technical Contract. Assign V-numbers sequentially across all endpoints (first endpoint gets V1-Vn, second continues from Vn+1). For each field:
+- If a vocabulary file exists for the endpoint and the field has a semantic name: copy it into the PRD table and use it exactly
+- If a vocabulary file exists but the field is not in it: add it to the PRD table and propose adding the entry to the vocabulary file
+- If no vocabulary file exists for the endpoint: add all fields to the PRD table and propose creating a new vocabulary file with all entries
 Also track any existing vocabulary entry whose semantic name you believe is wrong or misleading — propose a change with justification.
+
+In the behavioral layer, add `[V#]` markers on the first use of each semantic name. Subsequent uses of the same term do not repeat the marker.
 
 ### Assembling the PRD
 
@@ -172,21 +171,20 @@ The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Ke
 
 **When writing the Behavioral Contract (FRs, ACs, Edge Cases, Key Entities):**
 - Use **semantic concept names** for data attributes — "transaction identifier", not `tx_id`
-- Add **`[TC-*]` cross-reference anchors** to link every concept to its Technical Contract definition
+- Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract. Do not repeat the marker on subsequent uses of the same term
 - Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
 - **Never embed API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names, framework terminology — these belong in the Technical Contract
-- **Never make design decisions**: Do not specify UI components, layout arrangements, or visual treatments — describe what the user sees, learns, or does, and let design agents decide how to render it. If the interaction pattern *is* the product requirement (e.g., drag-to-reorder), state it; otherwise describe the behavior and route presentation to `[TC-CM]` / `[TC-VR]`
-- Edge cases can be slightly more specific (concrete data scenarios), but should still use semantic names and reference ACs/TC sections
+- **Never make design decisions**: Do not specify UI components, layout arrangements, or visual treatments — describe what the user sees, learns, or does, and let design agents decide how to render it. If the interaction pattern *is* the product requirement (e.g., drag-to-reorder), state it
+- Edge cases can be slightly more specific (concrete data scenarios), but should still use semantic names
 
 **When writing the Technical Contract:**
-- **Cross-cutting tables defined once**: Data Sources `[TC-DS]`, Error Classification `[TC-EC]`, Query Configuration `[TC-QC]`, Route Mapping `[TC-RT]` — each lives in one table, referenced everywhere via anchors
-- **Per-endpoint blocks**: For each API endpoint, create a block with Field Mapping (semantic name → API field → type), Behavioral Mapping (which FRs/ACs each field drives + transformation rules), and Error Handling (HTTP status → behavior)
-- **Flexible anchors**: Create a 2-letter mnemonic per endpoint (e.g., `[TC-AM]` for Activity Mapping, `[TC-RM]` for Recipient Mapping)
-- Every API field in a Field Mapping table SHOULD have a Behavioral Mapping entry tracing back to FRs/ACs
+- **Cross-cutting tables defined once**: Data Sources, Error Classification, Query Configuration, Route Mapping — each lives in one table as implementation reference
+- **Per-endpoint vocabulary tables**: For each API endpoint, create a vocabulary table with V-numbered rows (V# | Semantic Name | API Field | Type | Required | Notes). Copy entries from vocabulary files when they exist; add new rows for unmapped fields. V-numbers are sequential across all endpoints
+- **Per-endpoint error handling**: For each endpoint, include an Error Handling table (HTTP status → behavior)
 
-**Cross-reference discipline:**
-- Every semantic concept in the behavioral layer MUST have a `[TC-*]` anchor linking to its definition
-- Every `[TC-*]` anchor referenced in the behavioral layer MUST have a corresponding section in the Technical Contract
+**V-number discipline:**
+- Every `[V#]` marker in the behavioral layer MUST resolve to a row in a vocabulary table
+- Every vocabulary table row SHOULD correspond to a semantic name used in the behavioral layer
 
 ### Systematic Edge Case Generation
 
@@ -254,7 +252,7 @@ If project-context.md specifies versioned filenames:
 11. **Config-driven behavior must read as config-driven** — when behavior is determined by remote config or feature flags, describe it as config-driven. Never frame it as a hardcoded business rule.
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
-14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) and no design decisions (component types, layout arrangements, visual treatments) in the behavioral layer. Describe what the user sees and does, not how the UI renders it or what the API returns. Use semantic concept names with `[TC-*]` cross-references. See `rules/behavioral-separation.md`.
+14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names, framework terminology) and no design decisions (component types, layout arrangements, visual treatments) in the behavioral layer. Describe what the user sees and does, not how the UI renders it or what the API returns. Use semantic concept names with `[V#]` vocabulary references. See `rules/behavioral-separation.md`.
 15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `transactions.status.paid` already maps to "Paid" in all supported languages, don't create `home.status.paid` with the same translations.
 
 ## Step 5: Save and Summarize
@@ -267,7 +265,6 @@ Provide a **HANDOFF SUMMARY** to the user:
 - Key decisions made (and why — reference Q&A)
 - Proposed glossary terms (if any) — list each term with its proposed definition and why it's needed
 - Proposed vocabulary entries (if any) — list each endpoint and its new/changed entries with semantic names and justification
-- Proposed design vocabulary entries (if any) — list each design term with its semantic name and why it's needed
 - Recommended next step: "Run prd-reviewer to validate"
 
 ## Step 6: Write Handoff File
@@ -317,14 +314,6 @@ Save to the same directory as the PRD:
           "reason": "<which FRs/ACs use this, or why the name should change>"
         }
       ]
-    }
-  ],
-  "proposedDesignVocabulary": [
-    {
-      "designTerm": "<component/layout term>",
-      "semanticName": "<behavioral description>",
-      "action": "add | change",
-      "reason": "<why this entry is needed>"
     }
   ],
   "nextAgent": "prd-reviewer"

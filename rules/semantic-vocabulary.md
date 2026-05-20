@@ -14,12 +14,16 @@ Examples:
 - `GET /v1/transactions/{id}` → `semantic-vocabulary/get-v1-transactions-id.md`
 - `POST /v1/recipients` → `semantic-vocabulary/post-v1-recipients.md`
 
-Each file contains a mapping table from API field names to semantic concept names used in the behavioral layer of PRDs. The design vocabulary file (`semantic-vocabulary/_design-vocabulary.md`) maps UI component and layout terms to behavioral descriptions.
+Each file contains a mapping table from API field names to semantic concept names used in the behavioral layer of PRDs.
+
+## PRD snapshot pattern
+
+When the writer drafts a PRD, it copies relevant vocabulary entries into per-endpoint vocabulary tables inside the PRD's Technical Contract, assigning V-numbers (V1, V2, V3... sequential across all endpoints). The PRD is self-contained — if vocabulary files change later, the PRD retains its snapshot. New terms discovered during drafting are added to the PRD tables and proposed as vocabulary file additions.
 
 ## How agents use vocabulary files
 
-- **prd-writer**: Reads vocabulary files for endpoints identified during research. Uses established semantic names when drafting FRs/ACs. Proposes new entries for unmapped fields.
-- **prd-reviewer**: Verifies FRs/ACs use semantic names from vocabulary files. Flags invented alternatives for already-mapped fields. Proposes entries for fields the writer missed.
+- **prd-writer**: Reads vocabulary files for endpoints identified during research. Copies entries into PRD vocabulary tables with V-numbers. Uses semantic names with `[V#]` markers in FRs/ACs. Proposes new entries for unmapped fields.
+- **prd-reviewer**: Verifies FRs/ACs use semantic names from vocabulary files and that `[V#]` markers resolve to vocabulary table rows. Flags invented alternatives for already-mapped fields. Proposes entries for fields the writer missed.
 - **create-prd orchestrator**: Collects proposals from both agents, deduplicates, presents to user for approval, and dispatches callbacks to write approved entries.
 
 This rule applies to all agents, skills, and conversations in this project.

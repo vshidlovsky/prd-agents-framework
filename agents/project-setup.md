@@ -183,39 +183,15 @@ If the user says skip, set the "Shared requirements" path in project-context.md 
 
 Ask the user:
 
-**"Would you like to set up semantic vocabulary files? These map API field names to human-readable names used in PRD requirements — preventing writers from using raw API terms like `tx_id` in behavioral requirements.**
+**"Would you like to set up semantic vocabulary files? These map API field names to human-readable names used in PRD requirements — preventing writers from using raw API terms like `tx_id` in behavioral requirements. Each endpoint gets its own vocabulary file, and entries are copied into PRD vocabulary tables with V-numbers.**
 
-**If yes, I'll create the `semantic-vocabulary/` directory and a design vocabulary file with common UI component term mappings.**
+**If yes, I'll create the `semantic-vocabulary/` directory.**
 
 **If no, the directory will be created automatically when the first PRD proposes vocabulary entries."**
 
 If the user wants to initialize:
 1. Create `semantic-vocabulary/` directory
-2. Create `semantic-vocabulary/_design-vocabulary.md` with common design term mappings:
-
-   ```markdown
-   ---
-   type: design-vocabulary
-   last-updated-by: project-setup
-   ---
-
-   # Design Vocabulary
-
-   | Design Term | Semantic Name | Notes |
-   |-------------|--------------|-------|
-   | toast | transient notification | Brief message that appears and auto-dismisses |
-   | snackbar | transient notification | Same as toast — project may distinguish |
-   | modal | overlay dialog | Blocks interaction with the page behind it |
-   | popover | contextual overlay | Small overlay anchored to a trigger element |
-   | tooltip | contextual hint | Appears on hover/focus |
-   | carousel | scrollable content gallery | Horizontally swipeable set of items |
-   | accordion | expandable section | Section that reveals content on interaction |
-   | spinner | loading indicator | Visual indicator that processing is in progress |
-   | skeleton | content placeholder | Visual placeholder shown before data loads |
-   ```
-
-3. Let the user review and customize these before saving
-4. Copy `rules/semantic-vocabulary.md` to `.claude/rules/semantic-vocabulary.md`
+2. Copy `rules/semantic-vocabulary.md` to `.claude/rules/semantic-vocabulary.md`
 
 If the user says skip, move on. The vocabulary system activates when the first PRD proposes entries.
 
@@ -484,6 +460,6 @@ When the user confirms the draft is good:
    - Confirm `.claude/rules/domain-glossary.md` exists
    - Confirm `.claude/rules/shared-requirements.md` exists
    - Confirm `.claude/rules/semantic-vocabulary.md` exists
-   - If semantic vocabulary initialized: confirm `semantic-vocabulary/_design-vocabulary.md` exists
+   - If semantic vocabulary initialized: confirm `semantic-vocabulary/` directory exists
    - If shared requirements enabled: confirm `docs/shared-requirements.md` exists
 4. Report: "Setup complete. **Restart your Claude Code session** (exit and reopen) so the `/create-prd` skill gets registered. After restarting, you can run `/create-prd {initiative}` or individual agents."

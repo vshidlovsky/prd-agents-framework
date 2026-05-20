@@ -12,49 +12,49 @@ Contains: FRs, ACs, Edge Cases, Key Entities, Success Criteria, Security, Access
 
 Rules for this layer:
 - Use **semantic concept names** for data attributes (e.g., "transaction identifier" not `tx_id`)
-- Use **`[TC-*]` cross-reference anchors** to link concepts to their technical definitions
+- Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract
 - Each semantic name maps to exactly one API field — if ambiguous, make it more specific
 - **Use vocabulary files when they exist** — if `semantic-vocabulary/` contains a file for an endpoint, use the semantic names defined there. Do not invent alternatives for fields that already have vocabulary entries. See `rules/semantic-vocabulary.md`
-- **Use the design vocabulary** — if `semantic-vocabulary/_design-vocabulary.md` exists, use its semantic names instead of raw design/component terms
 - **Never include API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, analytics event names, constructor signatures, framework-specific terminology
 - **Never make design decisions**: Do not specify UI components (toast, modal, carousel), layout arrangements (inline, sticky, full-surface), or visual treatments (pixel values, color variants, spacing). Describe what the user sees, learns, or does — let design decide how to render it. Exception: interaction patterns that *are* the product requirement (drag-to-reorder, swipe-to-dismiss) are behavioral
 
 ## Technical Contract
 
-Contains: Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Field Mapping + Behavioral Mapping + Error Handling, Component Mapping, Localization Keys, Visual References, Screen Flow, MSW Mock Data, Configuration Attributes, Feature Flags.
+Contains: Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Vocabulary tables + Error Handling, Component Mapping, Localization Keys, Visual References, Screen Flow, MSW Mock Data, Configuration Attributes, Feature Flags.
 
 Rules for this layer:
-- **Cross-cutting concerns defined once**: Error classification, query config, route mapping each live in one table, referenced everywhere via anchors
-- **Per-endpoint blocks** include: Field Mapping (API field → type → notes), Behavioral Mapping (which FRs/ACs each field drives + transformation rules), Error Handling (HTTP status → behavior)
-- Every API field in a Field Mapping table SHOULD have a Behavioral Mapping entry tracing back to the FRs/ACs it supports
+- **Cross-cutting concerns defined once**: Error classification, query config, route mapping each live in one table as implementation reference
+- **Per-endpoint blocks** include: Vocabulary table (V-numbered rows mapping semantic names to API fields) and Error Handling (HTTP status → behavior)
 
-## `[TC-*]` Anchor Vocabulary
+## `[V#]` Vocabulary References
 
-Fixed anchors (same for every PRD):
+FRs and ACs use `[V#]` markers to link semantic names to their definitions in per-endpoint vocabulary tables inside the Technical Contract.
 
-| Anchor | Section |
-|--------|---------|
-| `[TC-DS]` | Data Sources (endpoints, methods, paths) |
-| `[TC-QC]` | Query Configuration (cache times, retry, stale behavior) |
-| `[TC-EC]` | Error Classification (error types and display rules) |
-| `[TC-RT]` | Route Mapping (route constants and navigation targets) |
-| `[TC-CA]` | Configuration Attributes (env vars, base URLs) |
-| `[TC-FF]` | Feature Flags (toggles and rollout config) |
-| `[TC-CM]` | Component Mapping (UI components to source files) |
-| `[TC-LK]` | Localization Keys (i18n string identifiers) |
-| `[TC-VR]` | Visual References (screen-to-component mapping) |
-| `[TC-SF]` | Screen Flow (route diagram with URLs) |
-| `[TC-MSW]` | MSW Handlers (mock service worker test fixtures) |
+**Format**: `[V1]`, `[V2]`, `[V3]`, etc. — sequential across all endpoints in the PRD.
 
-Flexible anchors (initiative-specific, one per API endpoint consumed):
+**First-use rule**: The first time a semantic name appears in an FR or AC, it gets a `[V#]` marker. Subsequent uses of the same term do not repeat the marker.
 
-| Pattern | Example | Section |
-|---------|---------|---------|
-| `[TC-{XX}]` | `[TC-AM]` | Per-endpoint Field Mapping (Activity Mapping) |
-| | `[TC-RM]` | Per-endpoint Field Mapping (Recipient Mapping) |
-| | `[TC-UM]` | Per-endpoint Field Mapping (User Mapping) |
+**Example**:
+```
+- FR-001: System MUST display the transaction identifier [V1] and delivery method label [V2].
+- FR-002: System MUST display the transaction identifier and the transaction status [V3].
+```
 
-The prd-writer creates flexible anchors based on the initiative's data sources. The 2-letter code should be a mnemonic for the endpoint's semantic name.
+Each `[V#]` resolves to exactly one row in a per-endpoint vocabulary table:
+
+```
+### GET /v1/transactions/{id}
+
+#### Vocabulary
+
+| V# | Semantic Name | API Field | Type | Required | Notes |
+|----|---------------|-----------|------|----------|-------|
+| V1 | transaction identifier | tx_id | string | yes | |
+| V2 | delivery method label | delivery_method_alias | string | no | |
+| V3 | transaction status | status | string | yes | |
+```
+
+V-numbers are local to a single PRD. Vocabulary files (`semantic-vocabulary/`) provide the cross-initiative source of truth for semantic names. The writer copies entries from vocabulary files into the PRD's tables, assigning V-numbers. The PRD is self-contained.
 
 ## Detection
 
@@ -62,7 +62,7 @@ The prd-reviewer detects violations using the "Behavioral/Technical Separation S
 
 ## This Rule Applies To
 
-- **prd-writer**: MUST produce separated Behavioral/Technical Contracts with `[TC-*]` cross-references
+- **prd-writer**: MUST produce separated Behavioral/Technical Contracts with `[V#]` vocabulary references
 - **prd-reviewer**: MUST check for separation violations in FRs, ACs, and Edge Cases (FAIL for FRs/ACs, WARN for Edge Cases)
 - **All agents**: MUST NOT embed technical details in the behavioral layer when writing or revising PRDs
 
