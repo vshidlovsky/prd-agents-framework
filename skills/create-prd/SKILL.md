@@ -157,9 +157,9 @@ echo "gate2_prompt=$(date +%s)" >> "$TIMING_FILE"
 ```
 Update state file — set `currentPhase: "gate2"`.
 
-Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."**
+**Cycle 1 (first draft)**: Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."** If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
 
-If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
+**Cycle 2+ (revision)**: Skip the human gate — the writer just fixed reviewer FAILs, no user review needed. Tell the user: **"Writer revised the PRD — running reviewer automatically."** Proceed directly to Phase 3.
 
 If run logging is enabled:
 ```bash
