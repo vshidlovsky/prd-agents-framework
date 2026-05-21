@@ -11,7 +11,7 @@
 
 #### Entry Points
 
-- [How users reach this feature — e.g., "Tap 'Send Money' on Home screen" or "Navigate to /settings/notifications"]
+- [How users reach this feature — e.g., "Tap 'New Order' on Dashboard" or "Navigate to /settings/notifications"]
 
 #### Back / Dismiss Behavior
 

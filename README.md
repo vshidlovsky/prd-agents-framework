@@ -101,7 +101,7 @@ For **greenfield projects** with no code yet: tell the setup agent your planned 
 ### 4. Start writing PRDs
 
 ```
-/create-prd payment-processing
+/create-prd search-filters
 ```
 
 ## How It Works
@@ -134,10 +134,10 @@ Human gates between every phase. Nothing runs without your approval.
 ### Output
 
 ```
-docs/initiatives/payment-processing/
-├── payment-processing-research.md     # Codebase research (one file, includes custom step results)
-├── payment-processing-prd.md          # The PRD
-├── payment-processing-prd-review.md   # Review with PASS/FAIL verdicts
+docs/initiatives/search-filters/
+├── search-filters-research.md     # Codebase research (one file, includes custom step results)
+├── search-filters-prd.md          # The PRD
+├── search-filters-prd-review.md   # Review with PASS/FAIL verdicts
 └── runs/
     └── run-20260513-103000.json       # Run log (timing, models, quality metrics)
 ```
@@ -147,9 +147,9 @@ All agents commit their output. Nothing is pushed automatically.
 ### Individual agents (manual control)
 
 ```
-Run the researcher agent on "payment-processing"
-Run the prd-writer agent on "payment-processing"
-Run the prd-reviewer agent on "payment-processing"
+Run the researcher agent on "search-filters"
+Run the prd-writer agent on "search-filters"
+Run the prd-reviewer agent on "search-filters"
 ```
 
 Each agent reads `.claude/project-context.md` on every run.
@@ -198,12 +198,12 @@ Add project-specific research steps in `docs/research-steps/`. Each step tells t
 Add domain-specific review rules under **Project-Specific Review Checks** in `project-context.md`. One table per check:
 
 ```markdown
-#### Financial Safety
+#### Data Integrity
 | # | Check Item |
 |---|-----------|
-| 1 | All money fields use integer cents, no floats |
+| 1 | All numeric fields use appropriate precision (no floating-point for exact values) |
 | 2 | Every mutation has an idempotency key |
-| 3 | No optimistic updates on financial mutations |
+| 3 | No optimistic updates on critical mutations |
 ```
 
 ### Model profiles

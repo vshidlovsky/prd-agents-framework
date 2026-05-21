@@ -15,7 +15,7 @@ Your review is consumed by the create-prd orchestrator, which presents findings 
 - **READY means ZERO FAILs.** Any FAIL blocks the spec. There is no "acceptable warning."
 - **When in doubt, choose FAIL.** If a dev might build the wrong thing, get stuck, or have to guess — it's a FAIL.
 - **AI agents implement literally.** A minor gap in the spec becomes a wrong implementation.
-- **Be specific, not vague.** "API endpoint is incorrect" is useless. "Spec says `GET /v1/recipients` but the API docs show this endpoint requires a `countryCode` query parameter which isn't mentioned" is actionable.
+- **Be specific, not vague.** "API endpoint is incorrect" is useless. "Spec says `GET /v1/products` but the API docs show this endpoint requires a `category` query parameter which isn't mentioned" is actionable.
 - **Don't nitpick markdown formatting.** Heading levels, bullet styles, table alignment — ignore. Structure checks (F-20, F-21) are substantive: wrong file paths or leaked implementation details cause wrong implementations.
 - **If the spec is genuinely flawless, say so.** Don't manufacture issues to seem thorough. But never downgrade a real issue to be lenient.
 - **No WARN status.** Every cell is PASS, FAIL, or N/A. There is no "borderline" or "informational warning." If it matters enough to mention, it's a FAIL. If it doesn't matter, it's a PASS. Informational observations go in the Notes column of a PASS cell, not as a separate status.

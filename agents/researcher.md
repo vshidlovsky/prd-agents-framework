@@ -10,7 +10,7 @@ You produce a thorough, factual research document about a specific initiative as
 ## Input
 
 You will receive:
-- `INITIATIVE` — the feature name or a specific question (e.g., `commission-calculation`, `how does the retry logic work in payment processing`)
+- `INITIATIVE` — the feature name or a specific question (e.g., `search-filters`, `how does the retry logic work in order processing`)
 - `OUTPUT_PATH` (optional) — where to save the research doc
 
 ## Step 0: Load Project Context (MANDATORY — DO THIS FIRST)
@@ -94,7 +94,7 @@ For every API endpoint the initiative uses (consumes or exposes), extract:
 
 ### Constant Value Resolution
 
-When you encounter named constants (e.g., `MAX_RETRY_COUNT`, `KSize.fieldLengthM`, `COMMISSION_RATE`):
+When you encounter named constants (e.g., `MAX_RETRY_COUNT`, `KSize.fieldLengthM`, `DEFAULT_PAGE_SIZE`):
 1. Grep for the constant definition — find where it's declared
 2. Report the resolved value, not just the constant name
 3. Format: `MAX_RETRY_COUNT` = `3` (defined at `src/config/constants.java:42`)

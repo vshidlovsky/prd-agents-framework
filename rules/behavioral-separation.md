@@ -11,7 +11,7 @@ A requirement passes the behavioral test if a QA engineer can verify it without 
 Contains: FRs, ACs, Edge Cases, Key Entities, Success Criteria, Security, Accessibility, Compliance, Support/Observability.
 
 Rules for this layer:
-- Use **semantic concept names** for data attributes (e.g., "transaction identifier" not `tx_id`)
+- Use **semantic concept names** for data attributes (e.g., "order identifier" not `order_id`)
 - Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract
 - Each semantic name maps to exactly one API field — if ambiguous, make it more specific
 - **Use vocabulary files when they exist** — if `semantic-vocabulary/` contains a file for an endpoint, use the semantic names defined there. Do not invent alternatives for fields that already have vocabulary entries. See `rules/semantic-vocabulary.md`
@@ -38,22 +38,22 @@ FRs and ACs use `[V#]` markers to link semantic names to their definitions in pe
 
 **Example**:
 ```
-- FR-001: System MUST display the transaction identifier [V1] and delivery method label [V2].
-- FR-002: System MUST display the transaction identifier and the transaction status [V3].
+- FR-001: System MUST display the order identifier [V1] and shipping method label [V2].
+- FR-002: System MUST display the order identifier and the order status [V3].
 ```
 
 Each `[V#]` resolves to exactly one row in a per-endpoint vocabulary table:
 
 ```
-### GET /v1/transactions/{id}
+### GET /v1/orders/{id}
 
 #### Vocabulary
 
 | V# | Semantic Name | API Field | Type | Required | Notes |
 |----|---------------|-----------|------|----------|-------|
-| V1 | transaction identifier | tx_id | string | yes | |
-| V2 | delivery method label | delivery_method_alias | string | no | |
-| V3 | transaction status | status | string | yes | |
+| V1 | order identifier | order_id | string | yes | |
+| V2 | shipping method label | shipping_method_code | string | no | |
+| V3 | order status | status | string | yes | |
 ```
 
 V-numbers are local to a single PRD. Vocabulary files (`semantic-vocabulary/`) provide the cross-initiative source of truth for semantic names. The writer copies entries from vocabulary files into the PRD's tables, assigning V-numbers. The PRD is self-contained.

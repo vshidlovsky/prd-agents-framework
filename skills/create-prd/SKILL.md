@@ -54,13 +54,13 @@ These names are stable across revision cycles. The reviewer reads the writer's h
 Before spending time on research, analyze the initiative brief (`{argument}`) for ambiguity. Ask the user **2-4 framing questions** to lock down scope before the researcher starts. This prevents misdirected research.
 
 Focus on:
-- **Ambiguous terms**: Does the initiative name map to one specific feature, or could it mean multiple things? (e.g., "payment processing" could mean adding a new payment method, building the processing pipeline, or adding transaction history)
+- **Ambiguous terms**: Does the initiative name map to one specific feature, or could it mean multiple things? (e.g., "notifications" could mean adding push notifications, building the notification preferences page, or adding an in-app notification center)
 - **Scope boundaries**: Is this a full feature or a slice? New build or extension of existing behavior?
 - **Target users/systems**: Who or what is this for? (e.g., end users, internal ops, another service)
 
 **Format**: Present each question with your best guess based on the initiative name and what you know about the project from project-context.md:
 > "Before I research, a few quick scope questions:
-> 1. 'Payment processing' — does this mean (a) adding a new payment method to the existing checkout, (b) building the backend processing pipeline, or (c) both? I'm guessing (a) based on the project type.
+> 1. 'Notifications' — does this mean (a) adding push notifications to existing flows, (b) building the notification preferences page, or (c) both? I'm guessing (a) based on the project type.
 > 2. Is this for all users or a specific segment?
 
 If the user provides a detailed brief (more than 2 sentences with clear scope), you may skip this phase — the brief itself answers the framing questions. Say: **"Your brief is clear on scope — moving straight to research."**

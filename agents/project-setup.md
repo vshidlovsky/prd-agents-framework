@@ -113,9 +113,9 @@ The Domain Glossary in project-context.md is read by the writer before every PRD
 - **Model/entity class names**: search source directories for class definitions, data classes, or type definitions that look domain-specific (not framework types like `Controller`, `Repository`, `Widget`)
 - **Feature flag names**: search for feature flag constants or remote config keys
 - **API entity names**: scan API docs (from Step 4) for request/response object names that differ from what the UI or code calls them
-- **Constants and enums**: look for domain-specific constants (status codes, transaction types, user roles)
+- **Constants and enums**: look for domain-specific constants (status codes, order types, user roles)
 
-Compile a candidate list of terms that appear domain-specific. For each, note where you found it and whether multiple names seem to refer to the same concept (e.g., `IMTU` in code vs "mobile recharge" in UI copy vs "top up" in user-facing strings).
+Compile a candidate list of terms that appear domain-specific. For each, note where you found it and whether multiple names seem to refer to the same concept (e.g., `SKU` in code vs "product" in UI copy vs "item" in user-facing strings).
 
 **Present candidates and ask the user:**
 
@@ -183,7 +183,7 @@ If the user says skip, set the "Shared requirements" path in project-context.md 
 
 Ask the user:
 
-**"Would you like to set up semantic vocabulary files? These map API field names to human-readable names used in PRD requirements — preventing writers from using raw API terms like `tx_id` in behavioral requirements. Each endpoint gets its own vocabulary file, and entries are copied into PRD vocabulary tables with V-numbers.**
+**"Would you like to set up semantic vocabulary files? These map API field names to human-readable names used in PRD requirements — preventing writers from using raw API terms like `order_id` in behavioral requirements. Each endpoint gets its own vocabulary file, and entries are copied into PRD vocabulary tables with V-numbers.**
 
 **If yes, I'll create the `semantic-vocabulary/` directory.**
 

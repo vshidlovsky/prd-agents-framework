@@ -11,8 +11,8 @@ If the user says "skip", "none", or does not approve — write nothing.
 Each API endpoint gets its own file in `semantic-vocabulary/`. The naming convention converts the endpoint to a filename: lowercase HTTP method + path with `/` replaced by `-` and `{param}` replaced by the param name.
 
 Examples:
-- `GET /v1/transactions/{id}` → `semantic-vocabulary/get-v1-transactions-id.md`
-- `POST /v1/recipients` → `semantic-vocabulary/post-v1-recipients.md`
+- `GET /v1/orders/{id}` → `semantic-vocabulary/get-v1-orders-id.md`
+- `POST /v1/customers` → `semantic-vocabulary/post-v1-customers.md`
 
 Each file contains a mapping table from API field names to semantic concept names used in the behavioral layer of PRDs.
 
