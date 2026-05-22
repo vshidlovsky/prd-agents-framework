@@ -69,13 +69,16 @@
 ### Output Paths
 
 > GUIDE: Where agents save their output files and find templates.
+> **Directory convention**: Each initiative gets a folder. Only the PRD lives at the root of that folder.
+> All other artifacts (research docs, reviews, handoff JSONs, Q&A logs, run state) go into an `_artifacts/` subdirectory.
+> This keeps the initiative folder clean — a quick `ls` shows only the deliverable.
 
 - **PRD template**: [e.g., `docs/prd-template.md`]
 - **Section packs directory**: [e.g., `docs/prd-sections/`]
-- **Research docs**: [e.g., `docs/initiatives/{initiative}/{initiative}-research.md`]
+- **Research docs**: [e.g., `docs/initiatives/{initiative}/_artifacts/{initiative}-research.md`]
 - **PRDs**: [e.g., `docs/initiatives/{initiative}/{initiative}-prd.md`]
-- **Reviews**: [e.g., `docs/initiatives/{initiative}/{initiative}-prd-review.md`]
-- **Handoff files**: [same directory as the PRD, `.json` extension]
+- **Reviews**: [e.g., `docs/initiatives/{initiative}/_artifacts/{initiative}-prd-review.md`]
+- **Handoff files**: [`_artifacts/` subdirectory of the initiative folder, `.json` extension]
 - **Lessons**: `.claude/prd-lessons.md` (reviewer proposes in review doc, user must explicitly approve before any lesson is written)
 - **Glossary**: Domain Glossary table in `project-context.md` (writer and reviewer propose terms, user must explicitly approve before any term is added — see `rules/domain-glossary.md`)
 - **Semantic vocabulary**: `semantic-vocabulary/` (per-endpoint vocabulary files mapping API fields to semantic names — see `rules/semantic-vocabulary.md`). Writer and reviewer propose entries; user must explicitly approve before any entry is written.

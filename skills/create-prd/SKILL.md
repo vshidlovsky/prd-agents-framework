@@ -11,14 +11,17 @@ Run the full PRD workflow for `{argument}`.
 ## Pre-flight
 
 1. Read `.claude/project-context.md` — confirm it exists and is filled in. If it doesn't exist, STOP and tell the user: "You need to set up `.claude/project-context.md` first. Copy the template from the framework and fill it in for your project."
-2. Confirm the initiative directory exists or create it at the output path specified in project-context.md.
+2. Confirm the initiative directory exists or create it at the output path specified in project-context.md. Also create the `_artifacts/` subdirectory:
+   ```bash
+   mkdir -p "{initiative_dir}/_artifacts"
+   ```
 3. Read the **Model Profile** table from project-context.md. Extract the `Model` column for each agent row. Store as `MODEL_MAP` — a lookup from agent name to model (e.g., `researcher → sonnet`, `prd-writer → opus`). If the Model Profile section is missing, default all agents to `opus`.
 4. Check if **Run Logs** are enabled in project-context.md. If enabled:
    ```bash
    RUN_ID=$(date -u +%Y%m%d-%H%M%S)
    LOG_FILE=".claude/prd-run-log.jsonl"
-   STATE_FILE="{initiative_dir}/.run-state.json"
-   TIMING_FILE="{initiative_dir}/.run-timing.tmp"
+   STATE_FILE="{initiative_dir}/_artifacts/.run-state.json"
+   TIMING_FILE="{initiative_dir}/_artifacts/.run-timing.tmp"
    echo "pipeline_start=$(date +%s) $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$TIMING_FILE"
    ```
    Record the profile name (from the `Profile` field in Model Profile) for the run log.
@@ -43,9 +46,9 @@ Run the full PRD workflow for `{argument}`.
 
 ### Handoff file naming convention
 
-All agents use this naming pattern — files go in the same directory as the PRD:
-- Writer handoff: `{initiative}-prd-handoff.json`
-- Reviewer handoff: `{initiative}-prd-review-handoff.json` (or `{initiative}-prd-review-v{N}-handoff.json` if versioned)
+All agents use this naming pattern — files go in the `_artifacts/` subdirectory of the initiative folder:
+- Writer handoff: `_artifacts/{initiative}-prd-handoff.json`
+- Reviewer handoff: `_artifacts/{initiative}-prd-review-handoff.json` (or `_artifacts/{initiative}-prd-review-v{N}-handoff.json` if versioned)
 
 These names are stable across revision cycles. The reviewer reads the writer's handoff by this name. Neither agent overwrites the other's file.
 
@@ -191,7 +194,7 @@ If run logging is enabled: `echo "review_scaffold_end=$(date +%s)" >> "$TIMING_F
 
 After the reviewer returns, check if a dispatch file exists:
 ```bash
-cat {initiative_dir}/{argument}-review-dispatch.json 2>/dev/null
+cat {initiative_dir}/_artifacts/{argument}-review-dispatch.json 2>/dev/null
 ```
 
 - **If no dispatch file**: the reviewer completed in single-agent mode. The review file and handoff are done. Skip to Gate 3.
@@ -226,7 +229,7 @@ If run logging is enabled: `echo "review_dispatch_end=$(date +%s)" >> "$TIMING_F
 If run logging is enabled, read each sub-agent's timing file before cleanup:
 ```bash
 for agent in api structure flow requirements smells; do
-  TFILE="{initiative_dir}/{argument}-review-${agent}.md.timing"
+  TFILE="{initiative_dir}/_artifacts/{argument}-review-${agent}.md.timing"
   if [ -f "$TFILE" ]; then
     while IFS='=' read -r key val; do
       echo "subagent_${agent}_${key}=${val}" >> "$TIMING_FILE"
@@ -263,9 +266,9 @@ After the reviewer returns from Phase 3, verify the commit succeeded before dele
 ```bash
 # Only clean up if the reviewer's commit landed
 if git log --oneline -1 | grep -q "{argument}.*PRD review"; then
-  rm -f {initiative_dir}/*-review-prompt-*.md {initiative_dir}/*-review-dispatch.json
-  rm -f {initiative_dir}/*-review-api.md {initiative_dir}/*-review-structure.md {initiative_dir}/*-review-flow.md {initiative_dir}/*-review-requirements.md {initiative_dir}/*-review-smells.md
-  rm -f {initiative_dir}/*-review-*.md.timing
+  rm -f {initiative_dir}/_artifacts/*-review-prompt-*.md {initiative_dir}/_artifacts/*-review-dispatch.json
+  rm -f {initiative_dir}/_artifacts/*-review-api.md {initiative_dir}/_artifacts/*-review-structure.md {initiative_dir}/_artifacts/*-review-flow.md {initiative_dir}/_artifacts/*-review-requirements.md {initiative_dir}/_artifacts/*-review-smells.md
+  rm -f {initiative_dir}/_artifacts/*-review-*.md.timing
 else
   echo "WARNING: Review commit not found — keeping sub-agent files for debugging."
 fi

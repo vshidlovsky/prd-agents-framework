@@ -135,11 +135,12 @@ Human gates between every phase. Nothing runs without your approval.
 
 ```
 docs/initiatives/search-filters/
-├── search-filters-research.md     # Codebase research (one file, includes custom step results)
-├── search-filters-prd.md          # The PRD
-├── search-filters-prd-review.md   # Review with PASS/FAIL verdicts
-└── runs/
-    └── run-20260513-103000.json       # Run log (timing, models, quality metrics)
+├── search-filters-prd.md              # The PRD (only deliverable at root)
+└── _artifacts/
+    ├── search-filters-research.md     # Codebase research
+    ├── search-filters-prd-review.md   # Review with PASS/FAIL verdicts
+    ├── search-filters-prd-handoff.json
+    └── search-filters-prd-review-handoff.json
 ```
 
 All agents commit their output. Nothing is pushed automatically.

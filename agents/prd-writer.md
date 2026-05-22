@@ -41,7 +41,7 @@ Read the initiative idea or brief provided by the user.
 
 ## Step 2: Research (conditional)
 
-Check for a research document first — look for `{initiative}-research.md` in the initiative directory.
+Check for a research document first — look for `{initiative}-research.md` in the `_artifacts/` subdirectory of the initiative directory.
 
 **If a research document exists**: skip codebase research. Use the research doc as your primary source for existing behavior, API endpoints, business logic, and codebase patterns. Only do targeted lookups if a specific question from Step 3 isn't answered by the research.
 
@@ -101,9 +101,9 @@ If a research document exists, skip questions already resolved (`RESOLVED`) by t
 
 ### Q&A Log
 
-After all questions are answered and before proceeding to Step 4, save the complete Q&A exchange as a JSON file in the initiative directory:
+After all questions are answered and before proceeding to Step 4, save the complete Q&A exchange as a JSON file in the `_artifacts/` subdirectory:
 
-**File**: `{initiative}-writer-qa.json`
+**File**: `_artifacts/{initiative}-writer-qa.json`
 
 ```json
 {
@@ -294,7 +294,7 @@ Provide a **HANDOFF SUMMARY** to the user:
 
 After completing the spec, write a structured JSON handoff file so the prd-reviewer can reliably parse your output.
 
-Save to the same directory as the PRD:
+Save to the `_artifacts/` subdirectory of the initiative directory:
 
 ```json
 {

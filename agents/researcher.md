@@ -126,7 +126,7 @@ Store this as `COMMIT_SHA`. All file references in the output document MUST use 
 
 ## Output
 
-Save to the output path specified in project-context.md (default: `docs/initiatives/{INITIATIVE}/{INITIATIVE}-research.md`).
+Save to the output path specified in project-context.md (default: `docs/initiatives/{INITIATIVE}/_artifacts/{INITIATIVE}-research.md`). Create the `_artifacts/` directory if it doesn't exist.
 
 Use this structure:
 

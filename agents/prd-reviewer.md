@@ -24,7 +24,7 @@ Your review is consumed by the create-prd orchestrator, which presents findings 
 
 ## Step 0: Determine Initiative & Validate Project Context
 
-The `{initiative}` name is provided by the caller (skill prompt or user). It drives all file patterns in this spec (`{initiative}-prd-v*.md`, `{initiative}-review-*.md`, etc.). If the caller's prompt does not include an initiative name, ask for it before proceeding.
+The `{initiative}` name is provided by the caller (skill prompt or user). It drives all file patterns in this spec. PRD files live at the initiative directory root (`{initiative}-prd-v*.md`). All other artifacts (reviews, handoffs, temporary files) live in the `_artifacts/` subdirectory (`_artifacts/{initiative}-review-*.md`, `_artifacts/{initiative}-prd-handoff.json`, etc.). If the caller's prompt does not include an initiative name, ask for it before proceeding.
 
 Verify project-context.md exists:
 
@@ -59,9 +59,9 @@ Record all file paths — you will pass them to sub-reviewers.
 
 ## Step 2: Read the Spec
 
-Find and read the latest PRD. If the project uses versioned filenames, find the latest version:
+Find and read the latest PRD. PRDs live at the initiative directory root. If the project uses versioned filenames, find the latest version:
 ```bash
-ls {prd_directory}/{initiative}-prd-v*.md 2>/dev/null | sort -t v -k 2 -n | tail -1
+ls {initiative_dir}/{initiative}-prd-v*.md 2>/dev/null | sort -t v -k 2 -n | tail -1
 ```
 
 If no versioned file exists, fall back to `{initiative}-prd.md`.
@@ -70,9 +70,9 @@ If no PRD is found, STOP. Tell the orchestrator: "No PRD found for initiative {n
 
 ### Step 2.1: Re-review Detection
 
-Check if a previous review exists for this initiative:
+Check if a previous review exists for this initiative (reviews live in `_artifacts/`):
 ```bash
-ls {review_directory}/{initiative}-prd-review*.md 2>/dev/null | sort -t v -k 2 -n | tail -1
+ls {initiative_dir}/_artifacts/{initiative}-prd-review*.md 2>/dev/null | sort -t v -k 2 -n | tail -1
 ```
 
 If a previous review exists:
@@ -98,7 +98,7 @@ If no previous review exists, proceed with full analysis (all cells `[PENDING]`,
 
 ## Step 3: Read Handoff File
 
-If a handoff file exists from the prd-writer, read it. Extract key fields: `prdPath`, `apiEndpoints`, `existingCodeReferenced`. Use `apiEndpoints` to pre-populate Matrix A rows in Phase 1 (one row per listed endpoint). Use `existingCodeReferenced` paths as additional inputs for Agent 1 when verifying endpoints against code.
+If a handoff file exists from the prd-writer (in `_artifacts/`), read it. Extract key fields: `prdPath`, `apiEndpoints`, `existingCodeReferenced`. Use `apiEndpoints` to pre-populate Matrix A rows in Phase 1 (one row per listed endpoint). Use `existingCodeReferenced` paths as additional inputs for Agent 1 when verifying endpoints against code.
 
 Use `apiEndpoints` to load vocabulary files for each endpoint:
 - Convert each endpoint to a vocabulary filename (lowercase method + path with `/` → `-`, `{param}` → param name)
@@ -397,13 +397,13 @@ All three MUST be plain integers. `TOTAL_CELLS` = `SUB_AGENT_CELLS` + `ORCHESTRA
 The skill prompt tells you: "If parallel mode, write prompt files and dispatch JSON, then STOP." This path applies when that instruction is present AND you determined `REVIEW_MODE: parallel` in Step 6.1.1. The create-prd skill handles sub-agent dispatch because nested Agent calls are not supported. In this path:
 
 1. Construct each sub-agent prompt (see prompt construction rules below)
-2. Write each prompt to a file in the initiative directory:
-   - `{initiative}-review-prompt-api.md`
-   - `{initiative}-review-prompt-structure.md`
-   - `{initiative}-review-prompt-flow.md`
-   - `{initiative}-review-prompt-requirements.md`
-   - `{initiative}-review-prompt-smells.md`
-3. Write `{initiative}-review-dispatch.json`:
+2. Write each prompt to a file in the `_artifacts/` subdirectory:
+   - `_artifacts/{initiative}-review-prompt-api.md`
+   - `_artifacts/{initiative}-review-prompt-structure.md`
+   - `_artifacts/{initiative}-review-prompt-flow.md`
+   - `_artifacts/{initiative}-review-prompt-requirements.md`
+   - `_artifacts/{initiative}-review-prompt-smells.md`
+3. Write `_artifacts/{initiative}-review-dispatch.json`:
    ```json
    {
      "reviewMode": "parallel",
@@ -420,18 +420,18 @@ The skill prompt tells you: "If parallel mode, write prompt files and dispatch J
        "smells": "<model from review-smells row>"
      },
      "promptFiles": {
-       "api": "<absolute path>-review-prompt-api.md",
-       "structure": "<absolute path>-review-prompt-structure.md",
-       "flow": "<absolute path>-review-prompt-flow.md",
-       "requirements": "<absolute path>-review-prompt-requirements.md",
-       "smells": "<absolute path>-review-prompt-smells.md"
+       "api": "<absolute path to _artifacts>/{initiative}-review-prompt-api.md",
+       "structure": "<absolute path to _artifacts>/{initiative}-review-prompt-structure.md",
+       "flow": "<absolute path to _artifacts>/{initiative}-review-prompt-flow.md",
+       "requirements": "<absolute path to _artifacts>/{initiative}-review-prompt-requirements.md",
+       "smells": "<absolute path to _artifacts>/{initiative}-review-prompt-smells.md"
      },
      "outputFiles": {
-       "api": "<absolute path>-review-api.md",
-       "structure": "<absolute path>-review-structure.md",
-       "flow": "<absolute path>-review-flow.md",
-       "requirements": "<absolute path>-review-requirements.md",
-       "smells": "<absolute path>-review-smells.md"
+       "api": "<absolute path to _artifacts>/{initiative}-review-api.md",
+       "structure": "<absolute path to _artifacts>/{initiative}-review-structure.md",
+       "flow": "<absolute path to _artifacts>/{initiative}-review-flow.md",
+       "requirements": "<absolute path to _artifacts>/{initiative}-review-requirements.md",
+       "smells": "<absolute path to _artifacts>/{initiative}-review-smells.md"
      },
      "previousReview": {
        "exists": false,
@@ -483,15 +483,15 @@ TIMING (for run logs):
 
 ### Sub-agent output files
 
-Each sub-agent writes to the **same directory as the review output file** (from project-context.md output paths). Use absolute paths when passing output file paths to sub-agents.
+Each sub-agent writes to the `_artifacts/` subdirectory. Use absolute paths when passing output file paths to sub-agents.
 
 | Agent | Output File | Matrices |
 |-------|------------|----------|
-| Agent 1: API Reviewer | `{initiative}-review-api.md` | A |
-| Agent 2: Structure Reviewer | `{initiative}-review-structure.md` | F, G, P |
-| Agent 3: Flow & Edge Case Reviewer | `{initiative}-review-flow.md` | D1, D2, E |
-| Agent 4: Requirements Reviewer | `{initiative}-review-requirements.md` | B, C |
-| Agent 5: Smell Reviewer | `{initiative}-review-smells.md` | S |
+| Agent 1: API Reviewer | `_artifacts/{initiative}-review-api.md` | A |
+| Agent 2: Structure Reviewer | `_artifacts/{initiative}-review-structure.md` | F, G, P |
+| Agent 3: Flow & Edge Case Reviewer | `_artifacts/{initiative}-review-flow.md` | D1, D2, E |
+| Agent 4: Requirements Reviewer | `_artifacts/{initiative}-review-requirements.md` | B, C |
+| Agent 5: Smell Reviewer | `_artifacts/{initiative}-review-smells.md` | S |
 
 ### Sub-agent prompt construction
 
@@ -503,7 +503,7 @@ Each sub-agent writes to the **same directory as the review output file** (from 
 
 If re-review context exists (Step 2.1), include the sub-agent's relevant previous FAILs and changed sections summary.
 
-**Agent 1: API Reviewer** — Matrix A → `{initiative}-review-api.md`
+**Agent 1: API Reviewer** — Matrix A → `_artifacts/{initiative}-review-api.md`
 
 Prompt provides:
 - Core rules with output file path
@@ -512,7 +512,7 @@ Prompt provides:
 - Column definitions: Exists in Docs/Code, Method Correct, Request Params Match, Response Fields Match, Missing Params/Fields
 - Instruction: verify every endpoint against API docs/code. Check exists, method, request shape, response shape. Check for missing endpoints the initiative needs.
 
-**Agent 2: Structure Reviewer** — Matrix F, G, P → `{initiative}-review-structure.md`
+**Agent 2: Structure Reviewer** — Matrix F, G, P → `_artifacts/{initiative}-review-structure.md`
 
 Prompt provides:
 - Core rules with output file path
@@ -527,7 +527,7 @@ Prompt provides:
 - Vocabulary file paths: `{vocabulary_file_paths}`
 - Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above. For separation checks (F-25/F-26/F-27/F-28/F-29), read the separation rule file and vocabulary files, then verify compliance per the guidance above.
 
-**Agent 3: Flow & Edge Case Reviewer** — Matrix D1, D2, E → `{initiative}-review-flow.md`
+**Agent 3: Flow & Edge Case Reviewer** — Matrix D1, D2, E → `_artifacts/{initiative}-review-flow.md`
 
 Prompt provides:
 - Core rules with output file path
@@ -537,7 +537,7 @@ Prompt provides:
 - Note for backend services: rows are request flows or processing stages, not UI screens
 - Instruction: for each screen/state, map flow from all three perspectives (end-user, QA, support). For each entity, check edge case coverage across all columns.
 
-**Agent 4: Requirements Reviewer** — Matrix B, C → `{initiative}-review-requirements.md`
+**Agent 4: Requirements Reviewer** — Matrix B, C → `_artifacts/{initiative}-review-requirements.md`
 
 Prompt provides:
 - Core rules with output file path
@@ -546,7 +546,7 @@ Prompt provides:
 - Column definitions for B (Atomic, Necessary/Story Link, Feasible/API in Technical section, Contradicts FR) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, Implementation Detail Leak) — inline
 - Instruction: For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), and contradictions. Also check FRs for implementation detail leaks — function/utility names and "via someFunction()" patterns are FAILs (FRs must define observable behavior, not delegate to code). For each AC, check testability, FR linkage, state coverage, and implementation detail leaks (same rule — function names are FAILs). Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake). **Do NOT check smell patterns** — smell detection is handled by Agent 5 in Matrix S.
 
-**Agent 5: Smell Reviewer** — Matrix S → `{initiative}-review-smells.md`
+**Agent 5: Smell Reviewer** — Matrix S → `_artifacts/{initiative}-review-smells.md`
 
 Prompt provides:
 - Core rules with output file path
@@ -571,10 +571,10 @@ Agent 4's "Feasible" column checks PRD internal consistency (does the Technical 
 
 ### Sub-agent failure handling
 
-After all agents complete, check each output file:
+After all agents complete, check each output file in `_artifacts/`:
 
 ```bash
-for f in {initiative}-review-api.md {initiative}-review-structure.md {initiative}-review-flow.md {initiative}-review-requirements.md {initiative}-review-smells.md; do
+for f in _artifacts/{initiative}-review-api.md _artifacts/{initiative}-review-structure.md _artifacts/{initiative}-review-flow.md _artifacts/{initiative}-review-requirements.md _artifacts/{initiative}-review-smells.md; do
   echo "$f: $(grep -c '\[PENDING\]' "$f" 2>/dev/null || echo 'MISSING')"
 done
 ```
@@ -592,7 +592,7 @@ Note: this check covers the 5 sub-agent files only (`SUB_AGENT_CELLS`). Matrix H
 
 When the skill calls you with "Run Phase 3 only," you are a fresh agent with no memory of Phase 1. The skill's prompt provides the dispatch file path. Before proceeding to Step 8:
 
-1. Read the dispatch file at the path provided in the skill's prompt (fall back to `{initiative}-review-dispatch.json` in the initiative directory if no path given)
+1. Read the dispatch file at the path provided in the skill's prompt (fall back to `_artifacts/{initiative}-review-dispatch.json` in the initiative directory if no path given)
 2. Re-read `.claude/project-context.md` — extract all paths and configuration
 3. Re-read `.claude/prd-lessons.md` if it exists
 4. Re-read the PRD (path from dispatch JSON or project-context.md)
@@ -606,12 +606,12 @@ For each sub-agent output file, locate filled matrices by their section markers 
 
 **Header validation**: Before replacing, verify the sub-agent's matrix header matches the scaffold's header exactly (e.g., `**Matrix A: API Endpoints**`). If a sub-agent reformatted the header or wrapped tables in code blocks, normalize the format before inserting. If section markers are missing from the sub-agent output, fall back to matching by the `**Matrix X:` header prefix.
 
-Assembly order:
-1. Read `{initiative}-review-api.md` → replace Matrix A in scaffold
-2. Read `{initiative}-review-structure.md` → replace Matrix F, G, P in scaffold
-3. Read `{initiative}-review-flow.md` → replace Matrix D1, D2, E in scaffold
-4. Read `{initiative}-review-requirements.md` → replace Matrix B, C in scaffold
-5. Read `{initiative}-review-smells.md` → replace Matrix S in scaffold
+Assembly order (all files in `_artifacts/`):
+1. Read `_artifacts/{initiative}-review-api.md` → replace Matrix A in scaffold
+2. Read `_artifacts/{initiative}-review-structure.md` → replace Matrix F, G, P in scaffold
+3. Read `_artifacts/{initiative}-review-flow.md` → replace Matrix D1, D2, E in scaffold
+4. Read `_artifacts/{initiative}-review-requirements.md` → replace Matrix B, C in scaffold
+5. Read `_artifacts/{initiative}-review-smells.md` → replace Matrix S in scaffold
 
 ### 8.1.1: Fill Matrix H (Lesson Checks) — you do this yourself
 
@@ -801,7 +801,7 @@ FAIL_COUNT: [integer — count of FAIL cells across all matrices]
 
 ## Step 9: Write Handoff File
 
-Write a structured JSON handoff file to the same directory as the review.
+Write a structured JSON handoff file to the `_artifacts/` subdirectory (same directory as the review).
 
 Use `date -u +"%Y-%m-%dT%H:%M:%SZ"` for the timestamp — must be actual current time, not midnight.
 
@@ -915,12 +915,12 @@ git log --oneline -1
 
 Only run cleanup if the Step 10 commit succeeded (verified by `git log --oneline -1`). If the commit failed, STOP — do not delete evidence files. Fix the commit first.
 
-Delete sub-agent output files, prompt files, and the dispatch file from the working tree. Use the same directory as the review output file for all paths:
+Delete sub-agent output files, prompt files, and the dispatch file from `_artifacts/`:
 
 ```bash
-rm -f {review_dir}/{initiative}-review-api.md {review_dir}/{initiative}-review-structure.md {review_dir}/{initiative}-review-flow.md {review_dir}/{initiative}-review-requirements.md {review_dir}/{initiative}-review-smells.md
-rm -f {review_dir}/{initiative}-review-prompt-api.md {review_dir}/{initiative}-review-prompt-structure.md {review_dir}/{initiative}-review-prompt-flow.md {review_dir}/{initiative}-review-prompt-requirements.md {review_dir}/{initiative}-review-prompt-smells.md
-rm -f {review_dir}/{initiative}-review-dispatch.json
+rm -f {artifacts_dir}/{initiative}-review-api.md {artifacts_dir}/{initiative}-review-structure.md {artifacts_dir}/{initiative}-review-flow.md {artifacts_dir}/{initiative}-review-requirements.md {artifacts_dir}/{initiative}-review-smells.md
+rm -f {artifacts_dir}/{initiative}-review-prompt-api.md {artifacts_dir}/{initiative}-review-prompt-structure.md {artifacts_dir}/{initiative}-review-prompt-flow.md {artifacts_dir}/{initiative}-review-prompt-requirements.md {artifacts_dir}/{initiative}-review-prompt-smells.md
+rm -f {artifacts_dir}/{initiative}-review-dispatch.json
 ```
 
 ## Step 12: Write Approved Lessons (called by orchestrator only)
