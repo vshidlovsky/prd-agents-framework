@@ -117,6 +117,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **GUIDE**: What the user/caller sees while processing. Cover three distinct cases:
 > - **Initial load**: no cached data exists — what placeholder/skeleton does the user see?
 > - **Background refetch with cached data**: stale time elapsed, refetch in flight, but previous data is on screen — does the UI show cached data unchanged (no skeleton, no spinner), or does it overlay a loading indicator?
+> - **Background refetch failure**: For every read-only endpoint with a refetch policy, include a dedicated AC for background-refetch failure. Default: preserve cached data on-screen, fire a `<feature>_refetch_failed` analytics event, do NOT swap to error state. Make the choice explicit in an AC — do not assume.
 > - **Mutation in-flight**: a write operation is pending — what disables, what spins?
 > For backend services: cover async processing indicators, queue states, or in-flight request states if applicable. Mark `N/A` if the service is purely synchronous with no user-visible wait states.
 
@@ -126,6 +127,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 > **GUIDE**: What happens when something fails. Cover: API errors, auth errors, network failures, validation errors.
 > Applies to all project types — every system has failure modes. Describe error behavior semantically. Don't hardcode error copy.
+> - **Transient vs persistent**: When an error state can result from both transient (transport, 429, 5xx) and persistent (parse_error, content-bug) failures, either (a) specify differentiated copy per class, OR (b) explicitly document in the PRD body that generic copy is intentional with a stated rationale. Silent reliance on generic copy is a defect.
 
 - [ ] **AC-NNN**: [Error behavior].
 
@@ -192,11 +194,17 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **GUIDE**
 > **What**: How errors are categorized for analytics and UI behavior. Defined once, referenced by all error-handling ACs.
 
-| Error Class | Condition | Analytics Properties | UI Behavior |
-|---|---|---|---|
-| Transport error | [when] | [properties] | [behavior] |
-| HTTP error | [when] | [properties] | [behavior] |
-| Schema validation failure | [when] | [properties] | [behavior] |
+| Error Class | Condition | error_status_code | failure_reason | UI Behavior |
+|---|---|---|---|---|
+| Transport error | [when] | 0 | `transport_failure` | [behavior] |
+| HTTP error | [when] | [real HTTP code] | [specific reason] | [behavior] |
+| Schema validation failure | [when] | 200 | `malformed_json` | [behavior] |
+| Content-incomplete | [when] | 200 | `required_field_missing` | [behavior] |
+
+> **Distinctness rule**: Every `(error_status_code, failure_reason)` tuple in this table MUST be unique. If two error classes share the same HTTP status, they MUST have distinct `failure_reason` values. Specifically:
+> - Guard-triggered failures (duplicate cursor, loop detection, client-side validation) must NOT reuse a `failure_reason` already assigned to a server-returned error class.
+> - "Structurally valid but content-incomplete" (HTTP 200, required field empty/null) is distinct from "schema validation failure" (malformed JSON). Never collapse both into a single `parse_error`.
+> - For numeric `error_status_code`: `0` for transport failures, real HTTP codes for HTTP responses. Use `failure_reason` to disambiguate within a status code.
 
 ---
 
@@ -236,7 +244,8 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ### Configuration Attributes
 
-> **GUIDE**: Environment-specific config (base URLs, feature endpoints, etc.)
+> **GUIDE**: Environment-specific config (base URLs, API prefixes, application IDs, timeout values, etc.).
+> PRDs MUST NOT hardcode base URLs or environment-specific hostnames in endpoint specifications. Endpoint paths in the Technical section MUST be specified relative to a named configuration attribute (e.g., "`<BFF_BASE_URL>/v1/config`" rather than "`/v1/config`" or "`api-dev.example.com/money-transfer/v1/config`"). This makes it explicit which client/prefix each endpoint belongs to and eliminates environment-switching guesswork.
 
 | Attribute | Description | Example value (dev) |
 |-----------|-------------|---------------------|
@@ -325,7 +334,7 @@ None — all questions resolved.
 > **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
 
 > **GUIDE**
-> **When**: Any feature that reads, displays, transmits, or stores auth tokens, PII (names, phone numbers, emails, avatars, account numbers), payment data, or sensitive state. "Touching" includes read-only display — a dashboard showing user names and passing customer data via router state triggers this section.
+> **When**: Any feature that reads, displays, transmits, or stores auth tokens, PII (names, phone numbers, emails, avatars, account numbers), payment data, or sensitive state. "Touching" includes read-only display — a dashboard showing user names and passing recipient data via router state triggers this section.
 > **What**: Security requirements specific to this initiative — what must NOT be logged, exposed in URLs, persisted in browser storage, or sent in analytics.
 
 ---
@@ -335,8 +344,18 @@ None — all questions resolved.
 > **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
 
 > **GUIDE**
-> **When**: Features with degraded states that have no user-visible distinguisher (e.g., silent background failures, identical error copy for different failure classes).
-> **What**: Symptom-to-query mappings for support engineers. Documents which analytics events to query, how to distinguish failure classes, and proactive workflows for states the user won't report.
+> **When**: Features with degraded states that have no user-visible distinguisher (e.g., silent background failures, identical error copy for different failure classes), OR features where the on-screen signal collapses multiple underlying classes into one user-facing message.
+> **What**: Symptom-to-query mappings for support engineers. This section is MANDATORY when any of these conditions hold.
+>
+> **Required sub-sections**:
+>
+> 1. **Silent-state workflows**: For every FR/AC with "fail silently" / "silently suppress" / "no visible change" behavior, include: (a) the analytics event that is the SOLE signal of this state, (b) the user-reported symptom that should trigger a proactive support query, (c) explicit note: "this state has no UI signal — query [event] using user_id + timestamp window."
+>
+> 2. **Collapsed-error workflows**: For every page state where N underlying classes produce one user-facing message, include: (a) the user-reported symptom phrase, (b) the analytics query to identify the user + window, (c) property-to-action mapping from each underlying class to a support runbook action, (d) either a visible distinguisher in the UI (error code, correlation ID) OR explicit documentation of the analytics-based support workflow.
+>
+> 3. **Multi-gated suppression**: When a UI element has multiple gates that can suppress it, include a single internal analytics event with a discriminator (`reason` enum) covering every suppression path.
+>
+> 4. **Cross-initiative hand-offs**: When a silent state's analytics is delegated to another initiative, name (a) the specific event name, (b) the specific property/sentinel, (c) the symptom-to-query mapping. Soft hand-offs without a named event are insufficient — log as an Open Question if the owning initiative hasn't defined the event yet.
 
 ---
 

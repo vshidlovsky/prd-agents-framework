@@ -16,6 +16,11 @@
 > - Include event properties when relevant
 > - Check existing events in the codebase first to avoid duplicates
 > - Every event gets a stable ID: AE-001, AE-002, ...
+>
+> **AC-binding rules** (writer):
+> - When an AC fires an analytics event, the AC MUST list every required property on that event, matching the Properties column in this table verbatim. Whenever this table is updated, grep every AC referencing that event and update the AC's property list in the same edit.
+> - For every analytics event whose Trigger describes a successful data outcome (not just a user interaction), add an AC binding the event by name and listing every property. If any event in this table is named by zero ACs, it has no test surface.
+> - ACs MUST reference events by AE-number (e.g., "fires AE-001"), NOT by literal event name inline. This table is the single source of truth for event names and properties; the AC asserts when the event fires and under what conditions.
 
 | # | Event Name | Trigger | Properties | Description |
 |---|---|---|---|---|

@@ -69,7 +69,7 @@ Check for a research document first — look for `{initiative}-research.md` in t
 **After identifying API endpoints** (from research doc or your own research):
 
 7. Load semantic vocabulary files for each identified endpoint:
-   - Convert each endpoint to a filename: lowercase HTTP method + path with `/` replaced by `-` and `{param}` replaced by param name (e.g., `GET /v1/orders/{id}` → `semantic-vocabulary/get-v1-orders-id.md`)
+   - Convert each endpoint to a filename: lowercase HTTP method + path with `/` replaced by `-` and `{param}` replaced by param name (e.g., `GET /v1/transactions/{id}` → `semantic-vocabulary/get-v1-transactions-id.md`)
    - Read each matching vocabulary file that exists
    - Record which endpoints have vocabulary files and which don't
    - For endpoints with vocabulary files: use the semantic names from the file when writing FRs, ACs, Edge Cases, and Key Entities. These entries will be copied into the PRD's per-endpoint vocabulary tables with V-numbers in Step 4
@@ -93,7 +93,7 @@ Ask about:
 If the research document already tagged ambiguities with resolution methods, carry those through — don't re-classify.
 
 Present questions with your recommended answer based on codebase and API research. Example:
-> "The API returns `pricing_tiers` as an array — should we show all tiers upfront or only the tier for the selected plan? I recommend showing only the selected plan's pricing since the selection step comes first."
+> "The API returns `fees_by_payment_method` as an array — should we show all fees upfront or only the fee for the selected method? I recommend showing only the selected method's fee since the selection step comes first."
 
 **Do NOT proceed to Step 4 until all questions are answered.**
 
@@ -135,11 +135,15 @@ If the orchestrator passes a review FAIL list (from prd-reviewer), this is a rev
 2. Read the review's Issues Found section — every numbered FAIL with its matrix-row ID
 3. For each FAIL: make the specific fix described in the "Suggested fix." Do NOT rewrite surrounding sections unless the fix requires it.
 4. Preserve any manual edits the user may have made to the PRD between cycles
-5. Increment the version number (e.g., v1 → v2). Write to a NEW versioned file — never overwrite the previous version.
-6. After fixing all FAILs, re-run the consistency pass (Quality Standard #13)
-7. Skip Steps 1-3 (context, research, and questions are already done)
-8. Proceed to Step 5 (save) and Step 6 (handoff) with the updated PRD
-9. In the handoff file, add a `"previousReviewPath"` field pointing to the review that triggered this revision
+5. **Changelog discipline**:
+   - Every content edit (prose, ACs, FRs, fixtures, response shapes — anything except formatting) MUST be preceded by appending a new changelog row with date, version, author, and a bullet of changes.
+   - Append every new row to the END of the changelog table — rows must read in ascending version order (v1 → v2 → v3 → ...). Never insert a row in the middle.
+   - When a revision drops or renames a screen/view/step, grep the PRD for every reference to the old name (ACs, MA-N rows, edge cases, diagrams) and update them in lockstep. The changelog must list "Cascading rewrites:" with every location updated.
+6. Increment the version number (e.g., v1 → v2). Write to a NEW versioned file — never overwrite the previous version.
+7. After fixing all FAILs, re-run the consistency pass (Quality Standard #13)
+8. Skip Steps 1-3 (context, research, and questions are already done)
+9. Proceed to Step 5 (save) and Step 6 (handoff) with the updated PRD
+10. In the handoff file, add a `"previousReviewPath"` field pointing to the review that triggered this revision
 
 ## Step 4: Draft the Spec
 
@@ -170,7 +174,7 @@ Build the PRD in this order:
 The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Key Entities) describes *what* the system does — observable by users and testers. The **Technical Contract** describes *how* it's built — readable by engineers. A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `rules/behavioral-separation.md` for the full rules.
 
 **When writing the Behavioral Contract (FRs, ACs, Edge Cases, Key Entities):**
-- Use **semantic concept names** for data attributes — "order identifier", not `order_id`
+- Use **semantic concept names** for data attributes — "transaction identifier", not `tx_id`
 - Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract. Do not repeat the marker on subsequent uses of the same term
 - Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
 - **Do not assign V-numbers to non-API concepts** — routing destinations, configuration URLs, client-side state, and other concepts that don't map to an API field do not get `[V#]` markers. Use a consistent semantic name and reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)")
@@ -203,6 +207,9 @@ After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — 
 | Just outside | What happens at min-1 or max+1? |
 | Invalid format | What if the type is wrong (string for number, future date for past-only)? |
 | Stale | What if this value changed between when it was read and when it's used? |
+| Paired input | If a formatter takes two paired inputs (amount + currency, date + locale, value + unit), cover BOTH axes independently AND the paired-missing combination. When Intl.NumberFormat or similar API throws on invalid input, document the fallback. |
+| Storage write failure | For every entity persisted in localStorage/sessionStorage, cover both READ failure and WRITE failure for each persisted key specifically — not for the storage backend as a whole. |
+| Web platform property | When deriving from `navigator.*` / `window.*` / `document.*` / `crypto.*`, the expression must be defensive against the property being undefined. Use nullish-coalescing or try/catch. State the defensive pattern in PRD prose. |
 
 **Per API endpoint:**
 
@@ -221,14 +228,25 @@ After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — 
 |-----------|----------|
 | Indeterminate | What if the condition can't be evaluated (data missing to decide)? |
 | Rapid toggle | What if the condition flips while the user is mid-flow? |
+| Session vs persistence | When a feature has both a same-session guard AND a cross-session persistence rule (e.g., 90-day cooldown), define BOTH gates explicitly: an in-memory session guard AND a persistent storage gate. State which gate fires when storage is unavailable. |
+| Visibility/lifecycle gate | When referencing visibility/focus/lifecycle gates on a SPA route, state whether the gate (a) subscribes to the lifecycle event and re-evaluates, or (b) evaluates only once on mount. SPAs do not auto-remount routes on tab focus. |
+
+**Per UI interaction:**
+
+| Dimension | Question |
+|-----------|----------|
+| Rapid tap / double-submit | For every clickable element, pick exactly one deterministic contract for (a) UI rendering (stack vs dedupe, with debounce window if dedupe) AND (b) analytics event firing count. "Either is acceptable" / "library default" hedges are not allowed. |
+| State transition controls | For every popup/modal/sheet state (default, loading, success, error), enumerate the visibility AND enabled-ness of EVERY interactive control. No "the body is replaced by …" without stating what happens to each existing control. |
+| Internal-view discriminator | When a route hosts multiple internal views toggled by client-side state (no URL change), every screen-view event must carry an enum property naming the active view — or fire distinct per-view events. Without this, support cannot debug which view the user was on. |
 
 **Process:**
-1. Walk each entity through the entity checklist → produces candidate rows
+1. Walk each entity through the entity checklist → produces candidate rows. The walk MUST be mechanical — for every (entity × dimension) cell, either write an edge-case row, mark it N/A with a one-line reason, or note it's covered by another row. Do not stop after the first delivery-method type or first field; walk the full matrix.
 2. Walk each endpoint through the endpoint checklist → produces candidate rows
 3. Walk each conditional FR through the conditional checklist → produces candidate rows
-4. Deduplicate — merge rows that describe the same scenario from different angles
-5. Remove rows that are truly impossible given the system constraints (document why)
-6. Write the survivors into the Edge Cases table
+4. Walk each UI interaction through the interaction checklist → produces candidate rows
+5. Deduplicate — merge rows that describe the same scenario from different angles
+6. Remove rows that are truly impossible given the system constraints (document why)
+7. Write the survivors into the Edge Cases table
 
 This is mechanical, not creative. Every entity × dimension is considered. The reviewer's Matrix E checks these same dimensions — generating them here prevents revision cycles.
 
@@ -255,7 +273,10 @@ If project-context.md specifies versioned filenames:
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
 14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names) and no CSS-level design decisions (layout arrangements prescribing CSS structure, visual treatments) in the behavioral layer. Framework-specific terms belong in TC, but CS jargon describing testable behavior should be rephrased to QA-verifiable language, not relocated. Acceptable: shipped DS component names, behavioral placement ("inline beneath the input"), PM-decided display formats ("MM:SS"), "new browser tab", platform concepts, generic UI vocabulary, enum values in analytics ACs. Use semantic concept names with `[V#]` vocabulary references. See `rules/behavioral-separation.md`.
-15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `orders.status.confirmed` already maps to "Confirmed" in all supported languages, don't create `checkout.status.confirmed` with the same translations.
+15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `transactions.status.paid` already maps to "Paid" in all supported languages, don't create `home.status.paid` with the same translations.
+16. **Gate polarity must match bullet polarity** — when writing a multi-bullet gate FR, the headline MUST match the polarity of the bullets. Positive preconditions ("X is true") → "render when ALL are true." Suppression conditions ("X is false") → "suppress when ANY holds." Never mix polarities within a single gate FR.
+17. **FR atomicity — watch analytics and navigation pairs** — after writing an FR's first sentence, check: is the second sentence a clarification of the SAME capability, or an ADDITIONAL one? If additional, split into two FRs. Analytics-firing rules and navigation-affordance rules are almost always separate capabilities, even when they feel "obviously related" to the primary behavior.
+18. **ACs must bind success events, not just failures** — for every analytics event whose Trigger describes a successful data outcome (not just a user interaction), the writer MUST add an AC binding the event by name and listing every property. When the Analytics Events table is edited, grep ACs for every event name — if any event is named by zero ACs, add a binding AC.
 
 ## Step 5: Save and Summarize
 
