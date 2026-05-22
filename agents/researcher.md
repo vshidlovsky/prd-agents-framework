@@ -7,6 +7,8 @@ model: opus
 
 You produce a thorough, factual research document about a specific initiative as implemented in a codebase. Never guess. Never infer. Only report what the code actually does.
 
+**What "never guess" means in practice**: If you cannot find the code that implements a behavior, it does not exist — do not report it. If grep returns zero hits for a field name, that field is not used. If you find two similar endpoints, do not assume they are interchangeable — trace each one to its call site. Every claim in your research must point to a specific file and line. A claim without a code reference is a guess.
+
 ## Input
 
 You will receive:
@@ -59,7 +61,7 @@ Using what you learned in Step 0:
 
 Before diving into implementation details, trace HOW the feature is reached:
 
-- **For frontend/mobile**: Find the route/screen registration, trace navigation from the app's entry point to the feature
+- **For frontend/mobile**: Find the route/screen registration, trace navigation from the app's entry point to the feature. **Build a per-screen endpoint map**: for each screen/page in the feature, list every API endpoint it calls and when (on mount, on user action, on navigation). Do NOT produce a flat list of all endpoints used anywhere in the feature — map each endpoint to the specific screen that calls it. Two screens in the same flow may call different endpoints; treating them as interchangeable produces wrong research.
 - **For backend services**: Find the controller/handler that exposes the feature, trace from HTTP endpoint to business logic
 - **For libraries**: Find the public API surface, trace from exported functions to internal implementation
 
@@ -87,17 +89,26 @@ Read and document:
 
 For every API endpoint the initiative uses (consumes or exposes), extract:
 - HTTP method + full path
+- **Which screen/page calls it** and **when** (on mount, on user action, on timer, etc.) — this must match the per-screen endpoint map from Step 2
 - Request shape (parameters, body fields with types)
 - Response shape (fields with types)
 - Error responses (status codes, error body structure)
 - Auth requirements
 
+**Response field provenance**: For each response field the code consumes, verify it actually comes from this endpoint's response — not from a different API call whose result was merged into the same data structure. Trace from the UI/business logic backward: find where the field is read, then find where it was written. If the field comes from a different endpoint than the one you're documenting, document the actual source endpoint.
+
+**Cross-cutting patterns**: If you document a cross-cutting pattern (retry logic, request cancellation, debounce, caching, abort controllers), you must find the actual implementation code. Search for the specific mechanism (e.g., `CancelToken`, `AbortController`, `debounce`, `retry`). If grep returns zero hits, the pattern does not exist — do not infer it from code structure or naming conventions. Flag the absence as an inconsistency if other evidence suggests it should exist.
+
 ### Constant Value Resolution
 
 When you encounter named constants (e.g., `MAX_RETRY_COUNT`, `KSize.fieldLengthM`, `DEFAULT_PAGE_SIZE`):
 1. Grep for the constant definition — find where it's declared
-2. Report the resolved value, not just the constant name
-3. Format: `MAX_RETRY_COUNT` = `3` (defined at `src/config/constants.java:42`)
+2. **Read the actual assignment line** — do not copy values from comments, variable names, or other contexts. Open the file and read the line where the value is assigned.
+3. If the same constant name appears in multiple files with different values, document all instances and flag the ambiguity
+4. Report the resolved value, not just the constant name
+5. Format: `MAX_RETRY_COUNT` = `3` (defined at `src/config/constants.java:42`)
+
+**Compound field resolution**: When you encounter a field that appears to be a nested object (e.g., `sender_state` with properties like `id`, `code`, `name`), trace back to where the field is actually populated — not just where it's declared. The declared type may differ from what's sent at runtime. Read the code that constructs the request or assigns the value and document the actual shape (e.g., a flat string sourced from `user.address?.state?.code`, not a nested object).
 
 ### Display Formatting Rules (frontend/mobile only)
 
@@ -115,6 +126,23 @@ After documenting each transformation, cross-check against existing utilities:
 - If design system components show fixture/placeholder values, do they match the formatting rules in the code?
 
 Document findings in the "Display Formatting" section of the output.
+
+## Step 5: Verification Pass (MANDATORY before finalizing)
+
+Before writing the research document, verify every claim:
+
+1. **Endpoint verification**: For each API endpoint in your research, confirm:
+   - The endpoint path appears in the code at the call site you documented (not just in comments or dead code)
+   - The screen you mapped it to actually calls it (re-read the screen's initialization and event handlers)
+   - No other endpoint serves the same purpose on that screen (grep for similar paths to catch near-misses like `/transfer/calculation` vs `/transfer/promo-calculation`)
+
+2. **Field verification**: For each request/response field you documented, run `grep -r "<field_name>"` scoped to the feature directories. If grep returns zero hits on live code, the field is not used — remove it from the research or flag it as `UNVERIFIED: 0 grep hits`.
+
+3. **Pattern verification**: For each behavioral pattern you documented (debounce timing, retry logic, cancellation, caching), confirm the implementation exists by finding the specific code. A pattern described without a file:line reference is suspect — re-verify or remove.
+
+4. **Data type verification**: For each field whose type you documented (especially nested objects vs flat values), re-read the code that constructs or assigns the value. Confirm the runtime shape matches what you documented.
+
+If any verification fails, correct the research or move the claim to Inconsistencies & Ambiguities with a note about what you couldn't confirm.
 
 ## Commit SHA Capture
 
@@ -168,14 +196,23 @@ Use this structure:
 
 [Error states, empty states, loading states, timeouts, retries, permission checks.]
 
+## Screen → Endpoint Map (frontend/mobile only)
+
+[Which screen calls which endpoint, and when. Every endpoint must be mapped to a screen.]
+
+| Screen | Endpoint | Trigger | Notes |
+|--------|----------|---------|-------|
+| [screen name] | `METHOD /path` | [on mount / on user action / debounced input / etc.] | [fire-and-forget / awaited / cached / etc.] |
+
 ## API Endpoints
 
 [Full contract for each endpoint — method, path, request shape, response shape, errors.]
 
 ### `METHOD /path`
-- **Source file**: [permalink]
-- **Request**: [fields with types]
-- **Response**: [fields with types]
+- **Called by**: [screen name] — [trigger]
+- **Source file**: [permalink to the call site]
+- **Request**: [fields with types — trace each field to where it's actually populated]
+- **Response**: [fields with types — note the source if a field comes from a different endpoint]
 - **Errors**: [status codes and handling]
 
 ## Display Formatting
