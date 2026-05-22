@@ -334,7 +334,7 @@ None — all questions resolved.
 > **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
 
 > **GUIDE**
-> **When**: Any feature that reads, displays, transmits, or stores auth tokens, PII (names, phone numbers, emails, avatars, account numbers), payment data, or sensitive state. "Touching" includes read-only display — a dashboard showing user names and passing recipient data via router state triggers this section.
+> **When**: Any feature that reads, displays, transmits, or stores auth tokens, PII (names, phone numbers, emails, avatars, account numbers), payment data, or sensitive state. "Touching" includes read-only display — a dashboard showing user names and passing customer data via router state triggers this section.
 > **What**: Security requirements specific to this initiative — what must NOT be logged, exposed in URLs, persisted in browser storage, or sent in analytics.
 
 ---

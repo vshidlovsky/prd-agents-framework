@@ -69,7 +69,7 @@ Check for a research document first — look for `{initiative}-research.md` in t
 **After identifying API endpoints** (from research doc or your own research):
 
 7. Load semantic vocabulary files for each identified endpoint:
-   - Convert each endpoint to a filename: lowercase HTTP method + path with `/` replaced by `-` and `{param}` replaced by param name (e.g., `GET /v1/transactions/{id}` → `semantic-vocabulary/get-v1-transactions-id.md`)
+   - Convert each endpoint to a filename: lowercase HTTP method + path with `/` replaced by `-` and `{param}` replaced by param name (e.g., `GET /v1/orders/{id}` → `semantic-vocabulary/get-v1-orders-id.md`)
    - Read each matching vocabulary file that exists
    - Record which endpoints have vocabulary files and which don't
    - For endpoints with vocabulary files: use the semantic names from the file when writing FRs, ACs, Edge Cases, and Key Entities. These entries will be copied into the PRD's per-endpoint vocabulary tables with V-numbers in Step 4
@@ -93,7 +93,7 @@ Ask about:
 If the research document already tagged ambiguities with resolution methods, carry those through — don't re-classify.
 
 Present questions with your recommended answer based on codebase and API research. Example:
-> "The API returns `fees_by_payment_method` as an array — should we show all fees upfront or only the fee for the selected method? I recommend showing only the selected method's fee since the selection step comes first."
+> "The API returns `pricing_tiers` as an array — should we show all tiers upfront or only the tier for the selected plan? I recommend showing only the selected plan's pricing since the selection step comes first."
 
 **Do NOT proceed to Step 4 until all questions are answered.**
 
@@ -174,7 +174,7 @@ Build the PRD in this order:
 The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Key Entities) describes *what* the system does — observable by users and testers. The **Technical Contract** describes *how* it's built — readable by engineers. A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `rules/behavioral-separation.md` for the full rules.
 
 **When writing the Behavioral Contract (FRs, ACs, Edge Cases, Key Entities):**
-- Use **semantic concept names** for data attributes — "transaction identifier", not `tx_id`
+- Use **semantic concept names** for data attributes — "order identifier", not `order_id`
 - Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract. Do not repeat the marker on subsequent uses of the same term
 - Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
 - **Do not assign V-numbers to non-API concepts** — routing destinations, configuration URLs, client-side state, and other concepts that don't map to an API field do not get `[V#]` markers. Use a consistent semantic name and reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)")
@@ -273,7 +273,7 @@ If project-context.md specifies versioned filenames:
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
 14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names) and no CSS-level design decisions (layout arrangements prescribing CSS structure, visual treatments) in the behavioral layer. Framework-specific terms belong in TC, but CS jargon describing testable behavior should be rephrased to QA-verifiable language, not relocated. Acceptable: shipped DS component names, behavioral placement ("inline beneath the input"), PM-decided display formats ("MM:SS"), "new browser tab", platform concepts, generic UI vocabulary, enum values in analytics ACs. Use semantic concept names with `[V#]` vocabulary references. See `rules/behavioral-separation.md`.
-15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `transactions.status.paid` already maps to "Paid" in all supported languages, don't create `home.status.paid` with the same translations.
+15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `orders.status.confirmed` already maps to "Confirmed" in all supported languages, don't create `checkout.status.confirmed` with the same translations.
 16. **Gate polarity must match bullet polarity** — when writing a multi-bullet gate FR, the headline MUST match the polarity of the bullets. Positive preconditions ("X is true") → "render when ALL are true." Suppression conditions ("X is false") → "suppress when ANY holds." Never mix polarities within a single gate FR.
 17. **FR atomicity — watch analytics and navigation pairs** — after writing an FR's first sentence, check: is the second sentence a clarification of the SAME capability, or an ADDITIONAL one? If additional, split into two FRs. Analytics-firing rules and navigation-affordance rules are almost always separate capabilities, even when they feel "obviously related" to the primary behavior.
 18. **ACs must bind success events, not just failures** — for every analytics event whose Trigger describes a successful data outcome (not just a user interaction), the writer MUST add an AC binding the event by name and listing every property. When the Analytics Events table is edited, grep ACs for every event name — if any event is named by zero ACs, add a binding AC.
