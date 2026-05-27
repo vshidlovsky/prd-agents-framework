@@ -134,16 +134,17 @@ If the orchestrator passes a review FAIL list (from prd-reviewer), this is a rev
 1. Read the existing PRD (the one the reviewer examined)
 2. Read the review's Issues Found section — every numbered FAIL with its matrix-row ID
 3. For each FAIL: make the specific fix described in the "Suggested fix." Do NOT rewrite surrounding sections unless the fix requires it.
-4. Preserve any manual edits the user may have made to the PRD between cycles
-5. **Changelog discipline**:
+4. **Sweep-fix**: after fixing a flagged term or pattern, grep the entire PRD for the same term (and obvious synonyms). Fix every instance, not just the one the reviewer pointed at. A reviewer FAIL on "debounce" in FR-009 means "debounce" in FR-026, AC-007, and edge cases must also be fixed in the same pass.
+5. Preserve any manual edits the user may have made to the PRD between cycles
+6. **Changelog discipline**:
    - Every content edit (prose, ACs, FRs, fixtures, response shapes — anything except formatting) MUST be preceded by appending a new changelog row with date, version, author, and a bullet of changes.
    - Append every new row to the END of the changelog table — rows must read in ascending version order (v1 → v2 → v3 → ...). Never insert a row in the middle.
    - When a revision drops or renames a screen/view/step, grep the PRD for every reference to the old name (ACs, MA-N rows, edge cases, diagrams) and update them in lockstep. The changelog must list "Cascading rewrites:" with every location updated.
-6. Increment the version number (e.g., v1 → v2). Write to a NEW versioned file — never overwrite the previous version.
-7. After fixing all FAILs, re-run the consistency pass (Quality Standard #13)
-8. Skip Steps 1-3 (context, research, and questions are already done)
-9. Proceed to Step 5 (save) and Step 6 (handoff) with the updated PRD
-10. In the handoff file, add a `"previousReviewPath"` field pointing to the review that triggered this revision
+7. Increment the version number (e.g., v1 → v2). Write to a NEW versioned file — never overwrite the previous version.
+8. After fixing all FAILs, re-run the consistency pass (Quality Standard #13)
+9. Skip Steps 1-3 (context, research, and questions are already done)
+10. Proceed to Step 4.5 (pre-save self-review), Step 5 (save), and Step 6 (handoff) with the updated PRD
+11. In the handoff file, add a `"previousReviewPath"` field pointing to the review that triggered this revision
 
 ## Step 4: Draft the Spec
 
@@ -272,11 +273,21 @@ If project-context.md specifies versioned filenames:
 11. **Config-driven behavior must read as config-driven** — when behavior is determined by remote config or feature flags, describe it as config-driven. Never frame it as a hardcoded business rule.
 12. **Exact copy, never "such as"** — all user-facing copy must use exact committed text, never "such as", "e.g.", or "something like". If the copy isn't decided, flag it as an open question.
 13. **Consistency pass after major edits** — after every 5+ edits or any edit that changes a data rule, scan the full PRD for affected terms and verify they say the same thing everywhere.
-14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names) and no CSS-level design decisions (layout arrangements prescribing CSS structure, visual treatments) in the behavioral layer. Framework-specific terms belong in TC, but CS jargon describing testable behavior should be rephrased to QA-verifiable language, not relocated. Acceptable: shipped DS component names, behavioral placement ("inline beneath the input"), PM-decided display formats ("MM:SS"), "new browser tab", platform concepts, generic UI vocabulary, enum values in analytics ACs. Use semantic concept names with `[V#]` vocabulary references. See `rules/behavioral-separation.md`.
+14. **Behavioral/Technical separation** — FRs, ACs, Edge Cases, and Key Entities describe observable behavior only. No API vocabulary (field names, enum values, URL patterns, analytics event names), no quoted UI strings or locale-key paths that duplicate the Localization Keys table (describe elements by semantic role and reference the table), no framework terminology or CS jargon (rephrase to what QA can verify with the browser UI and DevTools Network tab), no raw enum wire values (use semantic group names), and no CSS-level design decisions in the behavioral layer. Use semantic concept names with `[V#]` vocabulary references. See `rules/behavioral-separation.md`.
 15. **Reuse existing localization keys** — before creating new i18n keys, check existing locale files for keys whose string value is identical. Reuse the existing key rather than creating a duplicate under a new namespace. For example, if `orders.status.confirmed` already maps to "Confirmed" in all supported languages, don't create `checkout.status.confirmed` with the same translations.
 16. **Gate polarity must match bullet polarity** — when writing a multi-bullet gate FR, the headline MUST match the polarity of the bullets. Positive preconditions ("X is true") → "render when ALL are true." Suppression conditions ("X is false") → "suppress when ANY holds." Never mix polarities within a single gate FR.
 17. **FR atomicity — watch analytics and navigation pairs** — after writing an FR's first sentence, check: is the second sentence a clarification of the SAME capability, or an ADDITIONAL one? If additional, split into two FRs. Analytics-firing rules and navigation-affordance rules are almost always separate capabilities, even when they feel "obviously related" to the primary behavior.
 18. **ACs must bind success events, not just failures** — for every analytics event whose Trigger describes a successful data outcome (not just a user interaction), the writer MUST add an AC binding the event by name and listing every property. When the Analytics Events table is edited, grep ACs for every event name — if any event is named by zero ACs, add a binding AC.
+
+## Step 4.5: Pre-Save Self-Review
+
+Before saving, run two mechanical checks on the drafted PRD to catch the most common reviewer FAILs:
+
+1. **Locale-key scan.** Collect every quoted string in FRs, ACs, and Edge Cases (text inside `"..."` or `'...'`). For each, check if the same string appears as a value in the Localization Keys table. If it does, replace the quoted string with a semantic role description and add "(see Localization Keys)" — e.g., replace `"No countries found"` with "the empty-search heading (see Localization Keys)".
+
+2. **Wire-value scan.** Collect every `apiField` value from the per-endpoint vocabulary tables in the Technical Contract. For each, scan FRs, ACs, and Edge Cases (excluding analytics ACs) for that raw value. If found, replace with the semantic name from the vocabulary table — e.g., replace `boss-money-wallet` with "wallet recipients", replace `operator_not_found` with the semantic name from the vocabulary entry.
+
+If either check produces fixes, re-run Quality Standard #13 (consistency pass) on the affected sections.
 
 ## Step 5: Save and Summarize
 
