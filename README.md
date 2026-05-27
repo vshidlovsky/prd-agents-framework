@@ -35,7 +35,11 @@ prd-agents-framework/
 │       ├── service-integration.md
 │       ├── monitoring.md
 │       ├── compliance.md
-│       └── platform-considerations.md
+│       ├── platform-considerations.md
+│       ├── performance.md
+│       ├── capacity-constraints.md
+│       ├── rollback-degradation.md
+│       └── state-migration.md
 ├── rules/
 │   ├── prd-lessons.md          # Rule: no lessons written without user approval
 │   ├── domain-glossary.md      # Rule: no glossary terms written without user approval

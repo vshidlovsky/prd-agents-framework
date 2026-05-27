@@ -271,8 +271,8 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ## Boundaries
 
-> **Sub-section order**: Always use this order: Dependencies → Out of Scope → [section packs: position 1] → Open Questions.
-> Section packs inserted into Boundaries go between Out of Scope and Open Questions, in position order.
+> **Sub-section order**: Always use this order: Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
+> Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
 
 ### Dependencies
 
@@ -291,6 +291,24 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **What**: Things explicitly NOT part of this initiative. AI agents cannot infer boundaries from omission.
 
 - **OS-001**: **[Feature/behavior]** — [reason]
+
+---
+
+### Assumptions
+
+> **GUIDE**
+> **What**: Conditions that must be true for this PRD to be valid but are not verified by the system. If an assumption breaks, the PRD is silently wrong.
+> **Why**: Open Questions capture "what we don't know." Assumptions capture "what we think we know that could be wrong." A broken assumption doesn't cause a build error — it causes wrong behavior that passes all tests.
+> **How**: For each assumption, state: (1) what you're assuming, (2) where the assumption came from (code observation, API docs, verbal confirmation, convention), (3) what breaks if the assumption is wrong. If you can verify an assumption during research, do so and remove it. Only assumptions that cannot be verified at spec-writing time belong here.
+>
+> **Examples across stacks**:
+> - Frontend: "API always returns ISO 4217 currency codes — if it returns free-text, the currency formatter throws"
+> - Backend stateless: "Upstream service responds within 2s — if slower, our 5s timeout fires and the client retries"
+> - Backend stateful: "Table row count stays under 10M for year 1 — if exceeded, the unindexed query in the reporting endpoint degrades"
+
+| ID | Assumption | Source | Impact if Wrong |
+|----|-----------|--------|-----------------|
+| ASM-001 | [what we're assuming] | [code / API docs / verbal / convention] | [what breaks] |
 
 ---
 
