@@ -208,10 +208,10 @@ From the files already read (CLAUDE.md, README, source files, config), extract:
 Based on the detected project type, recommend section packs:
 
 **Frontend web app** (React, Vue, Angular, Next.js):
-- screen-flow, navigation, analytics-events, localization, component-mapping, feature-flags, accessibility, responsive-layout
+- screen-flow, navigation, analytics-events, component-mapping, feature-flags, accessibility, responsive-layout
 
 **Mobile app** (Flutter, React Native, Swift, Kotlin):
-- user-journey, screen-flow, navigation, analytics-events, localization, component-mapping, feature-flags, accessibility, platform-considerations
+- user-journey, screen-flow, navigation, analytics-events, component-mapping, feature-flags, accessibility, platform-considerations
 
 **Web app porting from mobile** (detected by mobile research docs, mobile references in CLAUDE.md):
 - all frontend packs + create a custom `mobile-baseline` pack during Step 8 (document which mobile behaviors to match/change/skip, source files, API endpoints used by mobile)

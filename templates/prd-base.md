@@ -165,7 +165,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **Organization**:
 > 1. Cross-cutting tables — Data Sources, Query Configuration, Error Classification, Route Mapping
 > 2. Per-endpoint blocks — Vocabulary table (V-numbered rows mapping semantic names to API fields) + Error Handling
-> 3. UI/config sections — Component Mapping, Localization Keys, Visual References, etc.
+> 3. UI/config sections — Component Mapping, Visual References, etc. (copy, localization keys, and translations are design-owned — not a PRD section)
 
 ### Data Sources
 
@@ -265,7 +265,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 ---
 
 <!-- Section packs: Technical Contract [position: 1] — UI structure (component-mapping, responsive-layout) -->
-<!-- Section packs: Technical Contract [position: 2] — content & visuals (localization, design-prototype) -->
+<!-- Section packs: Technical Contract [position: 2] — content & visuals (design-prototype) -->
 <!-- Section packs: Technical Contract [position: 3] — navigation & flow (screen-flow, navigation) -->
 <!-- Section packs: Technical Contract [position: 4] — infrastructure (database-changes, service-integration, monitoring) -->
 

@@ -109,7 +109,7 @@ Check the sections that apply to your project. Uncheck the rest.
 - [x] screen-flow — Mermaid screen flow diagrams
 - [x] navigation — Entry points, back behavior, deep links
 - [x] analytics-events — Analytics event definitions
-- [x] localization — Localization keys and translations
+- [ ] localization — (removed: copy, localization keys, and translations are design-owned, not PRD content)
 - [x] component-mapping — UI component to design system mapping
 - [x] feature-flags — Feature flags / remote config
 - [x] accessibility — Accessibility requirements
