@@ -8,7 +8,7 @@
 > **How to use**: Copy this template, fill in every Tier 1 section, include section packs listed in project-context.md.
 > Delete the `> **GUIDE**` blocks after filling each section.
 >
-> **Section order**: Context (what, who) → Behavioral Contract (requirements, verification, edge cases) → Technical Contract (APIs, mappings, config) → Boundaries (dependencies, scope, questions). Within each area, follow the numbered insertion-point markers for section pack placement.
+> **Section order**: Context (what, who) → Behavioral Contract (requirements, verification, edge cases) → Technical Contract (APIs, mappings, config, dependencies) → Boundaries (scope, questions). Within each area, follow the numbered insertion-point markers for section pack placement.
 >
 > **Separation principle**: The Behavioral Contract describes *what* the system does (observable by users and testers). The Technical Contract describes *how* it's built (readable by engineers). A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `rules/behavioral-separation.md` for the full rules.
 >
@@ -156,6 +156,17 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
+### Feature Flags / Remote Config
+
+> **GUIDE**: Feature flags, remote config, rollout settings. If no flags, state "None" and explain why.
+
+| Field | Value |
+|-------|-------|
+| **Flag name** | [name or "None"] |
+| **Fallback** | [behavior when flag is off] |
+
+---
+
 <!-- Section packs: Behavioral Contract — after Edge Cases [position: 1] (e.g., accessibility, compliance, platform-considerations) -->
 
 ## Technical Contract
@@ -253,26 +264,10 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-### Feature Flags / Remote Config
-
-> **GUIDE**: Feature flags, remote config, rollout settings. If no flags, state "None" and explain why.
-
-| Field | Value |
-|-------|-------|
-| **Flag name** | [name or "None"] |
-| **Fallback** | [behavior when flag is off] |
-
----
-
 <!-- Section packs: Technical Contract [position: 1] — UI structure (component-mapping, responsive-layout) -->
 <!-- Section packs: Technical Contract [position: 2] — content & visuals (design-prototype) -->
 <!-- Section packs: Technical Contract [position: 3] — navigation & flow (screen-flow, navigation) -->
 <!-- Section packs: Technical Contract [position: 4] — infrastructure (database-changes, service-integration, monitoring) -->
-
-## Boundaries
-
-> **Sub-section order**: Always use this order: Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
-> Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
 
 ### Dependencies
 
@@ -284,6 +279,11 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 | [what] | [where it comes from] | [Merged / In Progress / Blocked] |
 
 ---
+
+## Boundaries
+
+> **Sub-section order**: Always use this order: Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
+> Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
 
 ### Out of Scope
 

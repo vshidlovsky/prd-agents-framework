@@ -259,7 +259,7 @@ The writer generates edge cases using systematic checklists (entity × dimension
 | F-5 | Behavioral Contract: ACs with testable checkboxes | [PENDING] | [PENDING] |
 | F-6 | Behavioral Contract: Edge Cases table | [PENDING] | [PENDING] |
 | F-7 | Technical Contract: Data Sources with endpoint details | [PENDING] | [PENDING] |
-| F-8 | Boundaries: Dependencies section | [PENDING] | [PENDING] |
+| F-8 | Technical Contract: Dependencies section | [PENDING] | [PENDING] |
 | F-9 | Boundaries: Out of Scope section | [PENDING] | [PENDING] |
 | F-10 | Boundaries: Open Questions is empty | [PENDING] | [PENDING] |
 | F-11 | Tier 2: Success Criteria (if user-facing flows) | [PENDING] | [PENDING] |

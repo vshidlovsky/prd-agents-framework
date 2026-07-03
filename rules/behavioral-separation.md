@@ -24,7 +24,7 @@ Final user-facing copy, localization keys, and translations are **design deliver
 
 ## Behavioral Contract
 
-Contains: FRs, ACs, Edge Cases, Key Entities, Success Criteria, Security, Accessibility, Compliance, Support/Observability.
+Contains: FRs, ACs, Edge Cases, Key Entities, Feature Flags, Success Criteria, Security, Accessibility, Compliance, Support/Observability.
 
 Rules for this layer:
 - Use **semantic concept names** for data attributes (e.g., "order identifier" not `order_id`)
@@ -36,7 +36,7 @@ Rules for this layer:
 
 ## Technical Contract
 
-Contains: Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Vocabulary tables + Error Handling, Component Mapping, Visual References, Screen Flow, MSW Mock Data, Configuration Attributes, Feature Flags. (Copy, localization keys, and translations are NOT here — they are design deliverables; see "Copy and Localization Are Design-Owned" above.)
+Contains: Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Vocabulary tables + Error Handling, Component Mapping, Visual References, Screen Flow, MSW Mock Data, Configuration Attributes, Dependencies. (Copy, localization keys, and translations are NOT here — they are design deliverables; see "Copy and Localization Are Design-Owned" above.)
 
 Rules for this layer:
 - **Cross-cutting concerns defined once**: Error classification, query config, route mapping each live in one table as implementation reference
