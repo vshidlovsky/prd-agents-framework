@@ -9,10 +9,45 @@ A requirement passes the behavioral test if a QA engineer can verify it without 
 Decide whether a phrase belongs in the behavioral layer with three generic tests. These are platform-agnostic — they catch web, mobile, and backend leaks without enumerating examples, so do NOT rely on matching a phrase against a list of known-bad samples; apply the test:
 
 1. **Rename test** — would the requirement break if a developer renamed an API field, endpoint, status code, header, config key, or localization key, even though the observable behavior is unchanged? If yes, it is technical → move it to the Technical Contract and reference it by semantic name.
-2. **Designer-choice test** — could a designer present the same behavior with a different component, layout, or visual treatment? If yes, the phrase is a design decision → remove it; describe what the user sees, learns, or does instead. (Applies to emphasis/variant qualifiers such as "filled" vs "tonal" button, plus color, spacing, and layout — regardless of platform.)
-3. **QA-observability test** — can a tester confirm it purely by using the running app, with no knowledge of how it is built or stored? If no, it is an implementation detail → move it to the Technical Contract; do not reword it into the behavioral layer. (E.g. which secure-storage mechanism holds a value, which transport carries it.)
+2. **Designer-choice test** — could a designer present the same behavior with a different component, layout, emphasis, or visual treatment? If yes, the phrase is a design decision → remove it; describe what the user sees, learns, or does instead. This applies regardless of platform; see "Quick Reference: Forbidden in the Behavioral Layer" for what counts.
+3. **QA-observability test** — can a tester confirm it purely by using the running app, with no knowledge of how it is built or stored? If no, it is an implementation detail → move it to the Technical Contract; do not reword it into the behavioral layer.
 
-**Product-requirement carve-out:** when the mechanic *is* the product requirement, it stays in the behavioral layer even if it names UI or input mechanics — e.g. "accepts only a 6-digit numeric code", "drag to reorder", "swipe to dismiss". The test: is this a PM decision about *what the product does*, or a designer/engineer decision about *how it is rendered or built*? Only the former belongs here.
+**Product-requirement carve-out:** when the mechanic *is* the product requirement, it stays in the behavioral layer even if it names UI or input mechanics. The test: is this a PM decision about *what the product does*, or a designer/engineer decision about *how it is rendered or built*? Only the former belongs here. The full carve-out list is in "Quick Reference: Allowed in the Behavioral Layer" below.
+
+## Quick Reference: Allowed in the Behavioral Layer
+
+This is the single canonical carve-out list. Every other framework file points here instead of restating it. These items are product requirements, not design or implementation decisions — do NOT flag them.
+
+- **Interaction patterns that *are* the requirement** — drag-to-reorder ("drag to reorder"), swipe-to-dismiss.
+- **Input/output mechanics that define the product** — "accepts only a 6-digit numeric code".
+- **Shipped design-system component names** — carousel, skeleton, bottom sheet — when the PM explicitly chose them because the DS ships that component.
+- **Behavioral placement** — "inline beneath the input", "near the triggering element". These say where the user sees feedback and distinguish feedback strategies (field-level vs page-level). Only placement that prescribes CSS positioning is forbidden (see the Forbidden list).
+- **PM-decided display formats** — "MM:SS", "0:30", "zero-padded".
+- **User-visible navigation** — "new browser tab".
+- **Platform concepts** — "browser's one-time-code autofill", "device identifier header", "browser's reported language".
+- **Generic UI vocabulary used without a visual qualifier** — button, link, input, field, error message, page, screen, form, list, item, section, label, text, header, tab, menu, notification, dialog, alert, indicator, grid.
+- **Enum values in analytics ACs** — allowed when they make the AC testable.
+- **Product decisions and platform concepts that sound technical** — "replacing the current history entry", "proactive refresh". Acceptable as-is; these describe what the system does, not how it is built.
+- **CS jargon describing testable behavior** — "atomically replace", "first-expiry-wins", "single shared in-flight refresh", "invalidate the cached user profile". Verifiable with dev tools, so these stay in the Behavioral Contract — but rephrase them to how QA would actually verify the behavior. Flag for **rephrasing in place**, never for relocation to the Technical Contract.
+- **Copy mandated by law, compliance, or contract** — quoted verbatim as a constraint with its source cited. This is the only literal copy allowed in requirements.
+- **Analytics event names and property values** — a data contract, not UI copy, so they remain in the PRD (in the Analytics Events table). ACs reference them semantically; a raw event name inline in an FR/AC is still forbidden.
+
+## Quick Reference: Forbidden in the Behavioral Layer
+
+This is the single canonical forbidden list. Apply the three tests above rather than matching text against these examples — the examples illustrate the tests, they do not bound them.
+
+- **API vocabulary and wire details** (rename test) — API field names, enum wire values, endpoint paths and URL patterns, query keys, HTTP status codes, header names, analytics event names inline in FRs/ACs, constructor signatures. Replace with semantic concept names carrying `[V#]` markers, semantic destinations ("the order details page"), and semantic outcomes ("when the backend rate-limits further attempts"). Paths map in Route Mapping; status codes and headers map in Error Classification / per-endpoint Error Handling.
+- **Literal UI copy and localization keys** — headings, body copy, button labels, toasts, error/empty-state text, and any localization-key path. Copy is design-owned; specify intent per state instead. Sole exception: mandated copy (see the Allowed list).
+- **Design decisions** (designer-choice test):
+  - **Emphasis/variant qualifiers** — "primary, filled button", "tonal", "outlined".
+  - **Layout arrangements that prescribe CSS structure** — sticky, full-surface, grid-3-column, fixed/absolute positioning.
+  - **Visual treatments** — pixel values, color variants, spacing tokens, breakpoints.
+  - **Over-specified ACs (altitude)** — an AC that enumerates several visual elements or reads as a screen layout is a design spec, not a behavioral criterion. That furniture belongs in Visual References / Screen Flow; the AC should assert one observable outcome.
+- **Framework terminology — three tiers, three different remedies**:
+  1. **Library/framework-specific terms** (library names, config keys) — "query invalidation", "staleTime", "React Router state", "Zod schema validation", "Axios interceptor" → **relocate** to the Technical Contract and restate the behavior observably ("data refreshes after successful mutations").
+  2. **CS jargon describing testable behavior** → **rephrase in place**; it stays in the Behavioral Contract (see the Allowed list). Never relocate it to the Technical Contract.
+  3. **Product decisions that sound technical** → **allowed as-is** (see the Allowed list). Do not flag.
+- **Implementation mechanism** (QA-observability test) — *where or how* a value is stored or transported: secure-storage backend, keystore/keychain, encryption scheme, caching layer, transport protocol. Move it to the Technical Contract; do NOT reword it into an FR/AC.
 
 ## Copy and Localization Are Design-Owned
 
@@ -31,8 +66,8 @@ Rules for this layer:
 - Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract
 - Each semantic name maps to exactly one API field — if ambiguous, make it more specific
 - **Use vocabulary files when they exist** — if `semantic-vocabulary/` contains a file for an endpoint, use the semantic names defined there. Do not invent alternatives for fields that already have vocabulary entries. See `rules/semantic-vocabulary.md`
-- **Never include API vocabulary**: API field names, endpoint paths, query keys, enum values, URL patterns, HTTP status codes, header names, analytics event names, constructor signatures, framework-specific terminology (library names, config keys). CS jargon describing testable behavior ("atomically replace", "first-expiry-wins") is not API vocabulary — it stays in FRs but should be rephrased to QA-verifiable language. Product decisions and platform concepts that sound technical ("replacing the current history entry", "proactive refresh", "browser's reported language") are acceptable as-is
-- **Never make design decisions**: Do not specify layout arrangements that prescribe CSS structure (sticky, full-surface, grid-3-column) or visual treatments (pixel values, color variants, spacing). Describe what the user sees, learns, or does — let design decide how to render it. Exceptions — these are product language, not design decisions: (a) interaction patterns that *are* the product requirement (drag-to-reorder, swipe-to-dismiss); (b) shipped DS component names when explicitly chosen by PM; (c) behavioral placement ("inline beneath the input") when it distinguishes feedback strategies (field-level vs page-level); (d) PM-decided display formats ("MM:SS", "zero-padded"); (e) "new browser tab" (user-visible navigation); (f) platform concepts ("browser's one-time-code autofill"); (g) generic UI vocabulary ("indicator", "grid", "notification"); (h) enum values in analytics ACs when they make the AC testable
+- **Never include API vocabulary, wire details, framework terminology, or implementation mechanism**: apply the rename and QA-observability tests — see "Quick Reference: Forbidden in the Behavioral Layer" for the canonical list and the per-tier remedy (relocate / rephrase in place / allowed as-is)
+- **Never make design decisions**: describe what the user sees, learns, or does — let design decide how to render it. Apply the designer-choice test; the forbidden items are in "Quick Reference: Forbidden in the Behavioral Layer" and the product-language exceptions in "Quick Reference: Allowed in the Behavioral Layer"
 
 ## Technical Contract
 
