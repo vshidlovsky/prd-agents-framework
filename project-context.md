@@ -172,8 +172,9 @@ END EXAMPLE — DELETE -->
 
 > GUIDE: Controls which LLM model each agent uses. Two presets are available:
 > - **reliable**: All agents use Opus. Best quality, highest cost.
-> - **cost-optimized**: Only 3 mechanical agents switch to Sonnet (researcher, review-api,
->   review-structure). The other 4 stay on Opus because they need deeper judgment:
+> - **cost-optimized**: Only the mechanical agents switch to Sonnet (researcher, review-api,
+>   review-structure). Every other agent in the profile table stays on Opus because they need
+>   deeper judgment:
 >   - **prd-writer** (Opus) — synthesizes research into requirements, asks clarifying questions
 >   - **prd-reviewer** (Opus) — cross-matrix analysis, spot-checks, verdict
 >   - **review-flow** (Opus) — dead-end detection, discoverability, error recovery require judgment
@@ -182,7 +183,16 @@ END EXAMPLE — DELETE -->
 >
 > Pick a preset, then optionally override individual agents in the table below.
 > The create-prd skill and prd-reviewer read this table when spawning agents.
-> Valid models: `opus`, `sonnet`
+> Valid models: `opus`, `sonnet`, `haiku`
+>
+> Model values are tier names resolved by Claude Code (`opus`, `sonnet`, `haiku`), not pinned
+> model IDs — they track the current generation automatically.
+>
+> `haiku` is accepted for custom profiles. It is only appropriate for strictly mechanical work
+> (e.g., review-structure checklist verification on small PRDs). Judgment-heavy agents
+> (prd-writer, prd-reviewer, review-flow, review-requirements, review-smells) should stay on
+> opus. Quality degradation on review agents shows up as false PASSes, which are invisible —
+> prefer over-provisioning reviewers.
 
 - **Profile**: reliable
 

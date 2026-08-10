@@ -297,8 +297,8 @@ Ask the user:
 
 **"How should agents pick their LLM model?**
 
-- **Reliable** — all 7 agents use Opus. Best quality, highest cost.
-- **Cost-optimized** — 3 mechanical agents switch to Sonnet, 4 stay on Opus. Saves ~40-50% on token costs.
+- **Reliable** — every agent in the profile table uses Opus. Best quality, highest cost.
+- **Cost-optimized** — the mechanical agents switch to Sonnet, the rest stay on Opus. Saves ~40-50% on token costs.
   - Sonnet: **researcher** (reads files, extracts facts), **review-api** (compares endpoints against docs), **review-structure** (checklist verification)
   - Stays on Opus: **prd-writer** (synthesis, judgment), **prd-reviewer** (cross-matrix analysis, verdict), **review-flow** (dead-end/discoverability checks need judgment), **review-requirements** (smell detection needs nuanced language analysis)
 - **Custom** — you pick the model for each agent individually.
@@ -331,7 +331,9 @@ Fill the Model Profile table in project-context.md based on the user's choice:
 | review-flow | opus |
 | review-requirements | opus |
 
-**Custom:** Ask the user for each agent. Present the cost-optimized defaults as recommendations and let them override.
+**Custom:** Ask the user for each agent. Present the cost-optimized defaults as recommendations and let them override. Valid models: `opus`, `sonnet`, `haiku`. These are tier names resolved by Claude Code, not pinned model IDs — they track the current generation automatically.
+
+`haiku` is accepted for custom profiles. It is only appropriate for strictly mechanical work (e.g., review-structure checklist verification on small PRDs). Judgment-heavy agents (prd-writer, prd-reviewer, review-flow, review-requirements, review-smells) should stay on opus. Quality degradation on review agents shows up as false PASSes, which are invisible — prefer over-provisioning reviewers.
 
 Remove the `> GUIDE` block from the Model Profile section after filling it in.
 

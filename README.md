@@ -214,17 +214,19 @@ Add domain-specific review rules under **Project-Specific Review Checks** in `pr
 
 ### Model profiles
 
-The framework runs 7 agents per PRD. Each can use Opus or Sonnet independently. Three presets are available:
+The framework runs the agents in the Model Profile table, one pass per PRD. Each can use a different model independently — valid values are `opus`, `sonnet`, and `haiku`. Three presets are available:
 
 | Profile | Sonnet agents | Opus agents | Cost savings |
 |---------|--------------|-------------|--------------|
-| **reliable** | none | all 7 | — |
+| **reliable** | none | all agents | — |
 | **cost-optimized** | researcher, review-api, review-structure | prd-writer, prd-reviewer, review-flow, review-requirements | ~40-50% |
 | **custom** | you pick | you pick | varies |
 
 The cost-optimized preset keeps Opus where judgment matters most — PRD synthesis, smell detection, flow analysis, and cross-matrix verdicts — while switching mechanical agents (file reading, endpoint comparison, checklist verification) to Sonnet.
 
-The profile is stored in the **Model Profile** table in `project-context.md`. Change it anytime by editing the table directly — no re-setup needed.
+The profile is stored in the **Model Profile** table in `project-context.md`. Change it anytime by editing the table directly — no re-setup needed. Model values are tier names resolved by Claude Code (`opus`, `sonnet`, `haiku`), not pinned model IDs — they track the current generation automatically.
+
+`haiku` is accepted for custom profiles. It is only appropriate for strictly mechanical work (e.g., review-structure checklist verification on small PRDs). Judgment-heavy agents (prd-writer, prd-reviewer, review-flow, review-requirements, review-smells) should stay on opus. Quality degradation on review agents shows up as false PASSes, which are invisible — prefer over-provisioning reviewers.
 
 ### Run logs & model comparison
 
@@ -258,7 +260,7 @@ The reviewer agent incorporates techniques from requirements engineering researc
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI or IDE extension
-- Claude Opus or Sonnet model (configurable per agent via [model profiles](#model-profiles))
+- Access to the Claude model tiers you assign — `opus`, `sonnet`, or `haiku` (configurable per agent via [model profiles](#model-profiles))
 
 ## Contributing
 
