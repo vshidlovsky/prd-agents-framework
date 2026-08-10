@@ -376,4 +376,12 @@ Save to the `_artifacts/` subdirectory of the initiative directory:
 }
 ```
 
+If `scripts/validate-handoff.py` exists, run it on the file you just wrote and fix every reported problem before proceeding:
+
+```bash
+python3 scripts/validate-handoff.py --type writer {handoff_file}
+```
+
+Exit 0 means the handoff matches the shape above. Each problem line is `<field-path>: <problem>` — fix the file, re-run until it exits 0. Common causes: a count left as prose instead of a number, a placeholder `<name>` never filled in, or `action: "change"` without `previousName`. If the script is absent, re-read the JSON block above and check each field yourself.
+
 Commit the handoff file alongside the PRD. Do NOT push.

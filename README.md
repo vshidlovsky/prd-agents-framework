@@ -41,7 +41,9 @@ prd-agents-framework/
 │       └── state-migration.md
 ├── scripts/
 │   ├── prd-lint.py             # Deterministic linter for mechanical PRD/review rules
-│   └── tests/                  # Fixtures + run-tests.sh for the linter
+│   ├── validate-handoff.py     # Schema validator for inter-agent handoff JSON
+│   ├── run-log.py              # Safe JSONL run-log writer + timing reader
+│   └── tests/                  # Fixtures + run-tests.sh for all three scripts
 ├── rules/
 │   ├── behavioral-separation.md # Rule: behavioral/technical contract separation
 │   ├── prd-lessons.md          # Rule: no lessons written without user approval
@@ -88,11 +90,12 @@ cp path/to/prd-agents-framework/templates/sections/*.md docs/prd-sections/
 # Project context template
 cp path/to/prd-agents-framework/project-context.md .claude/project-context.md
 
-# Deterministic PRD linter (stdlib-only Python 3.9+; the agents call it at scripts/prd-lint.py)
+# Pipeline scripts — linter, handoff validator, run-log writer
+# (stdlib-only Python 3.9+; the agents call them by these exact paths)
 cp path/to/prd-agents-framework/scripts/*.py scripts/
 ```
 
-The linter's target location in your project is `scripts/prd-lint.py` — that's the path the writer, reviewer, and `/create-prd` skill invoke. See [PRD lint](#prd-lint).
+The target locations in your project are `scripts/prd-lint.py`, `scripts/validate-handoff.py`, and `scripts/run-log.py` — those are the paths the writer, reviewer, and `/create-prd` skill invoke. Every caller checks for the file first and falls back to its manual behavior when it's missing, so copying them in is opt-in. See [PRD lint](#prd-lint) and [Handoff validation and run logging](#handoff-validation-and-run-logging).
 
 ### 3. Run the project-setup agent
 
@@ -203,7 +206,33 @@ Stdlib-only Python 3.9+, single file, no dependencies. Exit `0` clean, `1` viola
 
 The agents call it automatically when the file is present: the writer at Step 4.5 (before saving), the reviewer at step 8.1.2 (PRD violations become Matrix I FAIL rows; review-file violations are fixed in place), and `/create-prd` before Gate 2 (violations surface with the draft notice). If the file is absent, every caller falls back to its manual scans — copying it in is opt-in.
 
-Regression tests live in `scripts/tests/`: `bash scripts/tests/run-tests.sh` lints the fixtures and asserts that a clean PRD reports zero violations and that each annotated violation fires with the expected check ID on the expected line.
+Regression tests live in `scripts/tests/`: `bash scripts/tests/run-tests.sh` lints the fixtures and asserts that a clean PRD reports zero violations and that each annotated violation fires with the expected check ID on the expected line. The same run covers the handoff validator and the run-log writer.
+
+### Handoff validation and run logging
+
+Agents hand state to each other through JSON files in `_artifacts/`, and the pipeline records each phase as a line of JSONL. Both were plumbing held together by convention: nothing checked a handoff's shape, and the run log was assembled by `echo`-ing JSON inside bash, which an initiative name containing a quote or `$(…)` could corrupt or execute. Two scripts close that gap.
+
+**`scripts/validate-handoff.py`** validates a handoff against the shape documented in the agent that writes it:
+
+```bash
+python3 scripts/validate-handoff.py --type writer   docs/.../_artifacts/search-filters-prd-handoff.json
+python3 scripts/validate-handoff.py --type reviewer docs/.../_artifacts/search-filters-prd-review-handoff.json
+python3 scripts/validate-handoff.py --type dispatch docs/.../_artifacts/search-filters-review-dispatch.json
+```
+
+Exit `0` valid, `1` invalid, `2` usage error. Output is one line per problem: `<field-path>: <problem>`. Beyond per-field types it enforces the invariants the agent docs state in prose — `totalCells == subAgentCells + orchestratorCells`, no midnight timestamp, all twelve `failsByMatrix` keys, `nextAgent` agreeing with `status`, and exactly the five sub-reviewer keys in the dispatch file's `models`/`promptFiles`/`outputFiles` (a dropped key there silently loses a whole sub-reviewer). It is called at four points: the writer after Step 6, the reviewer after Step 9, the reviewer at Step 3 before consuming the writer's handoff, and `/create-prd` at step 3.2 before dispatching sub-agents.
+
+**`scripts/run-log.py`** builds run-log lines with `json.dumps` instead of shell string concatenation, and reads the pipeline timing file so the skill doesn't parse it with shell loops:
+
+```bash
+python3 scripts/run-log.py append --log-file .claude/prd-run-log.jsonl --entry-type writer \
+  --field "runId=$RUN_ID" --field 'initiative=filters ("v2")' --field 'metrics={"frCount":18}'
+
+python3 scripts/run-log.py timing --file "$TIMING_FILE" --get pipeline_start --iso
+python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta writing_start writing_end
+```
+
+`--field` values that parse as JSON stay JSON (so nested `metrics` objects survive); everything else is a literal string, escaped on the way out. Missing required fields for the entry type are warnings on stderr and the line is still written — `--strict` turns them into an exit-1 refusal. The **JSONL Schema Reference** section in `skills/create-prd/SKILL.md` remains the contract for entry shapes, and every call site documents the `echo`-based fallback for projects that didn't copy the script in.
 
 ### Lessons learned
 
