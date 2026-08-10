@@ -540,7 +540,7 @@ Prompt provides:
 - Scaffold file path + instruction: "Read your matrix scaffolds (D1, D2, E) from `{scaffold_file}` using the section markers"
 - Column definitions for D1 (Entry From, Actions/Transitions, Exit To, Error Recovery, Dead End?, Error Msg Actionable, Discoverable), D2 (QA: Deterministic, QA: Negative Testable, Support: State Identifiable, Support: Errors Distinguishable), and E (Nullable Handled, Boundary Values, Error Scenario, Concurrent Access, Branch Complete) — inline
 - Note for backend services: rows are request flows or processing stages, not UI screens
-- Instruction: for each screen/state, map flow from all three perspectives (end-user, QA, support). For each entity, check edge case coverage across all columns.
+- Instruction: for each screen/state, map flow from all three perspectives (end-user, QA, support). For each entity, check edge case coverage across all columns. For any step re-entered by an authoritative reactive backstop (e.g., a server rejection that re-opens the step), trace the step's proactive gates: a gate that fail-opens unconditionally ("for any reason") with no carve-out for the backstop origin is a FAIL — the flow can loop reject → re-open → fail-open → reject, and the required behavior in the backstop origin is undefined when the gate's input is unreadable.
 
 **Agent 4: Requirements Reviewer** — Matrix B, C → `_artifacts/{initiative}-review-requirements.md`
 
