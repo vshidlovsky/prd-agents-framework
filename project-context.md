@@ -121,6 +121,10 @@ Check the sections that apply to your project. Uncheck the rest.
 - [ ] monitoring — Monitoring, alerting, SLA targets (backend)
 - [ ] compliance — Compliance / KYC triggers (fintech)
 - [ ] platform-considerations — iOS/Android differences (mobile)
+- [ ] performance — Latency/throughput budgets with measurement methods
+- [ ] capacity-constraints — Data volume ceilings, growth, ceiling behavior
+- [ ] rollback-degradation — Kill switch, data orphans, mid-session revert
+- [ ] state-migration — Migrating existing persistent state to a new shape
 
 ### Custom Section Packs
 
