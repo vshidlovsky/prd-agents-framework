@@ -107,7 +107,15 @@ If no previous review exists, proceed with full analysis (all cells `[PENDING]`,
 
 ## Step 3: Read Handoff File
 
-If a handoff file exists from the prd-writer (in `_artifacts/`), read it. Extract key fields: `prdPath`, `apiEndpoints`, `existingCodeReferenced`. Use `apiEndpoints` to pre-populate Matrix A rows in Phase 1 (one row per listed endpoint). Use `existingCodeReferenced` paths as additional inputs for Agent 1 when verifying endpoints against code.
+If a handoff file exists from the prd-writer (in `_artifacts/`), validate it before consuming it. If `scripts/validate-handoff.py` exists, run it on the writer's handoff and read the reported problems before you trust any field:
+
+```bash
+python3 scripts/validate-handoff.py --type writer {writer_handoff_file}
+```
+
+Exit 0 means every field below is present and well-formed. On exit 1, do NOT abort the review — instead treat each flagged field as unreliable: recover it from the PRD itself (extract endpoints from the API tables, counts from the FR/AC lists) and record a Matrix I finding that the writer's handoff was malformed, quoting the problem lines. If the script is absent, skip this check and read the handoff as-is.
+
+Then read it. Extract key fields: `prdPath`, `apiEndpoints`, `existingCodeReferenced`. Use `apiEndpoints` to pre-populate Matrix A rows in Phase 1 (one row per listed endpoint). Use `existingCodeReferenced` paths as additional inputs for Agent 1 when verifying endpoints against code.
 
 Use `apiEndpoints` to load vocabulary files for each endpoint:
 - Convert each endpoint to a vocabulary filename (lowercase method + path with `/` → `-`, `{param}` → param name)
@@ -939,6 +947,14 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
 ```
 
 Set `nextAgent` to `"prd-writer"` if NEEDS_REVISION (writer must fix the FAILs). Set to `"none"` if READY (review is the final agent in the pipeline — the create-prd skill handles what happens next).
+
+If `scripts/validate-handoff.py` exists, run it on the file you just wrote and fix every reported problem before proceeding:
+
+```bash
+python3 scripts/validate-handoff.py --type reviewer {handoff_file}
+```
+
+Exit 0 means the handoff matches the shape above. Each problem line is `<field-path>: <problem>` — fix the file, re-run until it exits 0. It catches exactly the failures this step warns about: quoted cell counts, `totalCells` that doesn't equal `subAgentCells + orchestratorCells`, a midnight timestamp, a missing `failsByMatrix` key, and a `nextAgent` that contradicts `status`. If the script is absent, re-read the JSON block above and check each field yourself.
 
 ## Step 10: Commit All Review Artifacts (MANDATORY — do NOT skip)
 
