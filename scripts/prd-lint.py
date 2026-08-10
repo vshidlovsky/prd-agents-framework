@@ -482,7 +482,8 @@ def check_006_guide_blocks(doc: Document, out: List[Violation]) -> None:
 
 
 BACKTICK_RE = re.compile(r"`([^`]+)`")
-AE_ID_RE = re.compile(r"\bAE-\d+\b")
+# Projects may prefix event IDs per initiative (e.g., AE-CVV-001), not just AE-001.
+AE_ID_RE = re.compile(r"\bAE-(?:[A-Za-z0-9]+-)*\d+\b")
 AC_ID_RE = re.compile(r"\bAC-\d+\b")
 
 

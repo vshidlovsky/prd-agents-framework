@@ -76,6 +76,7 @@ As a returning shopper, I want to see my past orders so that I do not have to co
 |---|---|---|---|---|
 | AE-001 | `order_history_viewed` | Order history page becomes visible | `order_count` (integer) | Page view event. |
 | AE-002 | `order_cancellation_confirmed` | Backend confirms a cancellation | `motive` (enum) | Successful cancellation. <!-- expect: LINT-007 --> |
+| AE-XY-003 | `order_export_completed` | Export finishes | `row_count` (integer) | Prefixed-ID event bound by zero ACs. <!-- expect: LINT-007 --> |
 
 ---
 

@@ -77,7 +77,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 - [ ] **AC-009**: With no cached orders, the order history page shows a placeholder list until the orders arrive.
 - [ ] **AC-010**: While a background refresh is in flight and cached orders are on screen, the cached orders stay visible unchanged — no placeholder and no overlay indicator.
-- [ ] **AC-011**: When a background refresh fails while cached orders are on screen, the cached orders stay visible, no error state is shown, and AE-003 fires with the failure-reason property.
+- [ ] **AC-011**: When a background refresh fails while cached orders are on screen, the cached orders stay visible, no error state is shown, and AE-OH-003 fires with the failure-reason property.
 - [ ] **AC-012**: While a cancellation is being submitted, the confirm affordance is disabled and shows an in-progress indicator.
 
 #### Error States
@@ -98,7 +98,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 |---|---|---|---|---|
 | AE-001 | `order_history_viewed` | Order history page becomes visible | `order_count` (integer) | Page view event. |
 | AE-002 | `order_cancellation_confirmed` | Backend confirms a cancellation | `motive` (enum) | Successful cancellation. |
-| AE-003 | `order_history_refetch_failed` | Background refresh fails with cached data on screen | `failure_reason` (enum) | Silent background failure — the sole signal of this state. |
+| AE-OH-003 | `order_history_refetch_failed` | Background refresh fails with cached data on screen | `failure_reason` (enum) | Silent background failure — the sole signal of this state. |
 
 ---
 
