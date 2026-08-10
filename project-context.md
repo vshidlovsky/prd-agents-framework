@@ -133,6 +133,16 @@ Custom section pack files (one path per line, or "none"):
 
 - none
 
+### Registry-Mirrored Catalogs
+
+> GUIDE: Central catalogs that PRD tables mirror — e.g., an analytics event catalog, a
+> platform-discrepancy log, an error-code registry, a decision log. When a PRD table row
+> mirrors a row in one of these files, additions, changes, AND removals must land in the
+> catalog in the same PRD edit (see the registry-lockstep rules in prd-writer and prd-reviewer).
+> List one catalog per line with its path and what it tracks, or "none".
+
+- none
+
 ### Project-Specific Review Checks
 
 > GUIDE: Additional review checks beyond the universal ones.

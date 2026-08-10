@@ -16,6 +16,7 @@
 > - Include event properties when relevant
 > - Check existing events in the codebase first to avoid duplicates
 > - Every event gets a stable ID: AE-001, AE-002, ...
+> - If the project maintains a central analytics event catalog (see Registry-Mirrored Catalogs in project-context.md), mirror every event addition, property change, and removal into the catalog in the same PRD edit — the lockstep applies to property updates and removals, not just new event names
 >
 > **AC-binding rules** (writer):
 > - When an AC fires an analytics event, the AC MUST list every required property on that event, matching the Properties column in this table verbatim. Whenever this table is updated, grep every AC referencing that event and update the AC's property list in the same edit.
