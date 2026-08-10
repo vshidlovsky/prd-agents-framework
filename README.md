@@ -43,7 +43,9 @@ prd-agents-framework/
 │   ├── prd-lint.py             # Deterministic linter for mechanical PRD/review rules
 │   ├── validate-handoff.py     # Schema validator for inter-agent handoff JSON
 │   ├── run-log.py              # Safe JSONL run-log writer + timing reader
-│   └── tests/                  # Fixtures + run-tests.sh for all three scripts
+│   ├── check-docs.py           # Framework self-check: doc-consistency / drift guard
+│   ├── banned-terms.txt        # Domain-leakage term list used by check-docs.py
+│   └── tests/                  # Fixtures + run-tests.sh for the three PRD scripts
 ├── rules/
 │   ├── behavioral-separation.md # Rule: behavioral/technical contract separation
 │   ├── prd-lessons.md          # Rule: no lessons written without user approval
@@ -330,6 +332,24 @@ The reviewer agent incorporates techniques from requirements engineering researc
 ## Contributing
 
 Issues and PRs welcome. If you adapt the framework to a new tech stack or add section packs, consider contributing them back.
+
+**CI**: PRs run doc-consistency checks — run `python3 scripts/check-docs.py` locally before pushing.
+
+The framework is documentation, and every enumeration in it is maintained by hand — smell counts, Matrix F rows, the file tree above, the section-pack registry. `scripts/check-docs.py` is the regression guard for that drift. Stdlib-only Python 3.9+, no arguments needed. Exit `0` clean, `1` findings, `2` usage error; one line per finding: `<CHECK-ID> <file>:<line> <message>`.
+
+| ID | Check |
+|----|-------|
+| DOC-001 | Every backticked repo-relative path in a markdown file exists; every file named in the README file tree exists; every markdown file under `agents/ rules/ templates/ skills/` appears in that tree |
+| DOC-002 | Smell counts restated in `agents/prd-reviewer.md` and this README match the bullet counts in `agents/prd-smell-patterns.md` |
+| DOC-003 | Every `F-<n>` the reviewer references has a Matrix F scaffold row; every `Matrix <X>` referenced has a definition |
+| DOC-004 | Every in-page `](#anchor)` link in this README resolves to a heading |
+| DOC-005 | Every section pack has an `Insert into` tag with a position; every pack listed in `project-context.md` exists on disk; every pack on disk has a Matrix G check definition |
+| DOC-006 | No consuming-project vocabulary in framework docs — a term list guards against domain leakage into "generic" examples |
+| DOC-007 | No orphan rule files (each is referenced by an agent, template, or skill), and every `rules/…` reference resolves |
+
+`scripts/banned-terms.txt` holds the DOC-006 term list: one term per line, `#` comments, and `term :: path` to exempt a file where a term is legitimate. It scans the authored doc surface (`agents/`, `rules/`, `templates/`, `skills/`, `project-context.md`, `README.md`) and deliberately skips `scripts/tests/fixtures/`, whose fixtures contain bad examples on purpose. Add a term whenever you notice a consuming project's product name, endpoint path, enum value, or repo name in a framework example.
+
+Run `bash scripts/tests/run-tests.sh` too — it covers `prd-lint.py`, `validate-handoff.py`, and `run-log.py`. CI runs both, plus `python3 -m py_compile scripts/*.py`.
 
 ## License
 
