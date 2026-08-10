@@ -1,0 +1,6 @@
+# One planted defect per line: the substring run-tests.sh requires in the
+# `validate-handoff.py --type dispatch` output for dispatch-invalid.json.
+prdPath: must be a non-empty string
+models.taxonomy: unexpected key
+promptFiles.smells: required key is missing
+previousReview.exists: expected boolean, got string

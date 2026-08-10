@@ -1,0 +1,34 @@
+{
+  "reviewMode": "parallel",
+  "scaffoldPath": "/repo/docs/initiatives/search-filters/search-filters-prd-review.md",
+  "prdPath": "",
+  "subAgentCells": 231,
+  "orchestratorCells": 16,
+  "totalCells": 247,
+  "models": {
+    "api": "opus",
+    "structure": "opus",
+    "flow": "sonnet",
+    "requirements": "opus",
+    "smells": "opus",
+    "taxonomy": "opus"
+  },
+  "promptFiles": {
+    "api": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-prompt-api.md",
+    "structure": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-prompt-structure.md",
+    "flow": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-prompt-flow.md",
+    "requirements": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-prompt-requirements.md"
+  },
+  "outputFiles": {
+    "api": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-api.md",
+    "structure": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-structure.md",
+    "flow": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-flow.md",
+    "requirements": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-requirements.md",
+    "smells": "/repo/docs/initiatives/search-filters/_artifacts/search-filters-review-smells.md"
+  },
+  "previousReview": {
+    "exists": "false",
+    "previousFails": [],
+    "changedSections": []
+  }
+}

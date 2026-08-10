@@ -1,0 +1,33 @@
+{
+  "agent": "prd-author",
+  "initiative": "search-filters",
+  "timestamp": "10 Aug 2026",
+  "status": "draft_complete",
+  "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
+  "apiEndpoints": ["GET /v1/catalog/search", 42],
+  "existingCodeReferenced": ["src/catalog/search/SearchController.kt"],
+  "dependencies": [],
+  "prdMetrics": {
+    "frCount": "eighteen",
+    "edgeCaseCount": 11,
+    "keyEntityCount": 4,
+    "version": "v1",
+    "isFreshDraft": "yes"
+  },
+  "proposedVocabularyEntries": [
+    {
+      "endpoint": "GET /v1/catalog/search",
+      "file": "semantic-vocabulary/get-v1-catalog-search.md",
+      "isNewFile": true,
+      "entries": [
+        {
+          "apiField": "srt",
+          "semanticName": "sort order",
+          "action": "change",
+          "reason": "AC-019 uses 'sort order'."
+        }
+      ]
+    }
+  ],
+  "nextAgent": "prd-reviewer"
+}

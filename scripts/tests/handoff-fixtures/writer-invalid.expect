@@ -1,0 +1,9 @@
+# One planted defect per line: the substring run-tests.sh requires in the
+# `validate-handoff.py --type writer` output for writer-invalid.json.
+agent: expected "prd-writer", got "prd-author"
+timestamp: expected ISO8601 timestamp
+apiEndpoints[1]: expected string, got integer
+prdMetrics.frCount: expected integer, got non-numeric string "eighteen"
+prdMetrics.acCount: required field is missing
+prdMetrics.isFreshDraft: expected boolean, got string
+proposedVocabularyEntries[0].entries[0].previousName: required field is missing
