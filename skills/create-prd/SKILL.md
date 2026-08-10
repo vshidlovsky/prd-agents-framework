@@ -34,8 +34,15 @@ Run the full PRD workflow for `{argument}`.
    1. Read the state file — extract `runId`, `initiative`, `currentPhase`, `startedAt`, `completedPhases`
    2. Append a `"terminated"` JSONL entry to `$LOG_FILE` capturing all completed phases and the phase that was in progress when it died:
       ```bash
-      echo '{"entryType":"terminated","runId":"<from state>","initiative":"<from state>","terminatedAt":"<now ISO8601>","diedInPhase":"<currentPhase>","completedPhases":<array from state>,"reason":"abandoned"}' >> "$LOG_FILE"
+      python3 scripts/run-log.py append --log-file "$LOG_FILE" --entry-type terminated \
+        --field "runId=<runId from state>" \
+        --field "initiative=<initiative from state>" \
+        --field "terminatedAt=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --field "diedInPhase=<currentPhase from state>" \
+        --field 'completedPhases=<completedPhases array from state, verbatim JSON>' \
+        --field "reason=abandoned"
       ```
+      Never interpolate values into a JSON string yourself — pass each one through `--field` so the script escapes it. If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
    3. Delete the stale state file: `rm -f "$STATE_FILE"`
    4. Log a message: "Recovered abandoned run {runId} for {initiative} — terminated in {currentPhase} phase."
 
@@ -94,8 +101,22 @@ Update state file — mark research complete and append researcher JSONL entry:
    ```
 2. Append researcher JSONL entry:
    ```bash
-   echo '{"entryType":"researcher","runId":"'"$RUN_ID"'","initiative":"{argument}","agent":"researcher","model":"'"$MODEL_MAP_RESEARCHER"'","cycle":1,"startedAt":"<research_start ISO>","completedAt":"<research_end ISO>","durationSeconds":<research_end - research_start>,"inputSummary":"Initiative brief: {argument}","outputSummary":"Research doc with '$ENDPOINTS' endpoints, '$FILES_READ' files, '$AMBIGUITIES' ambiguities","artifactPath":"<research doc path>","handoffPath":null,"metrics":{"endpointsFound":'$ENDPOINTS',"filesRead":'$FILES_READ',"ambiguitiesFlagged":'$AMBIGUITIES'}}' >> "$LOG_FILE"
+   python3 scripts/run-log.py append --log-file "$LOG_FILE" --entry-type researcher \
+     --field "runId=$RUN_ID" \
+     --field "initiative={argument}" \
+     --field "agent=researcher" \
+     --field "model=$MODEL_MAP_RESEARCHER" \
+     --field "cycle=1" \
+     --field "startedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get research_start --iso)" \
+     --field "completedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get research_end --iso)" \
+     --field "durationSeconds=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta research_start research_end)" \
+     --field "inputSummary=Initiative brief: {argument}" \
+     --field "outputSummary=Research doc with $ENDPOINTS endpoints, $FILES_READ files, $AMBIGUITIES ambiguities" \
+     --field "artifactPath=<research doc path>" \
+     --field "handoffPath=null" \
+     --field "metrics={\"endpointsFound\":$ENDPOINTS,\"filesRead\":$FILES_READ,\"ambiguitiesFlagged\":$AMBIGUITIES}"
    ```
+   The script escapes every value, so an initiative name containing quotes or `$(…)` is safe. If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference), and read the timing file with a `while IFS='=' read -r key val` loop.
 3. Update state file — set `currentPhase: "gate1"`, push researcher phase into `completedPhases`
 
 ### Gate 1: Research Review
@@ -148,8 +169,22 @@ Append writer JSONL entry:
 1. Read the writer's handoff JSON — extract `prdMetrics` (frCount, acCount, edgeCaseCount, keyEntityCount, version, isFreshDraft, failsAddressed, sectionPacksUsed) and `apiEndpoints` count
 2. Append:
    ```bash
-   echo '{"entryType":"writer","runId":"'"$RUN_ID"'","initiative":"{argument}","agent":"prd-writer","model":"'"$MODEL_MAP_WRITER"'","cycle":<current_cycle>,"startedAt":"<writing_start ISO>","completedAt":"<writing_end ISO>","durationSeconds":<delta>,"inputSummary":"<research doc or revision of N FAILs>","outputSummary":"PRD <version> with <frCount> FRs, <acCount> ACs, <edgeCaseCount> edge cases","artifactPath":"<prd path>","handoffPath":"<handoff path>","metrics":<prdMetrics from handoff>}' >> "$LOG_FILE"
+   python3 scripts/run-log.py append --log-file "$LOG_FILE" --entry-type writer \
+     --field "runId=$RUN_ID" \
+     --field "initiative={argument}" \
+     --field "agent=prd-writer" \
+     --field "model=$MODEL_MAP_WRITER" \
+     --field "cycle=<current_cycle>" \
+     --field "startedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get writing_start --iso)" \
+     --field "completedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get writing_end --iso)" \
+     --field "durationSeconds=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta writing_start writing_end)" \
+     --field "inputSummary=<research doc or revision of N FAILs>" \
+     --field "outputSummary=PRD <version> with <frCount> FRs, <acCount> ACs, <edgeCaseCount> edge cases" \
+     --field "artifactPath=<prd path>" \
+     --field "handoffPath=<handoff path>" \
+     --field 'metrics=<prdMetrics object from the handoff, verbatim JSON>'
    ```
+   Pass `metrics` as the handoff's `prdMetrics` object verbatim — `--field` values that parse as JSON stay JSON, so the object is preserved rather than stringified. If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
 3. Update state file — set `currentPhase: "gate2"`, push writer phase into `completedPhases`
 
 ### Gate 2: PRD Draft Review
@@ -206,7 +241,14 @@ cat {initiative_dir}/_artifacts/{argument}-review-dispatch.json 2>/dev/null
 ```
 
 - **If no dispatch file**: the reviewer completed in single-agent mode. The review file and handoff are done. Skip to Gate 3.
-- **If dispatch file exists**: read it. The dispatch JSON includes a `models` object with per-agent model assignments — use these for sub-agent dispatch (they match `MODEL_MAP` but are authoritative for this review run). Proceed to Step 3.3.
+- **If dispatch file exists**: validate it before consuming it. If `scripts/validate-handoff.py` exists, run it on the dispatch file and treat any reported problem as a Phase 1 failure:
+  ```bash
+  python3 scripts/validate-handoff.py --type dispatch \
+    "{initiative_dir}/_artifacts/{argument}-review-dispatch.json"
+  ```
+  Exit 0 means the dispatch is complete and consistent. On exit 1, STOP and tell the user: "Reviewer Phase 1 wrote an invalid dispatch file: [paste the reported problems]. Re-run the review." Do not dispatch sub-agents against a dispatch file with missing prompt paths or mismatched cell counts — a missing key here silently drops a whole sub-reviewer. If the script is absent, skip this check and rely on the prompt-file existence check in Step 3.3.
+
+  Then read it. The dispatch JSON includes a `models` object with per-agent model assignments — use these for sub-agent dispatch (they match `MODEL_MAP` but are authoritative for this review run). Proceed to Step 3.3.
 
 ### Step 3.3: Dispatch sub-reviewers (parallel)
 
@@ -263,8 +305,23 @@ Append reviewer JSONL entry:
 2. Read sub-agent timing files (if parallel mode) for per-sub-agent durations
 3. Append:
    ```bash
-   echo '{"entryType":"reviewer","runId":"'"$RUN_ID"'","initiative":"{argument}","agent":"prd-reviewer","model":"'"$MODEL_MAP_REVIEWER"'","cycle":<current_cycle>,"startedAt":"<review_start ISO>","completedAt":"<review_assembly_end ISO>","durationSeconds":<delta>,"inputSummary":"PRD <version> at <path>, <frCount> FRs, <acCount> ACs","outputSummary":"<verdict>: <failCount> FAILs, <totalCells> cells filled, <spotCheckOverrides> spot-check overrides","artifactPath":"<review path>","handoffPath":"<review handoff path>","metrics":<all metrics from handoff>,"subAgentDurations":{"scaffold":<delta>,"api":<delta|null>,"structure":<delta|null>,"flow":<delta|null>,"requirements":<delta|null>,"smells":<delta|null>,"assembly":<delta>}}' >> "$LOG_FILE"
+   python3 scripts/run-log.py append --log-file "$LOG_FILE" --entry-type reviewer \
+     --field "runId=$RUN_ID" \
+     --field "initiative={argument}" \
+     --field "agent=prd-reviewer" \
+     --field "model=$MODEL_MAP_REVIEWER" \
+     --field "cycle=<current_cycle>" \
+     --field "startedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get review_start --iso)" \
+     --field "completedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get review_assembly_end --iso)" \
+     --field "durationSeconds=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta review_start review_assembly_end)" \
+     --field "inputSummary=PRD <version> at <path>, <frCount> FRs, <acCount> ACs" \
+     --field "outputSummary=<verdict>: <failCount> FAILs, <totalCells> cells filled, <spotCheckOverrides> spot-check overrides" \
+     --field "artifactPath=<review path>" \
+     --field "handoffPath=<review handoff path>" \
+     --field 'metrics=<all metrics from the handoff, verbatim JSON object>' \
+     --field 'subAgentDurations={"scaffold":<delta>,"api":<delta|null>,"structure":<delta|null>,"flow":<delta|null>,"requirements":<delta|null>,"smells":<delta|null>,"assembly":<delta>}'
    ```
+   Per-sub-agent deltas come from the same helper: `python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta subagent_api_start subagent_api_end` (and likewise for structure/flow/requirements/smells, using whatever key names the sub-agent timing files carried). If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
 4. Update state file — set `currentPhase: "gate3"`, push reviewer phase into `completedPhases`
 
 ### Step 3.6: Defensive cleanup
@@ -354,12 +411,27 @@ If run logging is enabled in project-context.md, finalize the log before summari
    echo "pipeline_end=$(date +%s) $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$TIMING_FILE"
    ```
 
-2. Read the timing file. Compute human wait time from gate pairs (`gate1_resume - gate1_prompt` + `gate2_resume - gate2_prompt` + `gate3_resume - gate3_prompt`). If a gate pair is missing (e.g., pipeline ended before Gate 3), skip it.
+2. Compute human wait time from the gate pairs — `python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta gate1_prompt gate1_resume` for each of gate1/gate2/gate3, summed. A missing key exits 1 and prints nothing (e.g., the pipeline ended before Gate 3) — skip that gate. If `scripts/run-log.py` is missing, read the timing file with a `while IFS='=' read -r key val` loop and subtract the epochs yourself.
 
 3. Append the **pipeline summary** JSONL entry:
    ```bash
-   echo '{"entryType":"pipeline","runId":"'"$RUN_ID"'","initiative":"{argument}","agent":"create-prd","model":"opus","profile":"<profile>","cycle":<final_cycle>,"startedAt":"<pipeline_start ISO>","completedAt":"<pipeline_end ISO>","durationSeconds":<total_delta>,"inputSummary":"Initiative: {argument}, full pipeline run","outputSummary":"<totalCycles> cycles: <summary of each cycle verdict>","artifactPath":"<final prd path>","handoffPath":null,"metrics":{"totalCycles":<count>,"finalVerdict":"<READY|NEEDS_REVISION|OVERRIDE>","humanWaitSeconds":<sum>,"agentDurationSeconds":<total minus human>,"gateDurations":{"gate1":<delta|null>,"gate2":<delta|null>,"gate3":<delta|null>},"lessonsApproved":<count>,"glossaryTermsApproved":<count>}}' >> "$LOG_FILE"
+   python3 scripts/run-log.py append --log-file "$LOG_FILE" --entry-type pipeline \
+     --field "runId=$RUN_ID" \
+     --field "initiative={argument}" \
+     --field "agent=create-prd" \
+     --field "model=opus" \
+     --field "profile=<profile>" \
+     --field "cycle=<final_cycle>" \
+     --field "startedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get pipeline_start --iso)" \
+     --field "completedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get pipeline_end --iso)" \
+     --field "durationSeconds=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta pipeline_start pipeline_end)" \
+     --field "inputSummary=Initiative: {argument}, full pipeline run" \
+     --field "outputSummary=<totalCycles> cycles: <summary of each cycle verdict>" \
+     --field "artifactPath=<final prd path>" \
+     --field "handoffPath=null" \
+     --field 'metrics={"totalCycles":<count>,"finalVerdict":"<READY|NEEDS_REVISION|OVERRIDE>","humanWaitSeconds":<sum>,"agentDurationSeconds":<total minus human>,"gateDurations":{"gate1":<delta|null>,"gate2":<delta|null>,"gate3":<delta|null>},"lessonsApproved":<count>,"glossaryTermsApproved":<count>}'
    ```
+   Gate deltas come from the helper too — `--delta gate1_prompt gate1_resume` per gate; skip a gate whose pair is missing. If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
 
    Individual agent entries (researcher, writer, reviewer) were already appended after each phase completed — the pipeline entry is the final summary that ties them together via `runId`.
 
