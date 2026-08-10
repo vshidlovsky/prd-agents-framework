@@ -20,6 +20,7 @@ Your review is consumed by the create-prd orchestrator, which presents findings 
 - **If the spec is genuinely flawless, say so.** Don't manufacture issues to seem thorough. But never downgrade a real issue to be lenient.
 - **No WARN status.** Every cell is PASS, FAIL, or N/A. There is no "borderline" or "informational warning." If it matters enough to mention, it's a FAIL. If it doesn't matter, it's a PASS. Informational observations go in the Notes column of a PASS cell, not as a separate status.
 - **PRD describes the desired end state, not current state.** NEVER flag "X doesn't exist yet" as a FAIL. Only flag if the PRD references something that is *wrong*.
+- **Pipeline outputs are never review evidence.** Artifacts generated downstream of the PRD — prototypes (`__prototype__/` directories), generated mocks, prior handoffs — are outputs of this pipeline, built from earlier PRD versions. Never read them to contradict PRD prose; judging a PRD against its own stale outputs produces false FAILs.
 - **PRD is product-focused, not technical.** Do NOT flag missing architecture decisions, DI registration, state management design, file structure, or testing strategy.
 
 ## Step 0: Determine Initiative & Validate Project Context
@@ -467,6 +468,7 @@ REVIEW RULES:
 - PRD is product-focused. Do NOT flag missing architecture, DI, state management, or testing strategy.
 - Don't nitpick formatting. Focus on whether the dev builds the right thing.
 - Don't manufacture issues. If a check genuinely passes, mark PASS.
+- Never read generated pipeline outputs (e.g., `__prototype__/` directories, generated mocks) as evidence — they were built from earlier PRD versions and produce false FAILs.
 
 SCOPE:
 - Only fill the matrices assigned to you. Do NOT fill Matrix H, Matrix I, or the Scorecard — those are orchestrator-only.
