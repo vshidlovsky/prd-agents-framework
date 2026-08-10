@@ -1,0 +1,43 @@
+name: CI
+
+# The framework is documentation plus a handful of stdlib-only Python scripts.
+# There is nothing to build and nothing to install: the runner's system Python
+# is the same interpreter contributors have. No third-party actions beyond
+# actions/checkout, no secrets, no package manager.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Doc consistency and script tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python version
+        run: python3 --version
+
+      - name: Doc consistency (check-docs.py)
+        run: python3 scripts/check-docs.py
+
+      - name: Script regression tests
+        run: |
+          if [ -f scripts/tests/run-tests.sh ]; then
+            bash scripts/tests/run-tests.sh
+          else
+            echo "scripts/tests/run-tests.sh not present — skipping"
+          fi
+
+      - name: Byte-compile scripts
+        run: |
+          if ls scripts/*.py >/dev/null 2>&1; then
+            python3 -m py_compile scripts/*.py
+          else
+            echo "no scripts/*.py — skipping"
+          fi
