@@ -48,7 +48,15 @@ Read `.claude/project-context.md`. Extract:
 
 Verify the PRD template exists at the extracted path. If missing, STOP. Tell the orchestrator: "PRD template not found at {path}."
 
-Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Reviewer check" — these become rows in the Lesson Checks matrix.
+Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Reviewer check" — these become rows in the Lesson Checks matrix (Matrix H).
+
+**Lesson lifecycle (see `rules/lesson-lifecycle.md`).** Each lesson may carry two lifecycle fields, **Applies when** and **Status**:
+
+- Skip lessons whose Status is `superseded-by:*` or `graduated:*` — they generate no Matrix H rows. A `superseded-by: L-NNN` lesson has been replaced by the named lesson; a `graduated: <ref>` lesson is now enforced by the framework itself, so re-checking it in Matrix H is duplicated work.
+- Load only the remaining (`active`) lessons. Record each active lesson's **Applies when** condition alongside its Reviewer check — you will evaluate the condition in step 8.1.1 before executing the check.
+- **Backward compatibility — a lesson that omits `Applies when` and/or `Status` is treated as `Status: active` and `Applies when: always`.** Never skip or mark N/A a lesson merely because it lacks the newer fields; older lessons written before the lifecycle fields existed are fully in force.
+
+Report the counts to yourself before Phase 2: total lessons read, active lessons kept, lessons skipped as superseded/graduated. Matrix H is sized from the active count only.
 
 Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, flag terms that the PRD uses inconsistently or incorrectly and propose them in Step 8.6.
 
@@ -317,13 +325,15 @@ Section pack check definitions (add rows only for included packs):
 
 For custom section packs: read the pack file, verify the PRD includes the section filled in per the pack's template.
 
-**Matrix H: Lesson Checks** — one row per lesson from prd-lessons.md
+**Matrix H: Lesson Checks** — one row per **active** lesson from prd-lessons.md
 
 | ID | Lesson | Reviewer Check | Verdict | Notes |
 |----|--------|----------------|---------|-------|
 | H-1 | L-001: [name] | [check from lesson] | [PENDING] | [PENDING] |
 
-If no lessons file exists, skip this matrix.
+Lessons skipped in Step 1 (Status `superseded-by:*` or `graduated:*`) get **no row** — do not scaffold them and do not count them in `ORCHESTRATOR_CELLS`. Rows for active lessons whose **Applies when** condition does not hold are still scaffolded; step 8.1.1 resolves them to `N/A` with a reason.
+
+If no lessons file exists, or every lesson in it is superseded/graduated, skip this matrix.
 
 **Matrix P: Project-Specific Checks** — from project-context.md
 
@@ -602,7 +612,7 @@ When the skill calls you with "Run Phase 3 only," you are a fresh agent with no 
 
 1. Read the dispatch file at the path provided in the skill's prompt (fall back to `_artifacts/{initiative}-review-dispatch.json` in the initiative directory if no path given)
 2. Re-read `.claude/project-context.md` — extract all paths and configuration
-3. Re-read `.claude/prd-lessons.md` if it exists
+3. Re-read `.claude/prd-lessons.md` if it exists — re-apply the Step 1 lifecycle filter (skip `superseded-by:*` and `graduated:*`; absent fields mean `active` + `always`)
 4. Re-read the PRD (path from dispatch JSON or project-context.md)
 5. Re-read the scaffold/review file (path from dispatch JSON's `scaffoldPath`)
 
@@ -623,9 +633,17 @@ Assembly order (all files in `_artifacts/`):
 
 ### 8.1.1: Fill Matrix H (Lesson Checks) — you do this yourself
 
-Matrix H requires cross-cutting analysis of FRs and ACs against lesson rules. Now that you have all filled matrices from sub-agents, execute each lesson's "Reviewer check" against the PRD yourself and fill Matrix H in the review scaffold.
+Matrix H requires cross-cutting analysis of FRs and ACs against lesson rules. Now that you have all filled matrices from sub-agents, execute each active lesson's "Reviewer check" against the PRD yourself and fill Matrix H in the review scaffold.
 
-For each lesson row: read the lesson's reviewer check text and execute it against the PRD — some checks are simple text searches, others require cross-referencing multiple PRD sections (e.g., comparing AC property lists against Analytics Events tables, building control x state matrices). Follow the check text literally; do not reduce every check to a grep.
+**Lifecycle gate — apply in this order for every lesson:**
+
+1. **Status gate.** Lessons whose Status is `superseded-by:*` or `graduated:*` were dropped in Step 1 and have no Matrix H row. If such a row exists (e.g., a stale scaffold), delete it rather than filling it. A lesson with no Status field is `active` — check it.
+2. **Applies-when gate.** For each active lesson, **first evaluate its Applies when condition against the PRD** — before running the check. If the condition clearly does not apply, fill the row as `N/A — condition not met: <one-line reason>` and **do not execute the check**. Put the same text in Notes so the reason survives in the review document. A lesson with no Applies when field, or one whose condition is `always`, always applies — never mark it N/A on lifecycle grounds.
+3. **Execute.** Only for lessons that pass both gates: read the lesson's reviewer check text and execute it against the PRD — some checks are simple text searches, others require cross-referencing multiple PRD sections (e.g., comparing AC property lists against Analytics Events tables, building control x state matrices). Follow the check text literally; do not reduce every check to a grep.
+
+Ambiguity rule: `N/A — condition not met` is for conditions that **clearly** do not hold (the PRD has no such construct, section pack, or surface at all). If you are unsure whether the condition applies, execute the check — a wasted check is cheaper than a missed FAIL. `N/A` is never a substitute for a verdict you could not determine.
+
+`N/A — condition not met: …` counts as a filled cell for step 8.1.2 (it is not `[PENDING]`) and is not a FAIL, so it does not enter the scorecard as an issue.
 
 ### 8.1.2: Verify Assembly Completeness
 
@@ -716,9 +734,12 @@ Gather all FAIL cells into a numbered issues list. For each:
 
 For each FAIL that represents a NEW pattern not already in prd-lessons.md, propose a lesson. These are written into the review document only — the user decides which to accept via the orchestrator.
 - Short name
+- Applies when (the applicability condition, or `always` — see Step 12 for how it is written and used)
 - What was caught
 - Writer rule (how to prevent)
 - Reviewer check (how to detect)
+
+Proposals are always born `active`; do not propose a Status. Prefer a narrow, PRD-observable **Applies when** over `always` when the pattern only bites PRDs with a particular construct — that is what keeps Matrix H cheap as the corpus grows.
 
 **Rules budget.** Before proposing a lesson, check whether an existing framework rule (the files under `rules/`, the smell patterns, the writer's Quality Standards, the Matrix F checks) or an existing lesson already covers the pattern. If one does, propose a merge or an extension of that rule instead of a new lesson — name the rule and quote the clause you would amend. New rules should name the rule they subsume, if any. Every duplicated rule is a future drift bug: the framework pays for each additional copy of a rule in maintenance and in reviewer attention, so the budget is "one home per rule."
 
@@ -797,6 +818,7 @@ FAIL_COUNT: [integer — count of FAIL cells across all matrices]
 ## Proposed Lessons
 
 ### Proposed: [short name]
+- **Applies when**: [condition, or `always`]
 - **Issue**: [What was caught]
 - **Writer rule**: [Prevention]
 - **Reviewer check**: [Detection]
@@ -879,6 +901,7 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
   "proposedLessons": [
     {
       "name": "<short name>",
+      "appliesWhen": "<applicability condition, or \"always\">",
       "issue": "<what was caught>",
       "writerRule": "<prevention rule>",
       "reviewerCheck": "<detection rule>"
@@ -957,10 +980,26 @@ When the orchestrator calls back with user-approved lessons:
 ```markdown
 ## L-NNN: [short name]
 - **Caught in**: [initiative name] PRD [version], [date]
+- **Applies when**: [condition — e.g., "PRD consumes a discriminated union", "project maintains central catalogs", or "always"]
+- **Status**: active
 - **Issue**: [What was caught]
 - **Writer rule**: [How prd-writer should prevent this in future PRDs]
 - **Reviewer check**: [How to detect this in future reviews]
 ```
+
+**`Applies when`** is the lesson's applicability condition — a one-line, PRD-observable test that says when the lesson is in force. Write `always` for lessons that apply to every PRD. Conditions must be checkable from the PRD itself ("PRD includes the analytics-events pack", "PRD defines more than one entry point"), not from tribal knowledge. Step 8.1.1 evaluates this condition before executing the Reviewer check and marks non-matching lessons `N/A — condition not met: <reason>`.
+
+**`Status`** is the lifecycle state. Exactly three forms are valid:
+
+| Status | Meaning | Effect on reviews |
+|--------|---------|-------------------|
+| `active` | In force (the default for every newly approved lesson) | Generates a Matrix H row; the writer follows its Writer rule |
+| `superseded-by: L-NNN` | Replaced by the named lesson, which covers this case and more | Skipped in Step 1 — no Matrix H row, no Writer rule |
+| `graduated: <framework commit sha or PR link>` | The rule now lives in the framework itself (agent, template, rule file, or linter check) at the named ref | Skipped in Step 1 — the framework enforces it, so re-checking is duplicated work |
+
+Never invent other Status values. When writing a new lesson, always write `Status: active` — only the user changes a Status afterward, and only via the workflow in `rules/lesson-lifecycle.md`.
+
+**Backward compatibility — lessons that omit `Applies when` and/or `Status` are treated as `Status: active` and `Applies when: always`.** Do NOT rewrite or backfill existing lessons when appending new ones: leave older entries exactly as they are, append the new lesson with the full field set, and let the fallback carry the old ones. The file's header block below is unchanged by this format extension — if the file already exists with that header, append only; if it is missing, create it with the header first.
 
 If creating the file for the first time, use this header:
 

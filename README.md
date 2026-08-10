@@ -45,6 +45,7 @@ prd-agents-framework/
 ├── rules/
 │   ├── behavioral-separation.md # Rule: behavioral/technical contract separation
 │   ├── prd-lessons.md          # Rule: no lessons written without user approval
+│   ├── lesson-lifecycle.md     # Lesson statuses + graduation workflow
 │   ├── domain-glossary.md      # Rule: no glossary terms written without user approval
 │   ├── semantic-vocabulary.md  # Rule: no vocabulary entries written without user approval
 │   └── shared-requirements.md  # Rule: no SRs modified without user approval
@@ -203,6 +204,12 @@ Stdlib-only Python 3.9+, single file, no dependencies. Exit `0` clean, `1` viola
 The agents call it automatically when the file is present: the writer at Step 4.5 (before saving), the reviewer at step 8.1.2 (PRD violations become Matrix I FAIL rows; review-file violations are fixed in place), and `/create-prd` before Gate 2 (violations surface with the draft notice). If the file is absent, every caller falls back to its manual scans — copying it in is opt-in.
 
 Regression tests live in `scripts/tests/`: `bash scripts/tests/run-tests.sh` lints the fixtures and asserts that a clean PRD reports zero violations and that each annotated violation fires with the expected check ID on the expected line.
+
+### Lessons learned
+
+`.claude/prd-lessons.md` is your project's memory of past review failures: each lesson carries a **Writer rule** the writer follows while drafting and a **Reviewer check** that becomes a row in the reviewer's Lesson Checks matrix (Matrix H). Lessons grow through the propose→approve flow — the reviewer proposes a lesson for each new failure pattern in the review document, the orchestrator presents the proposals at Gate 3, and only lessons you explicitly approve are appended; no agent ever writes to the file on its own (`rules/prd-lessons.md`). Every approved lesson also records two lifecycle fields: **Applies when** (a PRD-observable condition, or `always`) and **Status** (`active`, `superseded-by: L-NNN`, or `graduated: <ref>`). The reviewer skips superseded and graduated lessons entirely, and marks a row `N/A — condition not met` when an active lesson's condition doesn't hold — so review cost tracks the lessons that actually apply, not the size of the corpus. Lessons written before these fields existed are treated as `active` + `always`, so nothing needs backfilling.
+
+Periodically the corpus should be pruned: project-agnostic lessons **graduate** into the framework itself and stop costing you a Matrix H row on every PRD. See **`rules/lesson-lifecycle.md`** for when to review the corpus, the genericity test, where graduated rules land, and how to retire the project lesson afterward.
 
 ### Domain glossary
 

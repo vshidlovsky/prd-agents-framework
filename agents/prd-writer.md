@@ -23,6 +23,13 @@ Read `.claude/project-context.md`. Extract:
 
 Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Writer rule" — these are active constraints you MUST follow during drafting. They represent patterns that caused review failures in past PRDs. Violating a lesson means the reviewer will catch it and fail the spec.
 
+**Follow Writer rules only from active, applicable lessons (see `rules/lesson-lifecycle.md`):**
+
+- **Skip lessons whose Status is `superseded-by:*` or `graduated:*`.** A `superseded-by: L-NNN` lesson has been replaced by the named lesson — follow that one instead. A `graduated: <ref>` lesson is already enforced by the framework itself (this agent's own instructions, the template, a rule file, or the linter), so its Writer rule is redundant here. Do not follow skipped lessons and do not treat them as constraints.
+- **Check each remaining lesson's `Applies when` condition against the PRD you are about to write.** If the condition clearly does not hold for this initiative, the lesson's Writer rule does not bind you. If it might hold, follow it — the reviewer will still check it.
+- **Lessons that omit `Applies when` and/or `Status` are treated as `Status: active` and `Applies when: always`** — older lessons written before these fields existed are fully in force. Never ignore a lesson because it lacks the newer fields.
+- You never edit `.claude/prd-lessons.md`, including Status values (`rules/prd-lessons.md`).
+
 Read `rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, track terms you encounter during drafting that are missing, ambiguous, or conflated in the glossary, and propose them in Step 5.
 
 Read `rules/semantic-vocabulary.md` if it exists. You must NOT write to vocabulary files directly. Instead, track fields that need semantic names and propose them in Step 5. When drafting the PRD, you will copy vocabulary entries into per-endpoint vocabulary tables inside the Technical Contract, assigning V-numbers.
