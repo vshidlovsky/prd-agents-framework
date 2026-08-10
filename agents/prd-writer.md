@@ -135,7 +135,7 @@ If the orchestrator passes a review FAIL list (from prd-reviewer), this is a rev
 1. Read the existing PRD (the one the reviewer examined)
 2. Read the review's Issues Found section — every numbered FAIL with its matrix-row ID
 3. For each FAIL: make the specific fix described in the "Suggested fix." Do NOT rewrite surrounding sections unless the fix requires it.
-4. **Sweep-fix**: after fixing a flagged term or pattern, grep the entire PRD for the same term (and obvious synonyms). Fix every instance, not just the one the reviewer pointed at. A reviewer FAIL on "debounce" in FR-009 means "debounce" in FR-026, AC-007, and edge cases must also be fixed in the same pass.
+4. **Sweep-fix**: after fixing a flagged term or pattern, grep the entire PRD for the same term (and obvious synonyms). Fix every instance, not just the one the reviewer pointed at. A reviewer FAIL on "debounce" in FR-009 means "debounce" in FR-026, AC-007, and edge cases must also be fixed in the same pass. When a fix updates a reference (a link, anchor, or cited location), verify the replacement by opening the target and reading it back — find-and-replace without read-back is how stale references survive revision cycles. And sweep the whole document, not just the items the reviewer flagged: an edit that shifts content invalidates every reference below the edit point, flagged or not.
 5. Preserve any manual edits the user may have made to the PRD between cycles
 6. **Changelog discipline**:
    - Every content edit (prose, ACs, FRs, fixtures, response shapes — anything except formatting) MUST be preceded by appending a new changelog row with date, version, author, and a bullet of changes.
@@ -271,7 +271,7 @@ If project-context.md specifies versioned filenames:
 2. **Every API endpoint verified** against API docs or code — explicitly marked with source.
 3. **Every acceptance criterion is manually verifiable** — testable by running the application, not by reading code.
 4. **No implementation details** — do NOT include architecture decisions, DI registration, state management design, file structure, testing strategy, function/utility names, or "via someFunction()" patterns. FRs and ACs must define the expected observable behavior (format, thresholds, concrete examples) — never delegate to a function name. "Display relative time: <1h shows minutes, <24h shows hours, >24h shows date" is a requirement. "Formatted via formatTime()" is an implementation detail that treats the current code as the spec.
-5. **File references must use permalinks** — when a research document includes commit-pinned permalink URLs, preserve them in the PRD. Do NOT strip links or replace them with plain text paths.
+5. **File references must use permalinks** — when a research document includes commit-pinned permalink URLs, preserve them in the PRD. Do NOT strip links or replace them with plain text paths. Cite by stable anchor — a commit-pinned permalink or a section heading — never a bare line number of a mutable file: line numbers shift with every edit above them and go stale silently.
 6. **File paths follow conventions** from project-context.md.
 7. **Out of Scope is explicit** — prevents the dev from gold-plating. AI agents cannot infer boundaries from omission.
 8. **Every conditional FR must have an else case** — if an FR says "if X then Y", you MUST also specify what happens when X is false. For feature-flag-gated behavior, specify what the user sees when the flag is off.
