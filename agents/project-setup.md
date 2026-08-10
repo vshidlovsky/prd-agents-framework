@@ -300,7 +300,7 @@ Ask the user:
 - **Reliable** — every agent in the profile table uses Opus. Best quality, highest cost.
 - **Cost-optimized** — the mechanical agents switch to Sonnet, the rest stay on Opus. Saves ~40-50% on token costs.
   - Sonnet: **researcher** (reads files, extracts facts), **review-api** (compares endpoints against docs), **review-structure** (checklist verification)
-  - Stays on Opus: **prd-writer** (synthesis, judgment), **prd-reviewer** (cross-matrix analysis, verdict), **review-flow** (dead-end/discoverability checks need judgment), **review-requirements** (smell detection needs nuanced language analysis)
+  - Stays on Opus: **prd-writer** (synthesis, judgment), **prd-reviewer** (cross-matrix analysis, verdict), **review-flow** (dead-end/discoverability checks need judgment), **review-requirements** (requirements quality — atomicity, feasibility, contradictions), **review-smells** (smell detection needs nuanced language analysis)
 - **Custom** — you pick the model for each agent individually.
 
 **You can change this anytime by editing the Model Profile table in `.claude/project-context.md`."**
@@ -318,6 +318,7 @@ Fill the Model Profile table in project-context.md based on the user's choice:
 | review-structure | opus |
 | review-flow | opus |
 | review-requirements | opus |
+| review-smells | opus |
 
 **Cost-optimized preset:**
 
@@ -330,6 +331,7 @@ Fill the Model Profile table in project-context.md based on the user's choice:
 | review-structure | sonnet |
 | review-flow | opus |
 | review-requirements | opus |
+| review-smells | opus |
 
 **Custom:** Ask the user for each agent. Present the cost-optimized defaults as recommendations and let them override. Valid models: `opus`, `sonnet`, `haiku`. These are tier names resolved by Claude Code, not pinned model IDs — they track the current generation automatically.
 

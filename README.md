@@ -255,10 +255,10 @@ The framework runs the agents in the Model Profile table, one pass per PRD. Each
 | Profile | Sonnet agents | Opus agents | Cost savings |
 |---------|--------------|-------------|--------------|
 | **reliable** | none | all agents | — |
-| **cost-optimized** | researcher, review-api, review-structure | prd-writer, prd-reviewer, review-flow, review-requirements | ~40-50% |
+| **cost-optimized** | researcher, review-api, review-structure | prd-writer, prd-reviewer, review-flow, review-requirements, review-smells | ~40-50% |
 | **custom** | you pick | you pick | varies |
 
-The cost-optimized preset keeps Opus where judgment matters most — PRD synthesis, smell detection, flow analysis, and cross-matrix verdicts — while switching mechanical agents (file reading, endpoint comparison, checklist verification) to Sonnet.
+The cost-optimized preset keeps Opus where judgment matters most — PRD synthesis, requirements quality (atomicity, feasibility, contradictions), smell detection, flow analysis, and cross-matrix verdicts — while switching mechanical agents (file reading, endpoint comparison, checklist verification) to Sonnet.
 
 The profile is stored in the **Model Profile** table in `project-context.md`. Change it anytime by editing the table directly — no re-setup needed. Model values are tier names resolved by Claude Code (`opus`, `sonnet`, `haiku`), not pinned model IDs — they track the current generation automatically.
 
