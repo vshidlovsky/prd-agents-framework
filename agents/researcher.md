@@ -108,7 +108,7 @@ When you encounter named constants (e.g., `MAX_RETRY_COUNT`, `KSize.fieldLengthM
 4. Report the resolved value, not just the constant name
 5. Format: `MAX_RETRY_COUNT` = `3` (defined at `src/config/constants.java:42`)
 
-**Compound field resolution**: When you encounter a field that appears to be a nested object (e.g., `sender_state` with properties like `id`, `code`, `name`), trace back to where the field is actually populated — not just where it's declared. The declared type may differ from what's sent at runtime. Read the code that constructs the request or assigns the value and document the actual shape (e.g., a flat string sourced from `user.address?.state?.code`, not a nested object). If the field is a discriminated union — a type/kind discriminator selects which sibling object is populated — document each variant's shape separately; never infer a shared shape across variants.
+**Compound field resolution**: When you encounter a field that appears to be a nested object (e.g., `billing_state` with properties like `id`, `code`, `name`), trace back to where the field is actually populated — not just where it's declared. The declared type may differ from what's sent at runtime. Read the code that constructs the request or assigns the value and document the actual shape (e.g., a flat string sourced from `user.address?.state?.code`, not a nested object). If the field is a discriminated union — a type/kind discriminator selects which sibling object is populated — document each variant's shape separately; never infer a shared shape across variants.
 
 ### Display Formatting Rules (frontend/mobile only)
 
@@ -134,7 +134,7 @@ Before writing the research document, verify every claim:
 1. **Endpoint verification**: For each API endpoint in your research, confirm:
    - The endpoint path appears in the code at the call site you documented (not just in comments or dead code)
    - The screen you mapped it to actually calls it (re-read the screen's initialization and event handlers)
-   - No other endpoint serves the same purpose on that screen (grep for similar paths to catch near-misses like `/transfer/calculation` vs `/transfer/promo-calculation`)
+   - No other endpoint serves the same purpose on that screen (grep for similar paths to catch near-misses like `/orders/summary` vs `/orders/promo-summary`)
 
 2. **Field verification**: For each request/response field you documented, run `grep -r "<field_name>"` scoped to the feature directories. If grep returns zero hits on live code, the field is not used — remove it from the research or flag it as `UNVERIFIED: 0 grep hits`.
 

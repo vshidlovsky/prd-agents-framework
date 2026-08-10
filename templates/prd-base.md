@@ -256,7 +256,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 ### Configuration Attributes
 
 > **GUIDE**: Environment-specific config (base URLs, API prefixes, application IDs, timeout values, etc.).
-> PRDs MUST NOT hardcode base URLs or environment-specific hostnames in endpoint specifications. Endpoint paths in the Technical section MUST be specified relative to a named configuration attribute (e.g., "`<BFF_BASE_URL>/v1/config`" rather than "`/v1/config`" or "`api-dev.example.com/money-transfer/v1/config`"). This makes it explicit which client/prefix each endpoint belongs to and eliminates environment-switching guesswork.
+> PRDs MUST NOT hardcode base URLs or environment-specific hostnames in endpoint specifications. Endpoint paths in the Technical section MUST be specified relative to a named configuration attribute (e.g., "`<ORDERS_API_BASE_URL>/v1/orders`" rather than "`/v1/orders`" or "`api-dev.example.com/orders-service/v1/orders`"). This makes it explicit which client/prefix each endpoint belongs to and eliminates environment-switching guesswork.
 
 | Attribute | Description | Example value (dev) |
 |-----------|-------------|---------------------|

@@ -11,7 +11,7 @@
 > **How**: For each data dimension the feature handles, state the expected volume and the design implication. Use the table below.
 >
 > **Frontend / Mobile examples**:
-> - List size: "Max 200 recipients — no virtualization needed"
+> - List size: "Max 200 list rows — no virtualization needed"
 > - Payload size: "Response ≤ 50KB — no streaming/pagination needed"
 > - Concurrent items: "Max 3 in-flight requests — queue additional"
 >
