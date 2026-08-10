@@ -250,6 +250,8 @@ The writer generates edge cases using systematic checklists (entity × dimension
 
 For entities that are (or contain) discriminated unions — a type/kind discriminator selecting which sibling object is populated — verify the PRD documents field paths per variant and that every FR/AC/fixture consuming the union uses its own variant's path. Applying one variant's field path to another is a FAIL even when the field names are individually correct.
 
+For every equality or change-detection comparison of API-sourced figures (amounts, rates, timestamps), verify the declared type matches the API contract (decimal string vs number) and that a normalization/precision rule is stated (integer minor units, fixed precision, or tolerance). Type drift against the contract or an unstated normalization rule on monetary/rate comparisons is a FAIL.
+
 **Matrix F: Structure Checklist** — one row per check
 
 | ID | Check | Verdict | Notes |

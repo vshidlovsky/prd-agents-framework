@@ -213,6 +213,7 @@ After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — 
 | Stale | What if this value changed between when it was read and when it's used? |
 | Paired input | If a formatter takes two paired inputs (amount + currency, date + locale, value + unit), cover BOTH axes independently AND the paired-missing combination. When Intl.NumberFormat or similar API throws on invalid input, document the fallback. |
 | Union variant | If the entity is (or contains) a discriminated union — a type/kind discriminator selects which sibling object is populated — walk EVERY variant through this checklist. Each variant's fields are distinct; do not generalize from the first variant. |
+| Equality comparison | If this value is compared for equality or change detection (amounts, rates, timestamps), type each side per the API contract (decimal string vs number) and state an explicit normalization rule before the comparison — integer minor units for amounts, fixed precision or a stated tolerance for rates. An untyped or unnormalized comparison of API-sourced figures is a defect. |
 | Storage write failure | For every entity persisted in localStorage/sessionStorage, cover both READ failure and WRITE failure for each persisted key specifically — not for the storage backend as a whole. |
 | Web platform property | When deriving from `navigator.*` / `window.*` / `document.*` / `crypto.*`, the expression must be defensive against the property being undefined. Use nullish-coalescing or try/catch. State the defensive pattern in PRD prose. |
 
