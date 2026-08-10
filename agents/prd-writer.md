@@ -56,7 +56,8 @@ Check for a research document first — look for `{initiative}-research.md` in t
 4. If no API spec is found, fall back to code research:
    - Search source directories for API client classes, controller annotations, route handlers
    - Read HTTP calls or endpoint definitions to extract paths, methods, request/response shapes
-   - Mark any endpoint found only in code as "from code — verify with backend/owner"
+   - Mark any endpoint found only in code as "from code — verify with backend/owner" AND track it: add a row under Dependencies or an Open Question with a `CHECK:` tag naming who confirms the contract. A parenthetical marker alone is not tracking
+   - Before claiming the API documentation is silent on an endpoint, field, or error code, search the documentation sources for it and cite what you searched. Claim a gap only when the search comes back empty — a false gap claim is as damaging as a real gap
 5. Search for existing patterns in the codebase that relate to this initiative:
    - Similar initiatives already implemented
    - Shared utilities, components, or services that can be reused
