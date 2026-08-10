@@ -510,7 +510,7 @@ Prompt provides:
 - File paths: PRD at `{prd_path}`, API docs at `{api_docs_paths}`
 - Scaffold file path + instruction: "Read your matrix scaffold between `<!-- MATRIX:A:START -->` and `<!-- MATRIX:A:END -->` from `{scaffold_file}`"
 - Column definitions: Exists in Docs/Code, Method Correct, Request Params Match, Response Fields Match, Missing Params/Fields
-- Instruction: verify every endpoint against API docs/code. Check exists, method, request shape, response shape. Check for missing endpoints the initiative needs.
+- Instruction: verify every endpoint against API docs/code. Check exists, method, request shape, response shape. Check for missing endpoints the initiative needs. For every FR/AC that branches on an API field's enumerated values, read the field's documented description and verify the value axis matches the branch logic — a correctly named field can encode a different classification axis than the behavior needs; if the documented values cannot produce the required distinction, FAIL even though the field name and shape are correct.
 
 **Agent 2: Structure Reviewer** — Matrix F, G, P → `_artifacts/{initiative}-review-structure.md`
 

@@ -185,6 +185,7 @@ The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Ke
 
 **When writing the Technical Contract:**
 - **Cross-cutting tables defined once**: Data Sources, Error Classification, Query Configuration, Route Mapping — each lives in one table as implementation reference
+- **Verify the value axis, not just the field name**: when an FR/AC branches on an API field's values, quote the field's documented description in the vocabulary row's Notes and confirm the field carries the distinction the behavior needs — a correctly named, correctly typed field can still encode a different classification axis than the one the behavior branches on. If the entity does not expose the attribute the behavior needs, flag the missing source explicitly — never repurpose an adjacent field
 - **Per-endpoint vocabulary tables**: For each API endpoint, create a vocabulary table with V-numbered rows (V# | Semantic Name | API Field | Type | Required | Notes). Copy entries from vocabulary files when they exist; add new rows for unmapped fields. V-numbers are sequential across all endpoints
 - **Per-endpoint error handling**: For each endpoint, include an Error Handling table (HTTP status → behavior)
 
