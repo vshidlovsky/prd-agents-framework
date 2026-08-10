@@ -187,6 +187,7 @@ The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Ke
 **When writing the Technical Contract:**
 - **Cross-cutting tables defined once**: Data Sources, Error Classification, Query Configuration, Route Mapping — each lives in one table as implementation reference
 - **Verify the value axis, not just the field name**: when an FR/AC branches on an API field's values, quote the field's documented description in the vocabulary row's Notes and confirm the field carries the distinction the behavior needs — a correctly named, correctly typed field can still encode a different classification axis than the one the behavior branches on. If the entity does not expose the attribute the behavior needs, flag the missing source explicitly — never repurpose an adjacent field
+- **Discriminated unions documented per variant**: when a payload field is a tagged union — a type/kind discriminator selects which sibling object is populated — document each variant's field paths as separate vocabulary rows, quoting the per-variant shapes from the API documentation. Never infer a shared shape across variants: the field path that is correct for one variant is typically wrong for its siblings. Every FR, AC, and fixture consuming the union must use the field path of its specific variant
 - **Per-endpoint vocabulary tables**: For each API endpoint, create a vocabulary table with V-numbered rows (V# | Semantic Name | API Field | Type | Required | Notes). Copy entries from vocabulary files when they exist; add new rows for unmapped fields. V-numbers are sequential across all endpoints
 - **Per-endpoint error handling**: For each endpoint, include an Error Handling table (HTTP status → behavior)
 
@@ -211,6 +212,7 @@ After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — 
 | Invalid format | What if the type is wrong (string for number, future date for past-only)? |
 | Stale | What if this value changed between when it was read and when it's used? |
 | Paired input | If a formatter takes two paired inputs (amount + currency, date + locale, value + unit), cover BOTH axes independently AND the paired-missing combination. When Intl.NumberFormat or similar API throws on invalid input, document the fallback. |
+| Union variant | If the entity is (or contains) a discriminated union — a type/kind discriminator selects which sibling object is populated — walk EVERY variant through this checklist. Each variant's fields are distinct; do not generalize from the first variant. |
 | Storage write failure | For every entity persisted in localStorage/sessionStorage, cover both READ failure and WRITE failure for each persisted key specifically — not for the storage backend as a whole. |
 | Web platform property | When deriving from `navigator.*` / `window.*` / `document.*` / `crypto.*`, the expression must be defensive against the property being undefined. Use nullish-coalescing or try/catch. State the defensive pattern in PRD prose. |
 
@@ -244,7 +246,7 @@ After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — 
 | Internal-view discriminator | When a route hosts multiple internal views toggled by client-side state (no URL change), every screen-view event must carry an enum property naming the active view — or fire distinct per-view events. Without this, support cannot debug which view the user was on. |
 
 **Process:**
-1. Walk each entity through the entity checklist → produces candidate rows. The walk MUST be mechanical — for every (entity × dimension) cell, either write an edge-case row, mark it N/A with a one-line reason, or note it's covered by another row. Do not stop after the first delivery-method type or first field; walk the full matrix.
+1. Walk each entity through the entity checklist → produces candidate rows. The walk MUST be mechanical — for every (entity × dimension) cell, either write an edge-case row, mark it N/A with a one-line reason, or note it's covered by another row. Do not stop after the first union variant or first field; walk the full matrix.
 2. Walk each endpoint through the endpoint checklist → produces candidate rows
 3. Walk each conditional FR through the conditional checklist → produces candidate rows
 4. Walk each UI interaction through the interaction checklist → produces candidate rows

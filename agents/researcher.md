@@ -108,7 +108,7 @@ When you encounter named constants (e.g., `MAX_RETRY_COUNT`, `KSize.fieldLengthM
 4. Report the resolved value, not just the constant name
 5. Format: `MAX_RETRY_COUNT` = `3` (defined at `src/config/constants.java:42`)
 
-**Compound field resolution**: When you encounter a field that appears to be a nested object (e.g., `sender_state` with properties like `id`, `code`, `name`), trace back to where the field is actually populated — not just where it's declared. The declared type may differ from what's sent at runtime. Read the code that constructs the request or assigns the value and document the actual shape (e.g., a flat string sourced from `user.address?.state?.code`, not a nested object).
+**Compound field resolution**: When you encounter a field that appears to be a nested object (e.g., `sender_state` with properties like `id`, `code`, `name`), trace back to where the field is actually populated — not just where it's declared. The declared type may differ from what's sent at runtime. Read the code that constructs the request or assigns the value and document the actual shape (e.g., a flat string sourced from `user.address?.state?.code`, not a nested object). If the field is a discriminated union — a type/kind discriminator selects which sibling object is populated — document each variant's shape separately; never infer a shared shape across variants.
 
 ### Display Formatting Rules (frontend/mobile only)
 
