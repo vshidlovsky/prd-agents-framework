@@ -152,6 +152,8 @@ git rev-parse HEAD
 ```
 Store this as `COMMIT_SHA`. All file references in the output document MUST use permalink URLs based on this commit, using the format specified in project-context.md. If no permalink format is configured (e.g., no remote, or a non-GitHub host), use local paths with the commit SHA noted in the Repository header — do NOT skip file references entirely.
 
+The same rule applies to files cited in any other repository (sibling repos referenced by custom research steps, upstream services): resolve that repo's commit SHA and build commit-pinned URLs. Never emit branch-name URLs (`/blob/main/`, `/blob/dev/`) — they silently drift as the branch moves. Record each cited repo's SHA in the research doc so the PRD writer can reuse it.
+
 ## Output
 
 Save to the output path specified in project-context.md (default: `docs/initiatives/{INITIATIVE}/_artifacts/{INITIATIVE}-research.md`). Create the `_artifacts/` directory if it doesn't exist.
