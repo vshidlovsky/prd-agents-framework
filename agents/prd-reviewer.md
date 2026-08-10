@@ -330,6 +330,10 @@ Section pack check definitions (add rows only for included packs):
 `monitoring`: Key metrics and SLA targets | Alerting thresholds | Dashboard/logging requirements
 `compliance`: Regulatory rules documented | Verification thresholds | UX during compliance checks
 `platform-considerations`: Platform-specific behaviors listed | Differences have rationale | All platform capabilities covered
+`performance`: Performance Requirements table exists with at least one `PERF-NNN` row | Every Target is a number with a unit (not "fast", "responsive") | Every row states a Measurement Method | Every user-blocking or latency-sensitive operation named in the ACs has a row
+`capacity-constraints`: Capacity Constraints table exists with at least one `CAP-NNN` row | Every dimension states a Current Expected Volume as a number | Growth trajectory stated | Ceiling Behavior specified (what happens at the limit, not "TBD")
+`rollback-degradation`: Kill switch documented (flag name + what the user sees when off, or an explicit "no flag" with rationale) | Data Impact stated for every write the feature performs | Mid-session user experience specified | Clean vs dirty rollback distinguished
+`state-migration`: All four phases filled (Before, Migration, Coexistence, Cleanup) | Transformation or dual-write strategy stated | Verification method given per phase | Cleanup names a follow-up ticket or migration
 
 For custom section packs: read the pack file, verify the PRD includes the section filled in per the pack's template.
 
