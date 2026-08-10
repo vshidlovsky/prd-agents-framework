@@ -1,0 +1,87 @@
+{
+  "agent": "prd-reviewer",
+  "initiative": "search-filters",
+  "timestamp": "2026-08-10T16:41:12Z",
+  "status": "NEEDS_REVISION",
+  "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
+  "reviewPath": "docs/initiatives/search-filters/search-filters-prd-review.md",
+  "subAgentCells": 231,
+  "orchestratorCells": 16,
+  "totalCells": 247,
+  "prdSize": {
+    "frCount": "18",
+    "acCount": "42",
+    "endpointCount": "2",
+    "entityCount": "4"
+  },
+  "failCount": 8,
+  "failsByMatrix": {
+    "A": 1, "B": 0, "C": 2, "S": 3, "D1": 0, "D2": 1,
+    "E": 0, "F": 1, "G": 0, "H": 0, "I": 0, "P": 0
+  },
+  "smellDetection": {
+    "totalChecked": "60",
+    "linguisticSmellsFound": "2",
+    "separationSmellsFound": "1"
+  },
+  "reviewMode": "parallel",
+  "isReReview": false,
+  "previousFailsVerified": 0,
+  "spotCheckOverrides": 1,
+  "defectTaxonomy": {
+    "omission": 4,
+    "ambiguity": 2,
+    "inconsistency": 1,
+    "incorrectFact": 1,
+    "extraneousInfo": 0,
+    "misplacedRequirement": 0
+  },
+  "issuesSummary": [
+    {
+      "id": 1,
+      "matrixRow": "F-10",
+      "category": "Omission",
+      "title": "AC-031 has no failure-path assertion",
+      "fix": "Add an AC covering the 502 response from the catalog service."
+    },
+    {
+      "id": 2,
+      "matrixRow": "S-4",
+      "category": "Ambiguity",
+      "title": "FR-007 says filters apply 'quickly'",
+      "fix": "State the latency budget in the Technical Contract and bind AC-018 to it."
+    }
+  ],
+  "proposedLessons": [
+    {
+      "name": "bind latency wording to a budget",
+      "appliesWhen": "the PRD contains a performance-sensitive user action",
+      "issue": "FR-007 used 'quickly' with no measurable budget anywhere in the PRD.",
+      "writerRule": "Never write a speed adjective without a numeric budget in the Technical Contract.",
+      "reviewerCheck": "For every speed adjective in an FR, verify a numeric budget exists and an AC asserts it."
+    }
+  ],
+  "proposedGlossaryTerms": [
+    {
+      "term": "facet",
+      "definition": "A filterable attribute of a catalog item, with a fixed set of selectable values.",
+      "reason": "The PRD alternates between 'facet' and 'filter' for the same concept."
+    }
+  ],
+  "proposedVocabularyEntries": [
+    {
+      "endpoint": "POST /v1/catalog/search/filters",
+      "file": "semantic-vocabulary/post-v1-catalog-search-filters.md",
+      "isNewFile": "false",
+      "entries": [
+        {
+          "apiField": "sel_vals",
+          "semanticName": "selected values",
+          "action": "add",
+          "reason": "AC-024 and AC-025 both name this field with no vocabulary entry."
+        }
+      ]
+    }
+  ],
+  "nextAgent": "prd-writer"
+}

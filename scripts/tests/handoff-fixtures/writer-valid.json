@@ -1,0 +1,53 @@
+{
+  "agent": "prd-writer",
+  "initiative": "search-filters",
+  "timestamp": "2026-08-10T14:22:05Z",
+  "status": "draft_complete",
+  "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
+  "apiEndpoints": ["GET /v1/catalog/search", "POST /v1/catalog/search/filters"],
+  "existingCodeReferenced": [
+    "src/catalog/search/SearchController.kt",
+    "src/catalog/search/FilterMapper.kt"
+  ],
+  "dependencies": [],
+  "prdMetrics": {
+    "frCount": 18,
+    "acCount": "42",
+    "edgeCaseCount": 11,
+    "keyEntityCount": 4,
+    "version": "v1",
+    "sectionPacksUsed": 3,
+    "isFreshDraft": true,
+    "failsAddressed": 0
+  },
+  "proposedGlossaryTerms": [
+    {
+      "term": "facet",
+      "definition": "A filterable attribute of a catalog item, with a fixed set of selectable values.",
+      "reason": "Used interchangeably with 'filter' across the search codebase."
+    }
+  ],
+  "proposedVocabularyEntries": [
+    {
+      "endpoint": "GET /v1/catalog/search",
+      "file": "semantic-vocabulary/get-v1-catalog-search.md",
+      "isNewFile": true,
+      "entries": [
+        {
+          "apiField": "flt_grp",
+          "semanticName": "filter group",
+          "action": "add",
+          "reason": "FR-004 and AC-011 both refer to this grouping."
+        },
+        {
+          "apiField": "srt",
+          "semanticName": "sort order",
+          "action": "change",
+          "previousName": "sorting",
+          "reason": "AC-019 uses 'sort order'; the old name reads as a verb."
+        }
+      ]
+    }
+  ],
+  "nextAgent": "prd-reviewer"
+}

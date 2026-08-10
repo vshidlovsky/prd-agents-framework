@@ -1,0 +1,9 @@
+# One planted defect per line: the substring run-tests.sh requires in the
+# `validate-handoff.py --type reviewer` output for reviewer-invalid.json.
+timestamp: midnight timestamp "2026-08-10T00:00:00Z"
+failCount: expected integer, got string "8"
+totalCells: totalCells (240) != subAgentCells (231) + orchestratorCells (16) = 247
+failsByMatrix.D2: required key is missing
+issuesSummary[0].category: expected one of Omission
+proposedLessons[0].appliesWhen: required field is missing
+nextAgent: status "READY" requires nextAgent "none", got "prd-writer"

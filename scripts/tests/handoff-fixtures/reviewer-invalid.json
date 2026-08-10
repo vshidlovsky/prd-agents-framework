@@ -1,0 +1,57 @@
+{
+  "agent": "prd-reviewer",
+  "initiative": "search-filters",
+  "timestamp": "2026-08-10T00:00:00Z",
+  "status": "READY",
+  "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
+  "reviewPath": "docs/initiatives/search-filters/search-filters-prd-review.md",
+  "subAgentCells": 231,
+  "orchestratorCells": 16,
+  "totalCells": 240,
+  "prdSize": {
+    "frCount": "18",
+    "acCount": "42",
+    "endpointCount": "2",
+    "entityCount": "4"
+  },
+  "failCount": "8",
+  "failsByMatrix": {
+    "A": 1, "B": 0, "C": 2, "S": 3, "D1": 0,
+    "E": 0, "F": 1, "G": 0, "H": 0, "I": 0, "P": 0
+  },
+  "smellDetection": {
+    "totalChecked": "60",
+    "linguisticSmellsFound": "2",
+    "separationSmellsFound": "1"
+  },
+  "reviewMode": "parallel",
+  "isReReview": false,
+  "previousFailsVerified": 0,
+  "spotCheckOverrides": 1,
+  "defectTaxonomy": {
+    "omission": 4,
+    "ambiguity": 2,
+    "inconsistency": 1,
+    "incorrectFact": 1,
+    "extraneousInfo": 0,
+    "misplacedRequirement": 0
+  },
+  "issuesSummary": [
+    {
+      "id": 1,
+      "matrixRow": "F-10",
+      "category": "Minor",
+      "title": "AC-031 has no failure-path assertion",
+      "fix": "Add an AC covering the 502 response from the catalog service."
+    }
+  ],
+  "proposedLessons": [
+    {
+      "name": "bind latency wording to a budget",
+      "issue": "FR-007 used 'quickly' with no measurable budget anywhere in the PRD.",
+      "writerRule": "Never write a speed adjective without a numeric budget in the Technical Contract.",
+      "reviewerCheck": "For every speed adjective in an FR, verify a numeric budget exists and an AC asserts it."
+    }
+  ],
+  "nextAgent": "prd-writer"
+}
