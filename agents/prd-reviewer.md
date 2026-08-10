@@ -298,7 +298,7 @@ Section pack check definitions (add rows only for included packs):
 `screen-flow`: Diagram exists (Mermaid or equivalent) | Shows happy + error + cancel paths | All AC screens appear in diagram | Transitions labeled with triggers
 `navigation`: Entry points specified | Back/dismiss behavior per screen | Deep link support (if applicable) | Consistent with screen flow diagram
 `analytics-events`: Every screen has a view event | Names follow convention | No duplicates vs codebase | Properties documented
-`component-mapping`: Every UI element maps to a design system component | Referenced components exist
+`component-mapping`: Every UI element maps to a design system component | Referenced component source paths exist on disk — FAIL if a cited file is missing or its name differs from the citation | Every cited prop exists in the component's prop definitions — grep the component source for each prop name; FAIL on non-existent props | If an existing composed page/template component is referenced, every mapped component appears in it or a gap/divergence note exists
 `feature-flags`: Flag name and convention documented | Fallback behavior specified | Reuse check performed
 `accessibility`: Focus management for modals/dialogs | Screen reader labels for non-text | Keyboard navigation for forms
 `responsive-layout`: Viewport-specific behaviors specified | Layout uses design system components
