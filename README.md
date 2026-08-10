@@ -39,6 +39,9 @@ prd-agents-framework/
 │       ├── capacity-constraints.md
 │       ├── rollback-degradation.md
 │       └── state-migration.md
+├── scripts/
+│   ├── prd-lint.py             # Deterministic linter for mechanical PRD/review rules
+│   └── tests/                  # Fixtures + run-tests.sh for the linter
 ├── rules/
 │   ├── behavioral-separation.md # Rule: behavioral/technical contract separation
 │   ├── prd-lessons.md          # Rule: no lessons written without user approval
@@ -66,7 +69,7 @@ If you have an existing project, just `cd` into it.
 
 ```bash
 # From your project root:
-mkdir -p .claude/agents .claude/skills/create-prd .claude/rules docs/prd-sections
+mkdir -p .claude/agents .claude/skills/create-prd .claude/rules docs/prd-sections scripts
 
 # Agents
 cp path/to/prd-agents-framework/agents/*.md .claude/agents/
@@ -83,7 +86,12 @@ cp path/to/prd-agents-framework/templates/sections/*.md docs/prd-sections/
 
 # Project context template
 cp path/to/prd-agents-framework/project-context.md .claude/project-context.md
+
+# Deterministic PRD linter (stdlib-only Python 3.9+; the agents call it at scripts/prd-lint.py)
+cp path/to/prd-agents-framework/scripts/*.py scripts/
 ```
+
+The linter's target location in your project is `scripts/prd-lint.py` — that's the path the writer, reviewer, and `/create-prd` skill invoke. See [PRD lint](#prd-lint).
 
 ### 3. Run the project-setup agent
 
@@ -174,6 +182,27 @@ Section packs are modular PRD sections. Enable them with checkboxes in `project-
 ```
 
 Create **custom section packs** for project-specific needs (e.g., mobile-app discrepancy tracking, mock data strategy). The project-setup agent helps you create these.
+
+### PRD lint
+
+`scripts/prd-lint.py` is the framework's deterministic enforcement layer: the subset of PRD rules that are mechanically checkable, enforced by a script instead of a prompt. Prompt-level discipline ("the agent MUST grep…") is probabilistic — a script can't forget.
+
+```bash
+python3 scripts/prd-lint.py docs/initiatives/search-filters/search-filters-prd.md
+python3 scripts/prd-lint.py docs/.../search-filters-prd-review.md --mode review
+python3 scripts/prd-lint.py <file> --format json    # machine-readable
+```
+
+Stdlib-only Python 3.9+, single file, no dependencies. Exit `0` clean, `1` violations, `2` usage error. Output is one line per violation: `<CHECK-ID> <line> <message>`.
+
+| Mode | Checks |
+|------|--------|
+| `prd` (default) | dangling/duplicate `[V#]` markers (LINT-001), unchecked writer-confirmation checkboxes (LINT-002), branch-name citation URLs that aren't commit-pinned (LINT-003), changelog version ordering (LINT-004), leftover `OQ-` items (LINT-005), leftover `> **GUIDE**` blocks (LINT-006), raw analytics event names in ACs and `AE-<n>` rows bound by zero ACs (LINT-007), wire-value leaks into FRs/ACs/Edge Cases (LINT-008), renamed top-level sections (LINT-009) |
+| `review` | leftover `[PENDING]` cells (LINT-101), invalid verdict tokens such as `WARN`/`INFO` (LINT-102), `TOTAL_CELLS`/`SUB_AGENT_CELLS`/`ORCHESTRATOR_CELLS` present, integer, and summing correctly (LINT-103) |
+
+The agents call it automatically when the file is present: the writer at Step 4.5 (before saving), the reviewer at step 8.1.2 (PRD violations become Matrix I FAIL rows; review-file violations are fixed in place), and `/create-prd` before Gate 2 (violations surface with the draft notice). If the file is absent, every caller falls back to its manual scans — copying it in is opt-in.
+
+Regression tests live in `scripts/tests/`: `bash scripts/tests/run-tests.sh` lints the fixtures and asserts that a clean PRD reports zero violations and that each annotated violation fires with the expected check ID on the expected line.
 
 ### Domain glossary
 

@@ -290,7 +290,9 @@ If project-context.md specifies versioned filenames:
 
 ## Step 4.5: Pre-Save Self-Review
 
-Before saving, run three mechanical checks on the drafted PRD to catch the most common reviewer FAILs:
+Before saving, run the deterministic lint gate, then three mechanical scans on the drafted PRD to catch the most common reviewer FAILs:
+
+0. **Deterministic lint gate.** Run `python3 scripts/prd-lint.py <prd> --mode prd` if the script exists in the project. It enforces the mechanical rules a prompt cannot guarantee: dangling and duplicate `[V#]` markers, unchecked writer-confirmation checkboxes, branch-name (non commit-pinned) citation URLs, changelog ordering, leftover `OQ-` items, leftover `> **GUIDE**` blocks, raw analytics event names in ACs and unbound `AE-<n>` rows, wire-value leaks into FRs/ACs/Edge Cases, and renamed top-level sections. Fix every violation before the manual scans below. If the script is absent, proceed with the manual scans only.
 
 1. **Literal-copy scan.** Collect every quoted user-facing string in FRs, ACs, and Edge Cases (text inside `"..."` or `'...'`) and every localization-key path. Each one is a violation — copy and keys are design-owned, not PRD content. Replace each with copy *intent by semantic role* — e.g., replace `"No countries found"` with "an empty state explaining no countries matched". The only quoted copy allowed to remain is wording mandated by law/compliance/contract, which must cite its source.
 
