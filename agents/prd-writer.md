@@ -232,6 +232,7 @@ After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — 
 | Rapid toggle | What if the condition flips while the user is mid-flow? |
 | Session vs persistence | When a feature has both a same-session guard AND a cross-session persistence rule (e.g., 90-day cooldown), define BOTH gates explicitly: an in-memory session guard AND a persistent storage gate. State which gate fires when storage is unavailable. |
 | Visibility/lifecycle gate | When referencing visibility/focus/lifecycle gates on a SPA route, state whether the gate (a) subscribes to the lifecycle event and re-evaluates, or (b) evaluates only once on mount. SPAs do not auto-remount routes on tab focus. |
+| Reachable error branch | For every validation branch that surfaces a distinct error, specify at least one input path (typing, paste, prefill, programmatic, API response) that can deliver the offending value to the validation point. If an earlier layer unconditionally sanitizes or rejects that value class, the branch is dead — remove it and its AC, or make the earlier layer's deferral of that value class explicit. An input-sanitization FR and a same-class validation-error FR cannot both be unconditional. |
 
 **Per UI interaction:**
 

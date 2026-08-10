@@ -246,7 +246,7 @@ The writer generates edge cases using systematic checklists (entity × dimension
 - **Boundary Values**: Min, max, just-outside-boundary, invalid format — specified? FAIL if the writer covered null but skipped boundary values for a numeric or date field.
 - **Error Scenario**: What happens when this entity fails to load/save? For API-backed entities, also check: timeout, partial response, rate limit.
 - **Concurrent Access**: Relevant only for mutable state — double-submit, race conditions, stale-data-on-write. `N/A` if read-only.
-- **Branch Complete**: For conditional logic involving this entity — all branches specified? Also check: indeterminate condition (data missing to evaluate), rapid toggle mid-flow.
+- **Branch Complete**: For conditional logic involving this entity — all branches specified? Also check: indeterminate condition (data missing to evaluate), rapid toggle mid-flow. Also check reachability: for every branch that surfaces a distinct validation error, trace the entry/sanitization FRs handling the same value class — if no input path can deliver the offending value to the validation point, FAIL (unreachable branch: QA cannot test it).
 
 **Matrix F: Structure Checklist** — one row per check
 
