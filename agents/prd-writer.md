@@ -289,13 +289,15 @@ If project-context.md specifies versioned filenames:
 
 ## Step 4.5: Pre-Save Self-Review
 
-Before saving, run two mechanical checks on the drafted PRD to catch the most common reviewer FAILs:
+Before saving, run three mechanical checks on the drafted PRD to catch the most common reviewer FAILs:
 
 1. **Literal-copy scan.** Collect every quoted user-facing string in FRs, ACs, and Edge Cases (text inside `"..."` or `'...'`) and every localization-key path. Each one is a violation — copy and keys are design-owned, not PRD content. Replace each with copy *intent by semantic role* — e.g., replace `"No countries found"` with "an empty state explaining no countries matched". The only quoted copy allowed to remain is wording mandated by law/compliance/contract, which must cite its source.
 
 2. **Wire-value scan.** Collect every `apiField` value from the per-endpoint vocabulary tables in the Technical Contract. For each, scan FRs, ACs, and Edge Cases (excluding analytics ACs) for that raw value. If found, replace with the semantic name from the vocabulary table — e.g., replace a raw enum value like `express-shipping` with its semantic group name ("expedited shipping method"), replace an error code like `resource_not_found` with the semantic name from its vocabulary entry. Then scan for other wire details that fail the rename test: endpoint paths (`METHOD /path`), raw HTTP status codes (`HTTP 201`, `429`, `5xx`), and header names (`Retry-After`). Replace each with the semantic outcome ("when the backend confirms…", "when the backend rate-limits further attempts") — these map in Error Classification / per-endpoint Error Handling, never in FRs/ACs.
 
-If either check produces fixes, re-run Quality Standard #13 (consistency pass) on the affected sections.
+3. **Pack-obligation scan.** For every included section pack, re-read the pack file and enumerate each required sub-block, table, and confirmation checklist it defines. Confirm the PRD contains every one under its canonical heading. A different section that covers similar ground does NOT satisfy the pack — one pack's table does not stand in for another's required block. Produce the missing block, or mark it N/A only if the pack itself defines an N/A condition.
+
+If any check produces fixes, re-run Quality Standard #13 (consistency pass) on the affected sections.
 
 ## Step 5: Save and Summarize
 
