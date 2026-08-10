@@ -59,53 +59,40 @@ prd-agents-framework/
 
 ## Getting Started (~15 minutes)
 
-### 1. Initialize your project repo
+### 1. Install the framework — ask Claude
 
-If you don't have a repo yet:
-
-```bash
-mkdir my-project && cd my-project
-git init
-```
-
-If you have an existing project, just `cd` into it.
-
-### 2. Copy framework files
-
-```bash
-# From your project root:
-mkdir -p .claude/agents .claude/skills/create-prd .claude/rules docs/prd-sections scripts
-
-# Agents
-cp path/to/prd-agents-framework/agents/*.md .claude/agents/
-
-# Orchestration skill
-cp path/to/prd-agents-framework/skills/create-prd/SKILL.md .claude/skills/create-prd/
-
-# Rules (enforced across all agents and conversations)
-cp path/to/prd-agents-framework/rules/*.md .claude/rules/
-
-# PRD template + section packs
-cp path/to/prd-agents-framework/templates/prd-base.md docs/prd-base-template.md
-cp path/to/prd-agents-framework/templates/sections/*.md docs/prd-sections/
-
-# Project context template
-cp path/to/prd-agents-framework/project-context.md .claude/project-context.md
-
-# Pipeline scripts — linter, handoff validator, run-log writer
-# (stdlib-only Python 3.9+; the agents call them by these exact paths)
-cp path/to/prd-agents-framework/scripts/*.py scripts/
-```
-
-The target locations in your project are `scripts/prd-lint.py`, `scripts/validate-handoff.py`, and `scripts/run-log.py` — those are the paths the writer, reviewer, and `/create-prd` skill invoke. Every caller checks for the file first and falls back to its manual behavior when it's missing, so copying them in is opt-in. See [PRD lint](#prd-lint) and [Handoff validation and run logging](#handoff-validation-and-run-logging).
-
-### 3. Run the project-setup agent
+You don't copy files by hand. Open Claude Code in your project (run `git init` first if it's a brand-new directory) and ask:
 
 ```
-Run the project-setup agent
+Install the PRD agents framework from
+https://github.com/vshidlovsky/prd-agents-framework.git
+into this project, following the install map in its README.
+Then run the project-setup agent.
 ```
 
-The setup agent will:
+Claude clones the framework to a temporary location, copies each file per the install map below, and hands off to the setup agent.
+
+#### Install map
+
+This table is the install contract — an installing agent MUST follow it exactly. Two entries **rename the file on copy**; do not miss them.
+
+| Framework source | Project destination | Note |
+|---|---|---|
+| `agents/*.md` | `.claude/agents/` | |
+| `skills/create-prd/SKILL.md` | `.claude/skills/create-prd/SKILL.md` | |
+| `rules/*.md` | `.claude/rules/` | Enforced across all agents and conversations |
+| `templates/prd-base.md` | `docs/prd-base-template.md` | **Renamed on copy** |
+| `templates/sections/*.md` | `docs/prd-sections/` | |
+| `project-context.md` | `.claude/project-context.md` | **Moves under `.claude/` on copy** |
+| `scripts/*.py` | `scripts/` | Stdlib-only Python 3.9+; agents call these exact paths |
+
+Do NOT copy: `README.md`, `LICENSE`, `scripts/tests/`, `scripts/check-docs.py`, `scripts/banned-terms.txt`, `.github/` — those belong to the framework repo itself, not to consuming projects.
+
+The script destinations matter: `scripts/prd-lint.py`, `scripts/validate-handoff.py`, and `scripts/run-log.py` are the paths the writer, reviewer, and `/create-prd` skill invoke. Every caller checks for the file first and falls back to its manual behavior when it's missing, so the scripts are opt-in. See [PRD lint](#prd-lint) and [Handoff validation and run logging](#handoff-validation-and-run-logging).
+
+### 2. Answer the setup agent
+
+The install prompt above ends by running the project-setup agent (or ask separately: "Run the project-setup agent"). The setup agent will:
 
 1. **Scan your repo** — reads package.json, CLAUDE.md, README, directory structure (skips git history)
 2. **Ask about your API docs** — "Where are your API docs?" You provide file paths, URLs, or say "none yet". It verifies each source and creates `docs/api-sources.md`.
@@ -117,7 +104,7 @@ The setup agent will:
 
 For **greenfield projects** with no code yet: tell the setup agent your planned tech stack, conventions, and any existing specs or design docs. It will configure the framework based on your plans. The researcher will scan whatever docs exist; if there's no code, it produces a minimal research doc and the PRD writer works from your requirements directly.
 
-### 4. Start writing PRDs
+### 3. Start writing PRDs
 
 ```
 /create-prd search-filters
