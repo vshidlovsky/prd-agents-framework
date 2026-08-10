@@ -178,7 +178,8 @@ END EXAMPLE — DELETE -->
 >   - **prd-writer** (Opus) — synthesizes research into requirements, asks clarifying questions
 >   - **prd-reviewer** (Opus) — cross-matrix analysis, spot-checks, verdict
 >   - **review-flow** (Opus) — dead-end detection, discoverability, error recovery require judgment
->   - **review-requirements** (Opus) — smell detection (vague verbs, loopholes, ambiguous pronouns) needs nuanced language analysis
+>   - **review-requirements** (Opus) — requirements quality (atomicity, feasibility, contradictions) needs judgment
+>   - **review-smells** (Opus) — smell detection (vague verbs, loopholes, ambiguous pronouns) needs nuanced language analysis
 >   Saves ~40-50% on token costs per PRD run.
 >
 > Pick a preset, then optionally override individual agents in the table below.
@@ -204,7 +205,8 @@ END EXAMPLE — DELETE -->
 | review-api | opus | Sub-reviewer: API endpoint verification |
 | review-structure | opus | Sub-reviewer: structure checklist |
 | review-flow | opus | Sub-reviewer: flow and edge case analysis |
-| review-requirements | opus | Sub-reviewer: requirements quality and smell detection |
+| review-requirements | opus | Sub-reviewer: requirements quality (atomicity, feasibility, contradictions) |
+| review-smells | opus | Sub-reviewer: smell detection (Matrix S — the only per-item smell scanner) |
 
 ---
 
