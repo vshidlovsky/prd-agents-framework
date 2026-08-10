@@ -145,6 +145,16 @@ def strip_code_fences(lines):
             yield index, text
 
 
+def strip_inline_code(text):
+    """Blank out `code span` contents.
+
+    Markdown inside a code span is quoted, not live: a README that documents the
+    ``](#anchor)`` link syntax is describing it, not linking. Replacing each
+    span with spaces of the same width keeps column positions intact.
+    """
+    return re.sub(r"`[^`]*`", lambda match: " " * len(match.group(0)), text)
+
+
 def github_slug(heading_text):
     """Approximate GitHub's heading-anchor slug algorithm."""
     text = heading_text.strip().lower()
@@ -466,7 +476,7 @@ def check_doc_004(root):
 
     findings = []
     for line_no, text in strip_code_fences(lines):
-        for match in ANCHOR_LINK_RE.finditer(text):
+        for match in ANCHOR_LINK_RE.finditer(strip_inline_code(text)):
             anchor = match.group(1)
             if anchor not in slugs:
                 findings.append(
