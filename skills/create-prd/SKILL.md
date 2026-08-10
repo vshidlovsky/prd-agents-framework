@@ -160,7 +160,15 @@ echo "gate2_prompt=$(date +%s)" >> "$TIMING_FILE"
 ```
 Update state file — set `currentPhase: "gate2"`.
 
-**Cycle 1 (first draft)**: Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."** If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
+**Lint the draft first.** If `scripts/prd-lint.py` exists in the project, run it on the drafted PRD before prompting the user:
+
+```bash
+python3 scripts/prd-lint.py "{prd_path}" --mode prd
+```
+
+Exit 0 means clean. Any violations are mechanical facts, not opinions — surface them verbatim to the user alongside the draft notice below (one line per violation: check ID, line number, message) and note that the writer will fix them in the next revision. If the script is absent, skip this step silently.
+
+**Cycle 1 (first draft)**: Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."** If the lint run reported violations, append: **"prd-lint found N violation(s):"** followed by the violation lines. If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
 
 **Cycle 2+ (revision)**: Skip the human gate — the writer just fixed reviewer FAILs, no user review needed. Tell the user: **"Writer revised the PRD — running reviewer automatically."** Proceed directly to Phase 3.
 

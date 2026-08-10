@@ -640,6 +640,17 @@ grep -c "\[PENDING\]" {review_file}
 
 **Do NOT generate a verdict until zero `[PENDING]` cells remain.**
 
+Then run the deterministic linter — if `scripts/prd-lint.py` exists in the project — on both artifacts:
+
+```bash
+python3 scripts/prd-lint.py {prd_file} --mode prd
+python3 scripts/prd-lint.py {review_file} --mode review
+```
+
+- **PRD violations**: every violation reported on the PRD becomes a Matrix I row with verdict FAIL (add them in step 8.2, one row per violation, citing the check ID, line number, and message). These are mechanical facts — do not re-litigate them.
+- **Review-file violations**: fix them in the review file yourself. `LINT-101` means `[PENDING]` cells remain; `LINT-102` means a cell uses an invalid verdict token (only PASS, FAIL: ..., N/A are valid); `LINT-103` means the cell-count header is missing, non-integer, or `TOTAL_CELLS != SUB_AGENT_CELLS + ORCHESTRATOR_CELLS`. Re-run until the review file lints clean.
+- If the script is absent, note that in the review and continue with the manual checks only.
+
 ### 8.1.3: Spot-Check Quality
 
 **Parallel mode**: For each sub-agent, pick 3-5 PASS cells to re-verify. **Prioritize cells adjacent to FAILs** — if a sub-agent FAILed B-3 but PASSed B-2 and B-4, those neighbors are most likely to be misclassified. If a sub-agent has no FAILs, pick its most complex cells (longest FR/AC text, widest API endpoint).
