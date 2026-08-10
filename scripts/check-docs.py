@@ -36,6 +36,12 @@ import sys
 # markdown that the checks below reason about.
 DOC_DIRS = ("agents", "rules", "templates", "skills")
 
+# DOC-007: who may keep a rule alive. rules/ is deliberately excluded -- a rule
+# that only other rules mention (or that mentions itself) is still unreachable
+# from the pipeline, and counting rules/ as a consumer would let a cluster of
+# orphans vouch for each other.
+RULE_CONSUMER_DIRS = ("agents", "templates", "skills")
+
 # Directories walked when collecting markdown to scan.
 SCAN_ROOTS = ("agents", "rules", "templates", "skills", "scripts")
 
@@ -700,7 +706,7 @@ def check_doc_007(root):
     )
 
     # (a) orphan-rule detection: consumed by at least one agent/template/skill
-    consumers = markdown_files(root, DOC_DIRS, ())
+    consumers = markdown_files(root, RULE_CONSUMER_DIRS, ())
     referenced = set()
     for rel_path in consumers:
         lines = read_lines(root, rel_path)
@@ -717,7 +723,7 @@ def check_doc_007(root):
                     "rules/%s" % name,
                     0,
                     "orphan rule -- not referenced by any file under %s"
-                    % ", ".join("%s/" % d for d in DOC_DIRS),
+                    % ", ".join("%s/" % d for d in RULE_CONSUMER_DIRS),
                 )
             )
 
