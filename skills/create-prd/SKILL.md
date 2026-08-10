@@ -214,7 +214,7 @@ Read each prompt file. Paths in the dispatch JSON are absolute — use them dire
 
 If run logging is enabled: `echo "review_dispatch_start=$(date +%s)" >> "$TIMING_FILE"`
 
-Spawn **all five agents in parallel**, using the model from `MODEL_MAP` for each:
+Spawn **every sub-reviewer listed below in parallel**, using the model from `MODEL_MAP` for each:
 
 - Agent 1 (API): read `{promptFiles.api}`, use its content as the agent prompt, `model: MODEL_MAP[review-api]`
 - Agent 2 (Structure): read `{promptFiles.structure}`, use its content as the agent prompt, `model: MODEL_MAP[review-structure]`
