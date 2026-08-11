@@ -63,11 +63,27 @@ The complete ceremony. Only when the release is big enough to justify it:
 6. **Test-retest band (E-2)**: 3+ fresh reviews of one frozen terminal PRD by the same
    reviewer. This calibrates every count in the study. The band survives across releases
    until the reviewer changes materially.
-7. **Blind judge**: strip titles and changelogs (they reveal revision history), randomize
-   A/B, judge scores dimensions with citations and reports whether blinding held. Optionally
-   run layer-scoped cuts (e.g., behavioral-contract-only) — pre-register a hypothesis for
-   each cut before running it.
-8. **Human pick** — the final metric: which document would you actually hand to a builder.
+7. **Blind judge panel — two role-based lenses, not one generic judge.** Strip titles and
+   changelogs (they reveal revision history), randomize A/B, each judge scores with citations
+   and reports whether blinding held. The standing panel:
+   - **Tech Lead lens** — ticketability, guessCount (count the actual would-have-to-ask
+     instances — the single most decision-relevant number a judge produces), contract
+     fidelity, failure-mode coverage, implementation freedom, estimability.
+   - **Senior PM lens** — value per requirement, scope sanity, over-specification priced as
+     a DEFECT, decision quality, outcome-based success criteria (would they fail if the
+     feature flops?).
+   Do NOT use a generic conformance/completeness judge as a verdict source: in the worked
+   example it systematically rewarded volume (verbosity bias) — the heavier, grind-bloated
+   document beat the leaner one until a lens priced gold-plating as a defect, which flipped
+   the verdict by the panel's widest margin. Layer-scoped cuts (e.g., behavioral-only) are
+   one-off instruments for specific design questions, each with a pre-registered hypothesis
+   — not standing fixtures.
+   **Tie rule: a margin of ≤3 points on these rubrics is a tie, full stop.** Single-run judge
+   scores inherit the reviewer-noise problem; the judges' real product is their *cited,
+   decisive differences*, not their totals. Never re-run or add judges to break a tie —
+   that is judge-shopping; every judge run publishes.
+8. **Human pick** — the final metric and the tiebreaker: which document would you actually
+   hand to a builder.
 
 ## Standing assets (create once, reuse)
 
@@ -122,8 +138,11 @@ The complete ceremony. Only when the release is big enough to justify it:
 | Writer self-catches pre-review | — (no gate) | 12 | **conclusive** |
 | Rejected findings re-litigated | n/a (no mechanism) | 0 of 9 over 3 cycles | **conclusive** |
 | Cross-review, other ruler's distinct defects | 28 found in old PRD | 13 found in new PRD | direction consistent, counts noisy |
-| Blind judge (full docs) | 31/35 | 29/35 | old, narrowly — tiebreaker only |
-| Blind judge (behavioral layer only) | 28/30 | 25/30 | old again; strict separation moves content out of the judged layer |
+| Blind judge — conformance lens | 31/35 | 29/35 | tie by the ≤3 rule; lens later retired for verbosity bias |
+| Blind judge — behavioral layer only | 28/30 | 25/30 | tie by the ≤3 rule; strict separation moves content out of the judged layer |
+| Blind judge — senior PM lens | 17/30 | 23/30 | new — over-specification priced as a defect flips the verdict |
+| Blind judge — tech lead lens | 24/30 | 25/30 | tie by the ≤3 rule; guessCount: old ~6 + a hard stop, new ~4 + one silent trap |
+| Human pick | — | ✓ | final |
 | Total tokens | ~1.7M | ~2.6M | the judgment layer costs ~50% more |
 
 Verdict shape: the release changed *process behavior* conclusively; document-quality deltas
