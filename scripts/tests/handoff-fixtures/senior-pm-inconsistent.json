@@ -1,0 +1,50 @@
+{
+  "agent": "prd-senior-pm",
+  "initiative": "search-filters",
+  "timestamp": "2026-08-11T09:14:03Z",
+  "prdPath": "docs/initiatives/search-filters/search-filters-prd-v2.md",
+  "reviewPath": "docs/initiatives/search-filters/_artifacts/search-filters-prd-review.md",
+  "seniorPmReviewPath": "docs/initiatives/search-filters/_artifacts/search-filters-senior-pm-review.md",
+  "mode": "delta",
+  "failsJudged": 3,
+  "rootCauses": 2,
+  "dispositionCounts": {
+    "fixTechnical": 3,
+    "fixProduct": 0,
+    "reject": 5,
+    "escalate": 0
+  },
+  "tickets": [
+    {
+      "id": "T-4",
+      "type": "technical",
+      "instruction": "Update the changelog row for v2 to list the cascading rewrites the revision made.",
+      "decision": null,
+      "rationale": "The revision renamed a step without updating the references below it.",
+      "evidence": "search-filters-prd-v2.md changelog vs. AC-011"
+    },
+    {
+      "id": "T-5",
+      "type": "product",
+      "instruction": "Set the empty-result behavior in FR-018 to the decided value.",
+      "decision": "An empty result set keeps the filter chips visible and offers a clear-all action.",
+      "rationale": "Matches the sibling initiative's list behavior; removing the chips hides why the list is empty.",
+      "evidence": "sibling PRD: saved-views, FR-009"
+    }
+  ],
+  "escalations": [
+    {
+      "id": "E-2",
+      "question": "Does the filter set count against the per-user storage quota?",
+      "recommendation": "No — treat it as session state until a quota owner says otherwise.",
+      "whyUngroundable": "No quota policy exists in the catalogs or the research doc."
+    }
+  ],
+  "rejectedFails": [
+    {
+      "matrixRow": "S-31",
+      "reason": "variance — a wording preference with no defect behind it; the same cell passed on the previous pass"
+    }
+  ],
+  "nextAgent": "none"
+}

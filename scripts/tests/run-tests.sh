@@ -14,17 +14,23 @@
 #   5. a missing input file exits 2
 #
 # validate-handoff.py asserts (fixtures in handoff-fixtures/):
-#   6. every *-valid.json exits 0 for its type
+#   6. every *-valid.json exits 0 for its type, including the senior-pm
+#      delta-mode fixture (ticketsVerified present)
 #   7. every *-invalid.json exits 1 AND names each planted defect — the
 #      required substrings live in the sibling `<fixture>.expect` file
-#   8. missing file, malformed JSON, and unsupported --type all exit 2
+#   8. senior-pm-inconsistent.json — every field well-typed, but the
+#      cross-field invariants (dispositionCounts vs the arrays, delta mode vs
+#      ticketsVerified, nextAgent vs ticket count) all violated
+#   9. missing file, malformed JSON, and unsupported --type all exit 2
 #
 # run-log.py asserts:
-#   9. `append` writes exactly one parseable line and round-trips values that
+#  10. `append` writes exactly one parseable line and round-trips values that
 #      would break shell-quoted JSON (quotes, `$(…)`, backslashes)
-#  10. `append --strict` refuses to write an entry missing required fields,
+#  11. `append --strict` refuses to write an entry missing required fields,
 #      while the default run warns and still writes
-#  11. `timing` reads epoch / ISO / delta values, and reports missing keys and
+#  12. `append --entry-type senior-pm` is accepted and keeps its nested
+#      judgment metrics as JSON
+#  13. `timing` reads epoch / ISO / delta values, and reports missing keys and
 #      unreadable files with distinct exit codes
 #
 # Usage: bash scripts/tests/run-tests.sh
@@ -241,10 +247,18 @@ assert_invalid_handoff() {
   fi
 }
 
-for handoff_type in writer reviewer dispatch; do
+for handoff_type in writer reviewer dispatch senior-pm; do
   assert_valid_handoff "$handoff_type" "$HANDOFFS/$handoff_type-valid.json"
   assert_invalid_handoff "$handoff_type" "$HANDOFFS/$handoff_type-invalid.json"
 done
+
+# Senior-PM delta mode: ticketsVerified present, re-issued ticket, zero
+# escalations. Full mode is covered by senior-pm-valid.json above.
+assert_valid_handoff senior-pm "$HANDOFFS/senior-pm-delta-valid.json"
+
+# Senior-PM cross-field invariants: every field is individually well-typed, so
+# only the count/mode/nextAgent agreement rules can catch this one.
+assert_invalid_handoff senior-pm "$HANDOFFS/senior-pm-inconsistent.json"
 
 # Usage errors: unreadable file, malformed JSON, unsupported type.
 "$PY" "$VALIDATE" --type writer "$HANDOFFS/does-not-exist.json" >/dev/null 2>&1
@@ -359,6 +373,41 @@ then
 else
   fail "run-log append: --field JSON value did not survive as JSON"
   cat "$TYPED_LOG"
+fi
+
+# The senior-pm entry type is accepted, and its nested judgment metrics survive.
+SPM_LOG="$TMP_DIR/senior-pm.jsonl"
+"$PY" "$RUNLOG" append --log-file "$SPM_LOG" --entry-type senior-pm \
+  --data '{"runId":"20260810-142200","initiative":"x","agent":"prd-senior-pm","model":"fable","cycle":1,"startedAt":"2026-08-10T16:30:00Z","completedAt":"2026-08-10T16:41:00Z","durationSeconds":660,"inputSummary":"full judgment of 9 FAILs","outputSummary":"2 tickets, 2 rejected, 1 escalation","artifactPath":"docs/x-senior-pm-review.md","handoffPath":"docs/x-senior-pm-handoff.json"}' \
+  --field 'metrics={"mode":"full","failsJudged":9,"rootCauses":5,"dispositionCounts":{"fixTechnical":1,"fixProduct":1,"reject":2,"escalate":1},"ticketCount":2,"escalations":1}' \
+  >/dev/null 2>"$TMP_DIR/spm.err"
+status=$?
+if [ "$status" -eq 0 ] && [ ! -s "$TMP_DIR/spm.err" ] && "$PY" - "$SPM_LOG" <<'PYEOF'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as fh:
+    entry = json.loads(fh.readline())
+
+problems = []
+if entry.get("entryType") != "senior-pm":
+    problems.append("entryType not set from --entry-type: %r" % entry.get("entryType"))
+if entry.get("metrics", {}).get("dispositionCounts", {}).get("reject") != 2:
+    problems.append("nested dispositionCounts lost: %r" % entry.get("metrics"))
+if entry.get("model") != "fable":
+    problems.append("model tier did not round-trip: %r" % entry.get("model"))
+
+if problems:
+    for problem in problems:
+        sys.stderr.write("      %s\n" % problem)
+    sys.exit(1)
+sys.exit(0)
+PYEOF
+then
+  pass "run-log append: senior-pm entry accepted with nested disposition counts"
+else
+  fail "run-log append: senior-pm entry failed (exit $status)"
+  cat "$TMP_DIR/spm.err"
 fi
 
 # Default run warns about missing required fields but still writes the line.

@@ -10,7 +10,7 @@ values arrive as arguments, never as shell-interpolated JSON fragments.
 Usage:
     python3 scripts/run-log.py append \\
         --log-file .claude/prd-run-log.jsonl \\
-        --entry-type researcher|writer|reviewer|pipeline|terminated \\
+        --entry-type researcher|writer|reviewer|senior-pm|pipeline|terminated \\
         [--data '<json object>'] \\
         [--field key=value]... [--strict]
 
@@ -50,7 +50,7 @@ Required fields per entry type, derived from the JSONL Schema Reference in
 `skills/create-prd/SKILL.md` (that section is the contract; this table
 mirrors it):
 
-    researcher, writer, reviewer
+    researcher, writer, reviewer, senior-pm
         entryType runId initiative agent model cycle startedAt completedAt
         durationSeconds inputSummary outputSummary artifactPath handoffPath
         metrics
@@ -96,6 +96,10 @@ REQUIRED_FIELDS: Dict[str, Tuple[str, ...]] = {
     "researcher": AGENT_FIELDS,
     "writer": AGENT_FIELDS,
     "reviewer": AGENT_FIELDS,
+    # The senior-PM phase (Phase 3.5) logs the same envelope as the other
+    # agents; its judgment counts (mode, failsJudged, dispositionCounts,
+    # ticketCount, escalations, ticketsVerified) travel inside `metrics`.
+    "senior-pm": AGENT_FIELDS,
     "pipeline": AGENT_FIELDS + ("profile",),
     "terminated": (
         "entryType",

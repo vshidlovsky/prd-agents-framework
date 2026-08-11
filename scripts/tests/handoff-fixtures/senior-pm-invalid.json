@@ -1,0 +1,50 @@
+{
+  "agent": "prd-reviewer",
+  "initiative": "search-filters",
+  "timestamp": "2026-08-10T00:00:00Z",
+  "prdPath": "docs/initiatives/search-filters/search-filters-prd-v1.md",
+  "seniorPmReviewPath": "docs/initiatives/search-filters/_artifacts/search-filters-senior-pm-review.md",
+  "mode": "product-challenge-only",
+  "failsJudged": "9",
+  "rootCauses": 5,
+  "ticketsVerified": {
+    "applied": 2,
+    "partial": 0,
+    "skipped": 1
+  },
+  "dispositionCounts": {
+    "fixTechnical": 1,
+    "fixProduct": 1,
+    "reject": "2",
+    "fixUx": 0
+  },
+  "tickets": [
+    {
+      "id": "T-1",
+      "type": "ux",
+      "instruction": "Correct the vocabulary row's field casing to match the wire contract.",
+      "decision": null,
+      "rationale": "The documented field is snake_case.",
+      "evidence": "docs/api-sources.md — list endpoint response schema"
+    },
+    {
+      "id": "T-2",
+      "type": "product",
+      "instruction": "Bound the retry loop in FR-012.",
+      "rationale": "One source of truth for the limit."
+    }
+  ],
+  "escalations": [
+    {
+      "id": "E-1",
+      "question": "Should a filter set be retained across sessions, or reset on sign-out?",
+      "whyUngroundable": "No sibling initiative, catalog row, or research finding addresses retention."
+    }
+  ],
+  "rejectedFails": [
+    {
+      "matrixRow": "F-14"
+    }
+  ],
+  "nextAgent": "prd-senior-pm"
+}
