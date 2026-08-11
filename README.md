@@ -55,6 +55,7 @@ prd-agents-framework/
 │   ├── semantic-vocabulary.md  # Rule: no vocabulary entries written without user approval
 │   └── shared-requirements.md  # Rule: no SRs modified without user approval
 ├── project-context.md          # Template — copied to your project during setup
+├── EVAL.md                     # How to evaluate a new framework version (4-tier methodology)
 └── README.md
 ```
 
