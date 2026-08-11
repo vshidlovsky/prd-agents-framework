@@ -9,7 +9,8 @@ of five prompt-file paths all passed silently and broke a consumer downstream.
 This script is the deterministic check — hand-rolled tables, no jsonschema.
 
 Usage:
-    python3 scripts/validate-handoff.py --type writer|reviewer|dispatch <file.json>
+    python3 scripts/validate-handoff.py
+        --type writer|reviewer|dispatch|senior-pm <file.json>
 
 Exit codes:
     0 — valid
@@ -21,9 +22,10 @@ type": this framework version ships no `agents/prd-retro.md`, so there is no
 documented shape to encode. When a retro agent lands, add its table here.
 
 Spec tables are derived from the agent documents, which are authoritative:
-    writer    — `agents/prd-writer.md` Step 6 (Write Handoff File)
-    reviewer  — `agents/prd-reviewer.md` Step 9 (Write Handoff File)
-    dispatch  — `agents/prd-reviewer.md` Phase 2, Path A (dispatch JSON)
+    writer     — `agents/prd-writer.md` Step 6 (Write Handoff File)
+    reviewer   — `agents/prd-reviewer.md` Step 9 (Write Handoff File)
+    dispatch   — `agents/prd-reviewer.md` Phase 2, Path A (dispatch JSON)
+    senior-pm  — `agents/prd-senior-pm.md` Step 7 (Write the Handoff File)
 
 Required vs optional: a field is required when the agent document emits it
 unconditionally. Fields that carry proposals or conditional context
@@ -38,6 +40,24 @@ Invariants enforced beyond per-field types:
     dispatch  totalCells == subAgentCells + orchestratorCells
     dispatch  models / promptFiles / outputFiles carry EXACTLY the five
               sub-agent keys — no missing key, no extra key
+    senior-pm dispositionCounts carries exactly the four disposition keys, all
+              integers, and agrees with the arrays it summarizes:
+              fixTechnical + fixProduct == len(tickets),
+              reject == len(rejectedFails), escalate == len(escalations)
+    senior-pm every ticket's `type` is technical | product, and a `product`
+              ticket carries a non-empty `decision` (a decision is the whole
+              point of that disposition)
+    senior-pm ticketsVerified is required in `delta` mode and forbidden in
+              `full` mode — the mode field is what tells a reader whether the
+              earlier dispositions were re-judged or enforced
+    senior-pm timestamp must not be midnight (the agent doc forbids it)
+    senior-pm nextAgent follows the ticket count (tickets → prd-writer, no
+              tickets → none)
+
+The escalation sanity bound the agent document states — more than five
+escalations means the agent is under-deciding — is deliberately NOT enforced
+here. It is a judgment heuristic, not a schema rule: a handoff with six
+escalations is well-formed and says something true about the evidence base.
 
 Stdlib only, Python 3.9+. Consumers copy this single file into their project.
 """
@@ -67,6 +87,21 @@ MATRIX_KEYS: Tuple[str, ...] = (
 SUB_AGENT_KEYS: Tuple[str, ...] = (
     "api", "structure", "flow", "requirements", "smells",
 )
+
+# The four dispositions every senior-PM finding gets exactly one of
+# (prd-senior-pm.md Step 4), as they appear in `dispositionCounts`.
+DISPOSITION_KEYS: Tuple[str, ...] = (
+    "fixTechnical", "fixProduct", "reject", "escalate",
+)
+
+# Ticket types (prd-senior-pm.md Step 5).
+TICKET_TYPES: Tuple[str, ...] = ("technical", "product")
+
+# Run modes (prd-senior-pm.md "Run Mode: Full or Delta").
+SENIOR_PM_MODES: Tuple[str, ...] = ("full", "delta")
+
+# Delta-mode prior-ticket verification buckets (prd-senior-pm.md Step 7).
+TICKETS_VERIFIED_KEYS: Tuple[str, ...] = ("applied", "partial", "notApplied")
 
 DEFECT_CATEGORIES: Tuple[str, ...] = (
     "Omission",
@@ -650,6 +685,157 @@ def validate_dispatch(document: Dict[str, Any], problems: Problems) -> None:
 
 
 # --------------------------------------------------------------------------
+# Type: senior-pm  (agents/prd-senior-pm.md Step 7)
+# --------------------------------------------------------------------------
+
+
+def validate_senior_pm(document: Dict[str, Any], problems: Problems) -> None:
+    root = ""
+    want_string(problems, document, root, "agent", equals="prd-senior-pm")
+    want_string(problems, document, root, "initiative")
+    want_timestamp(problems, document, root, "timestamp", reject_midnight=True)
+    want_string(problems, document, root, "reviewPath")
+    want_string(problems, document, root, "prdPath", required=False)
+    want_string(problems, document, root, "seniorPmReviewPath", required=False)
+
+    mode_ok = want_string(
+        problems, document, root, "mode", choices=SENIOR_PM_MODES
+    )
+    want_integer(problems, document, root, "failsJudged", strict=True)
+    want_integer(
+        problems, document, root, "rootCauses", required=False, strict=True
+    )
+
+    counts_ok = want_exact_keys(
+        problems, document, root, "dispositionCounts", DISPOSITION_KEYS,
+        value_kind="integer",
+    )
+
+    tickets_ok, tickets = want_list(
+        problems, document, root, "tickets", of="object"
+    )
+    if tickets_ok:
+        for index, ticket in enumerate(tickets):
+            path = "tickets[%d]" % index
+            want_string(problems, ticket, path, "id")
+            type_ok = want_string(
+                problems, ticket, path, "type", choices=TICKET_TYPES
+            )
+            want_string(problems, ticket, path, "instruction")
+            want_string(problems, ticket, path, "rationale", required=False)
+            want_string(problems, ticket, path, "evidence")
+            # A `product` ticket without a decision is the exact failure the
+            # disposition exists to prevent: the writer would have to invent
+            # the behavior, which is what the senior PM was spawned to stop.
+            if type_ok and ticket["type"] == "product":
+                want_string(problems, ticket, path, "decision")
+
+    escalations_ok, escalations = want_list(
+        problems, document, root, "escalations", of="object"
+    )
+    if escalations_ok:
+        for index, escalation in enumerate(escalations):
+            path = "escalations[%d]" % index
+            want_string(problems, escalation, path, "id")
+            want_string(problems, escalation, path, "question")
+            want_string(problems, escalation, path, "recommendation")
+            want_string(
+                problems, escalation, path, "whyUngroundable", required=False
+            )
+
+    rejected_ok, rejected = want_list(
+        problems, document, root, "rejectedFails", of="object"
+    )
+    if rejected_ok:
+        for index, entry in enumerate(rejected):
+            path = "rejectedFails[%d]" % index
+            want_string(problems, entry, path, "matrixRow")
+            want_string(problems, entry, path, "reason")
+
+    # dispositionCounts must agree with the arrays it summarizes. A decision
+    # sheet whose counts and lists disagree cannot be presented at Gate 3:
+    # the user would be approving numbers that describe a different run.
+    if counts_ok:
+        counts = document["dispositionCounts"]
+        if tickets_ok:
+            ticket_total = counts["fixTechnical"] + counts["fixProduct"]
+            if ticket_total != len(tickets):
+                problems.add(
+                    "dispositionCounts",
+                    "fixTechnical (%d) + fixProduct (%d) = %d != %d ticket(s) "
+                    "in `tickets`"
+                    % (
+                        counts["fixTechnical"],
+                        counts["fixProduct"],
+                        ticket_total,
+                        len(tickets),
+                    ),
+                )
+            by_type = {name: 0 for name in TICKET_TYPES}
+            for ticket in tickets:
+                kind = ticket.get("type")
+                if kind in by_type:
+                    by_type[kind] += 1
+            for key, kind in (
+                ("fixTechnical", "technical"),
+                ("fixProduct", "product"),
+            ):
+                if counts[key] != by_type[kind]:
+                    problems.add(
+                        "dispositionCounts.%s" % key,
+                        "%s (%d) != %d ticket(s) of type \"%s\""
+                        % (key, counts[key], by_type[kind], kind),
+                    )
+        if rejected_ok and counts["reject"] != len(rejected):
+            problems.add(
+                "dispositionCounts.reject",
+                "reject (%d) != %d entr(y|ies) in `rejectedFails`"
+                % (counts["reject"], len(rejected)),
+            )
+        if escalations_ok and counts["escalate"] != len(escalations):
+            problems.add(
+                "dispositionCounts.escalate",
+                "escalate (%d) != %d entr(y|ies) in `escalations`"
+                % (counts["escalate"], len(escalations)),
+            )
+
+    # ticketsVerified belongs to delta mode only: in full mode there is no
+    # prior ticket list to verify, so its presence means the mode field lies.
+    if mode_ok:
+        mode = document["mode"]
+        has_verified = "ticketsVerified" in document
+        if mode == "delta" and not has_verified:
+            problems.add(
+                "ticketsVerified",
+                'required field is missing: mode "delta" must report how many '
+                "prior tickets were applied / partial / not-applied",
+            )
+        elif mode == "full" and has_verified:
+            problems.add(
+                "ticketsVerified",
+                'unexpected field: mode "full" is the first pass, so there are '
+                "no prior tickets to verify",
+            )
+    if "ticketsVerified" in document:
+        want_exact_keys(
+            problems, document, root, "ticketsVerified",
+            TICKETS_VERIFIED_KEYS, value_kind="integer",
+        )
+
+    next_ok = want_string(
+        problems, document, root, "nextAgent", choices=("none", "prd-writer")
+    )
+    if next_ok and tickets_ok:
+        expected = "prd-writer" if tickets else "none"
+        if document["nextAgent"] != expected:
+            problems.add(
+                "nextAgent",
+                '%d ticket(s) require nextAgent "%s", got "%s"'
+                % (len(tickets), expected, document["nextAgent"]),
+            )
+
+
+# --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
@@ -657,6 +843,7 @@ VALIDATORS = {
     "writer": validate_writer,
     "reviewer": validate_reviewer,
     "dispatch": validate_dispatch,
+    "senior-pm": validate_senior_pm,
 }
 
 
@@ -687,11 +874,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--type",
         required=True,
-        choices=("writer", "reviewer", "dispatch", "retro"),
+        choices=("writer", "reviewer", "dispatch", "senior-pm", "retro"),
         help=(
             "handoff contract to apply: writer (prd-writer Step 6), "
-            "reviewer (prd-reviewer Step 9), dispatch (prd-reviewer Path A). "
-            "retro is reserved and always exits 2 — no retro agent exists yet."
+            "reviewer (prd-reviewer Step 9), dispatch (prd-reviewer Path A), "
+            "senior-pm (prd-senior-pm Step 7). retro is reserved and always "
+            "exits 2 — no retro agent exists yet."
         ),
     )
     parser.add_argument("file", help="handoff JSON file to validate")

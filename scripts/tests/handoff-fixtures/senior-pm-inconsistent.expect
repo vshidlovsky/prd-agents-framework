@@ -1,0 +1,24 @@
+# Planted defects in senior-pm-inconsistent.json. Every field here is
+# individually well-typed — what breaks is the set of cross-field invariants
+# `agents/prd-senior-pm.md` Step 7 states in prose. A decision sheet whose
+# counts describe a different run than its own arrays cannot be presented at
+# Gate 3: the user would be approving numbers that do not match the tickets.
+
+# delta mode must report how the prior tickets fared
+ticketsVerified: required field is missing: mode "delta"
+
+# fixTechnical + fixProduct must equal the number of tickets
+fixTechnical (3) + fixProduct (0) = 3 != 2 ticket(s)
+
+# and each count must match the tickets of that type
+dispositionCounts.fixTechnical: fixTechnical (3) != 1 ticket(s) of type "technical"
+dispositionCounts.fixProduct: fixProduct (0) != 1 ticket(s) of type "product"
+
+# reject must equal the rejectedFails array length
+dispositionCounts.reject: reject (5) != 1 entr
+
+# escalate must equal the escalations array length
+dispositionCounts.escalate: escalate (0) != 1 entr
+
+# tickets exist, so the writer is next
+nextAgent: 2 ticket(s) require nextAgent "prd-writer", got "none"

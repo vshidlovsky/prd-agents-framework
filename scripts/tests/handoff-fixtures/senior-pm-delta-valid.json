@@ -1,0 +1,44 @@
+{
+  "agent": "prd-senior-pm",
+  "initiative": "search-filters",
+  "timestamp": "2026-08-11T09:14:03Z",
+  "prdPath": "docs/initiatives/search-filters/search-filters-prd-v2.md",
+  "reviewPath": "docs/initiatives/search-filters/_artifacts/search-filters-prd-review.md",
+  "seniorPmReviewPath": "docs/initiatives/search-filters/_artifacts/search-filters-senior-pm-review.md",
+  "mode": "delta",
+  "failsJudged": 3,
+  "rootCauses": 1,
+  "ticketsVerified": {
+    "applied": 1,
+    "partial": 1,
+    "notApplied": 0
+  },
+  "dispositionCounts": {
+    "fixTechnical": 1,
+    "fixProduct": 0,
+    "reject": 2,
+    "escalate": 0
+  },
+  "tickets": [
+    {
+      "id": "T-2",
+      "type": "technical",
+      "instruction": "Re-issued: FR-012 still states an unbounded retry. Apply the decided bound from the first pass — attempts stop at the server-side lockout threshold.",
+      "decision": null,
+      "rationale": "Ticket T-2 was applied only partially; the decision from the first pass stands unchanged.",
+      "evidence": "search-filters-prd-v2.md FR-012; prior decision sheet D-1"
+    }
+  ],
+  "escalations": [],
+  "rejectedFails": [
+    {
+      "matrixRow": "F-14",
+      "reason": "repeat of a prior rejection — overreach on the same lesson condition, not re-argued"
+    },
+    {
+      "matrixRow": "D1-7",
+      "reason": "variance — a fresh re-read of an unchanged flow section produced a new wording preference"
+    }
+  ],
+  "nextAgent": "prd-writer"
+}

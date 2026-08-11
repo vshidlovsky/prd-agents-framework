@@ -1,0 +1,45 @@
+# Planted defects in senior-pm-invalid.json — one required output substring per
+# line. Each is a shape/type violation of the contract in
+# `agents/prd-senior-pm.md` Step 7.
+
+# wrong agent name (this is the senior PM's handoff, not the reviewer's)
+agent: expected "prd-senior-pm", got "prd-reviewer"
+
+# midnight timestamp — the agent doc requires the real `date -u` output
+timestamp: midnight timestamp
+
+# the path to the review being judged is the whole point of the handoff
+reviewPath: required field is missing
+
+# `mode` must be one of the two documented run modes
+mode: expected one of full | delta, got "product-challenge-only"
+
+# counts must be JSON numbers, not quoted values
+failsJudged: expected integer, got string "9"
+dispositionCounts.reject: expected integer, got string "2"
+
+# dispositionCounts carries EXACTLY the four dispositions
+dispositionCounts.escalate: required key is missing
+dispositionCounts.fixUx: unexpected key
+
+# ticketsVerified carries EXACTLY the three verification buckets
+ticketsVerified.notApplied: required key is missing
+ticketsVerified.skipped: unexpected key
+
+# a ticket type outside {technical, product} is not a disposition
+tickets[0].type: expected one of technical | product, got "ux"
+
+# a `product` ticket with no decision forces the writer to invent behavior
+tickets[1].decision: required field is missing
+
+# every ticket cites its evidence
+tickets[1].evidence: required field is missing
+
+# an escalation without a recommendation is a question, not a judgment
+escalations[0].recommendation: required field is missing
+
+# a rejected FAIL without a reason is an unexplained override
+rejectedFails[0].reason: required field is missing
+
+# nextAgent is either the writer or nobody
+nextAgent: expected one of none | prd-writer, got "prd-senior-pm"
