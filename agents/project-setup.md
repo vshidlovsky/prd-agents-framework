@@ -164,7 +164,7 @@ If the user wants shared requirements:
    PRDs reference SR IDs — they do not restate SR content inline.
 
    **Ownership**: PM-owned. Agents consume but never modify without explicit user approval.
-   See `rules/shared-requirements.md`.
+   See `.claude/rules/shared-requirements.md`.
 
    ---
 

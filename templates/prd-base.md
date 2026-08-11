@@ -10,7 +10,7 @@
 >
 > **Section order**: Context (what, who) → Behavioral Contract (requirements, verification, edge cases) → Technical Contract (APIs, mappings, config, dependencies) → Boundaries (scope, questions). Within each area, follow the numbered insertion-point markers for section pack placement.
 >
-> **Separation principle**: The Behavioral Contract describes *what* the system does (observable by users and testers). The Technical Contract describes *how* it's built (readable by engineers). A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `rules/behavioral-separation.md` for the full rules.
+> **Separation principle**: The Behavioral Contract describes *what* the system does (observable by users and testers). The Technical Contract describes *how* it's built (readable by engineers). A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `.claude/rules/behavioral-separation.md` for the full rules.
 >
 > **Section packs**: The prd-writer inserts additional sections from `templates/sections/` based on what's listed in `project-context.md`. Each section pack has an `Insert into` tag with a numbered position (e.g., `Insert into: Technical Contract [position: 1]`). Insert packs in ascending position order. Packs sharing the same position number should be inserted in alphabetical order by section name.
 
@@ -50,7 +50,7 @@ As a [role], I want [goal] so that [benefit].
 >
 > **Vocabulary files**: If `semantic-vocabulary/` files exist for the endpoints in this initiative, semantic names MUST match the vocabulary entries. For new fields not yet in vocabulary, the writer proposes entries in the handoff file.
 >
-> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only — decide every phrase with the three generic tests (rename / designer-choice / QA-observability). The canonical allowed and forbidden item lists are the two Quick Reference sections in `rules/behavioral-separation.md`; read them before drafting.
+> **Separation rule**: FRs, ACs, Edge Cases, and Key Entities must describe observable behavior only — decide every phrase with the three generic tests (rename / designer-choice / QA-observability). The canonical allowed and forbidden item lists are the two Quick Reference sections in `.claude/rules/behavioral-separation.md`; read them before drafting.
 
 ### Shared Requirements
 
@@ -79,7 +79,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - Number sequentially: FR-001, FR-002, etc.
 > - Every FR should map to one or more ACs below.
 > - Aim for 10-20 FRs. More suggests the scope is too broad.
-> **Separation check**: Describe observable behavior only, using semantic names with `[V#]` markers on first use — apply the Quick Reference lists in `rules/behavioral-separation.md`.
+> **Separation check**: Describe observable behavior only, using semantic names with `[V#]` markers on first use — apply the Quick Reference lists in `.claude/rules/behavioral-separation.md`.
 
 - **FR-001**: System MUST [capability using semantic names with [V#] markers].
 - **FR-002**: System MUST [capability].
@@ -105,7 +105,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - Every criterion gets a stable ID: AC-001, AC-002, ...
 > - Every criterion starts with a user-visible action or state.
 > - Must include sub-sections for: Loading States, Error States, Empty States (when applicable).
-> **Separation check**: Describe what the user sees and does, using semantic concept names with `[V#]` markers on first use — apply the Quick Reference lists in `rules/behavioral-separation.md`.
+> **Separation check**: Describe what the user sees and does, using semantic concept names with `[V#]` markers on first use — apply the Quick Reference lists in `.claude/rules/behavioral-separation.md`.
 
 #### [Screen / Flow Area]
 
@@ -148,7 +148,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **What**: Boundary conditions, nullable fields, concurrent actions, failure modes.
 > **Why**: Edge cases are where bugs live. The #1 complaint about AI-generated PRDs is missing edge cases.
 > **How**: Generate systematically, not from intuition. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data. For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: indeterminate condition, rapid toggle mid-flow. Then deduplicate and remove impossible scenarios.
-> **Separation check**: Use semantic names with `[V#]` markers where applicable. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but the same separation rule applies — see the Quick Reference lists in `rules/behavioral-separation.md`.
+> **Separation check**: Use semantic names with `[V#]` markers where applicable. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but the same separation rule applies — see the Quick Reference lists in `.claude/rules/behavioral-separation.md`.
 
 | # | Condition | Expected Behavior |
 |---|-----------|-------------------|

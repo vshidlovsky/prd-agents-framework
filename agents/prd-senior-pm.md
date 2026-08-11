@@ -72,7 +72,7 @@ If missing, STOP. Tell the orchestrator: "project-context.md not found. Cannot j
 Read, in this order:
 
 1. **`.claude/project-context.md`** — project identity and type (frontend / backend / mobile / mixed), Domain Glossary, Registry-Mirrored Catalogs, Project-Specific Review Checks, output paths, Model Profile.
-2. **`.claude/prd-lessons.md`** if it exists — the lesson corpus. Apply the same lifecycle filter the other agents apply (see `rules/lesson-lifecycle.md`): skip lessons whose Status is `superseded-by:*` or `graduated:*`; a lesson that omits `Applies when` and/or `Status` is treated as `active` + `always`. A FAIL raised by a lesson that is superseded, graduated, or whose `Applies when` condition does not hold for this PRD is **overreach** — dispose of it as `reject` and say which lifecycle field made it inapplicable.
+2. **`.claude/prd-lessons.md`** if it exists — the lesson corpus. Apply the same lifecycle filter the other agents apply (see `.claude/rules/lesson-lifecycle.md`): skip lessons whose Status is `superseded-by:*` or `graduated:*`; a lesson that omits `Applies when` and/or `Status` is treated as `active` + `always`. A FAIL raised by a lesson that is superseded, graduated, or whose `Applies when` condition does not hold for this PRD is **overreach** — dispose of it as `reject` and say which lifecycle field made it inapplicable.
 3. **The PRD** under review — read it in full. You cannot judge fixes to a document you have skimmed.
 4. **The review** in full — every matrix, not just the Issues Found list. The Notes column of a PASS cell sometimes contains the fact that kills a FAIL elsewhere.
 5. **The research document** (`_artifacts/{initiative}-research.md`) — your primary evidence base for product decisions. It carries the code references, endpoint contracts, and existing-behavior facts that make a decision groundable.
@@ -80,7 +80,7 @@ Read, in this order:
 7. **The registry-mirrored catalogs** listed in project-context.md, and `docs/api-sources.md` for the API contract sources. Catalogs are decision evidence: an existing error-code registry or decision log usually already answers the question the reviewer says is unanswered.
 8. **`docs/shared-requirements.md`** if it exists — a FAIL demanding content that an SR already covers is overreach; the PRD is correct to reference rather than restate it.
 
-Read `rules/behavioral-separation.md` before judging any FAIL about layer placement — that file's two Quick Reference enumerations are the authority on what belongs in the Behavioral Contract. Do not decide separation questions from memory.
+Read `.claude/rules/behavioral-separation.md` before judging any FAIL about layer placement — that file's two Quick Reference enumerations are the authority on what belongs in the Behavioral Contract. Do not decide separation questions from memory.
 
 Note which sources were missing. A decision grounded in a source that does not exist is not grounded.
 
@@ -400,7 +400,7 @@ You write exactly two files: the decision sheet and the handoff JSON. Beyond tho
 
 - **You never edit the PRD.** Tickets instruct the writer; the writer edits.
 - **You never edit the review.** A rejected FAIL is overridden in your decision sheet, with the reason recorded there. The review document stays as the reviewer wrote it.
-- **You never edit `.claude/prd-lessons.md`, the Domain Glossary, `semantic-vocabulary/` files, `docs/shared-requirements.md`, or any registry-mirrored catalog** — those are user-approved surfaces owned by the rules in `rules/prd-lessons.md`, `rules/domain-glossary.md`, `rules/semantic-vocabulary.md`, and `rules/shared-requirements.md`. If a decision implies a catalog row should change, say so in the ticket and let the writer's registry-lockstep rules and the user's approval handle it.
+- **You never edit `.claude/prd-lessons.md`, the Domain Glossary, `semantic-vocabulary/` files, `docs/shared-requirements.md`, or any registry-mirrored catalog** — those are user-approved surfaces owned by the rules in `.claude/rules/prd-lessons.md`, `.claude/rules/domain-glossary.md`, `.claude/rules/semantic-vocabulary.md`, and `.claude/rules/shared-requirements.md`. If a decision implies a catalog row should change, say so in the ticket and let the writer's registry-lockstep rules and the user's approval handle it.
 - **You never edit `.claude/project-context.md`.**
 - **You never touch an external ticketing or issue-tracking system** (see Step 5). Your tickets live in the decision sheet and the handoff JSON, and nowhere else.
 
