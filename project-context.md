@@ -175,7 +175,7 @@ END EXAMPLE — DELETE -->
 ## Model Profile
 
 > GUIDE: Controls which LLM model each agent uses. Two presets are available:
-> - **reliable**: All agents use Opus. Best quality, highest cost.
+> - **reliable**: All agents use Opus, except prd-senior-pm which uses Fable. Best quality, highest cost.
 > - **cost-optimized**: Only the mechanical agents switch to Sonnet (researcher, review-api,
 >   review-structure). Every other agent in the profile table stays on Opus because they need
 >   deeper judgment:
@@ -184,20 +184,25 @@ END EXAMPLE — DELETE -->
 >   - **review-flow** (Opus) — dead-end detection, discoverability, error recovery require judgment
 >   - **review-requirements** (Opus) — requirements quality (atomicity, feasibility, contradictions) needs judgment
 >   - **review-smells** (Opus) — smell detection (vague verbs, loopholes, ambiguous pronouns) needs nuanced language analysis
+>   - **prd-senior-pm** (Fable) — stays on fable even here: it judges the review and makes the
+>     product decisions, so judgment is the entire point of the agent. Downgrading it puts
+>     invented product behavior back into the spec, which is what it exists to prevent.
 >   Saves ~40-50% on token costs per PRD run.
 >
 > Pick a preset, then optionally override individual agents in the table below.
 > The create-prd skill and prd-reviewer read this table when spawning agents.
-> Valid models: `opus`, `sonnet`, `haiku`
+> Valid models: `opus`, `sonnet`, `haiku`, `fable`
 >
-> Model values are tier names resolved by Claude Code (`opus`, `sonnet`, `haiku`), not pinned
-> model IDs — they track the current generation automatically.
+> Model values are tier names resolved by Claude Code (`opus`, `sonnet`, `haiku`, `fable`), not
+> pinned model IDs — they track the current generation automatically.
 >
 > `haiku` is accepted for custom profiles. It is only appropriate for strictly mechanical work
 > (e.g., review-structure checklist verification on small PRDs). Judgment-heavy agents
 > (prd-writer, prd-reviewer, review-flow, review-requirements, review-smells) should stay on
 > opus. Quality degradation on review agents shows up as false PASSes, which are invisible —
 > prefer over-provisioning reviewers.
+>
+> `fable` — highest-judgment tier; default for prd-senior-pm; overkill for mechanical agents.
 
 - **Profile**: reliable
 
@@ -206,6 +211,7 @@ END EXAMPLE — DELETE -->
 | researcher | opus | Codebase research and fact extraction |
 | prd-writer | opus | PRD drafting and synthesis |
 | prd-reviewer | opus | Review orchestration, cross-checks, verdict |
+| prd-senior-pm | fable | Judges the review, makes the product decisions, writes the writer's tickets |
 | review-api | opus | Sub-reviewer: API endpoint verification |
 | review-structure | opus | Sub-reviewer: structure checklist |
 | review-flow | opus | Sub-reviewer: flow and edge case analysis |
