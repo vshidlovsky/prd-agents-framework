@@ -135,13 +135,23 @@ After all questions are answered and before proceeding to Step 4, save the compl
 
 This file enables Q&A replay in evaluation runs. Commit it alongside the PRD.
 
-## Step 3.5: Revision Mode (when called with review feedback)
+## Step 3.5: Revision Mode (when called with senior-PM tickets)
 
-If the orchestrator passes a review FAIL list (from prd-reviewer), this is a revision cycle — not a fresh draft.
+If the orchestrator passes a senior-PM ticket list, this is a revision cycle — not a fresh draft.
+
+**Your input is the senior-PM ticket list, NOT the raw review.** The technical review's FAIL list has already been judged by prd-senior-pm: some FAILs were rejected as unreal, overreach, or variance, and some carry a different fix than the reviewer suggested because the reviewer's fix would have made things worse. The tickets are the decided work. Read the ticket file (`_artifacts/{initiative}-senior-pm-review.md` — its `## Tickets for Writer` section — or the `tickets` array in `_artifacts/{initiative}-senior-pm-handoff.json`) and work from it.
+
+- **Apply each ticket exactly.** The ticket names the location and the edit; make that edit.
+- **`fix-product` tickets carry a made decision — implement it as written; do not re-decide.** The decision was grounded in evidence you may not have seen, and re-deciding it silently reopens a settled question. If you believe a decision is wrong, implement it and say so in your handoff — do not substitute your own.
+- **Never invent product behavior.** If you hit something no ticket covers that needs a product decision, leave it as it is and add an Open Question tagged `ASK:PM` describing the decision needed. Inventing a threshold, a cap, a precedence, or an error behavior to make the document look complete is how speculation becomes spec.
+- **Rejected FAILs are not to be "fixed" — they were overridden.** The decision sheet's Rejected FAILs list is authoritative. Do not "help" by fixing a rejected row; that re-introduces exactly what the senior PM ruled out, and the next review pass will churn on it.
+- If no senior-PM ticket file exists (the senior-PM agent was not run, e.g. the writer was invoked standalone against a review), fall back to the review's Issues Found list and apply each FAIL's suggested fix — but flag in your handoff that the revision was unjudged.
+
+Then:
 
 1. Read the existing PRD (the one the reviewer examined)
-2. Read the review's Issues Found section — every numbered FAIL with its matrix-row ID
-3. For each FAIL: make the specific fix described in the "Suggested fix." Do NOT rewrite surrounding sections unless the fix requires it.
+2. Read every ticket, in order, with its instruction, decision, rationale, and evidence
+3. For each ticket: make the edit exactly as instructed. Do NOT rewrite surrounding sections unless the edit requires it.
 4. **Sweep-fix**: after fixing a flagged term or pattern, grep the entire PRD for the same term (and obvious synonyms). Fix every instance, not just the one the reviewer pointed at. A reviewer FAIL on "debounce" in FR-009 means "debounce" in FR-026, AC-007, and edge cases must also be fixed in the same pass. When a fix updates a reference (a link, anchor, or cited location), verify the replacement by opening the target and reading it back — find-and-replace without read-back is how stale references survive revision cycles. And sweep the whole document, not just the items the reviewer flagged: an edit that shifts content invalidates every reference below the edit point, flagged or not.
 5. Preserve any manual edits the user may have made to the PRD between cycles
 6. **Changelog discipline**:
@@ -149,10 +159,10 @@ If the orchestrator passes a review FAIL list (from prd-reviewer), this is a rev
    - Append every new row to the END of the changelog table — rows must read in ascending version order (v1 → v2 → v3 → ...). Never insert a row in the middle.
    - When a revision drops or renames a screen/view/step, grep the PRD for every reference to the old name (ACs, MA-N rows, edge cases, diagrams) and update them in lockstep. The changelog must list "Cascading rewrites:" with every location updated.
 7. Increment the version number (e.g., v1 → v2). Write to a NEW versioned file — never overwrite the previous version.
-8. After fixing all FAILs, re-run the consistency pass (Quality Standard #13)
+8. After applying all tickets, re-run the consistency pass (Quality Standard #13)
 9. Skip Steps 1-3 (context, research, and questions are already done)
 10. Proceed to Step 4.5 (pre-save self-review), Step 5 (save), and Step 6 (handoff) with the updated PRD
-11. In the handoff file, add a `"previousReviewPath"` field pointing to the review that triggered this revision
+11. In the handoff file, add a `"previousReviewPath"` field pointing to the review that triggered this revision, and — when tickets drove the revision — a `"ticketsApplied"` list of the ticket IDs you applied. The senior PM verifies these on the next pass, ticket by ticket, so an ID you claim without the edit landing is a finding against this revision. Note any ticket you could not apply and why instead of silently dropping it.
 
 ## Step 4: Draft the Spec
 

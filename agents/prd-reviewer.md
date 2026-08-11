@@ -950,7 +950,7 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
 }
 ```
 
-Set `nextAgent` to `"prd-writer"` if NEEDS_REVISION (writer must fix the FAILs). Set to `"none"` if READY (review is the final agent in the pipeline — the create-prd skill handles what happens next).
+Set `nextAgent` to `"prd-writer"` if NEEDS_REVISION (the PRD needs revising). Set to `"none"` if READY. This field states whether a revision is needed, not which agent the orchestrator spawns next: `/create-prd` routes every review — READY or NEEDS_REVISION — through `prd-senior-pm` first, which judges your FAILs and turns the survivors into the ticket list the writer actually consumes. Do not write `"prd-senior-pm"` here; the handoff contract carries only `none` and `prd-writer`.
 
 If `scripts/validate-handoff.py` exists, run it on the file you just wrote and fix every reported problem before proceeding:
 
