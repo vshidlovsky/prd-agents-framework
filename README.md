@@ -4,7 +4,7 @@
 
 A multi-agent framework for creating, reviewing, and managing Product Requirements Documents using [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Works across tech stacks — Flutter, Spring Boot, React, Node, and more. Supports both existing codebases and greenfield projects.
 
-The framework chains specialized AI agents (researcher, writer, reviewer) through a human-gated pipeline, applying structured review techniques from BABOK, perspective-based reading (Basili, 1998), and requirements smell detection (Femmer et al., 2017) to produce implementation-ready specs.
+The framework chains specialized AI agents (researcher, writer, reviewer, senior PM) through a human-gated pipeline, applying structured review techniques from BABOK, perspective-based reading (Basili, 1998), and requirements smell detection (Femmer et al., 2017) to produce implementation-ready specs.
 
 ## What's Included
 
@@ -15,9 +15,10 @@ prd-agents-framework/
 │   ├── researcher.md          # Codebase research agent
 │   ├── prd-writer.md          # PRD drafting agent
 │   ├── prd-reviewer.md        # PRD review agent (orchestrates parallel sub-reviewers)
+│   ├── prd-senior-pm.md       # Judges the review, decides, writes tickets for the writer
 │   └── prd-smell-patterns.md  # Requirements smell patterns (Femmer et al.)
 ├── skills/
-│   └── create-prd/SKILL.md    # Orchestration skill (chains all 3)
+│   └── create-prd/SKILL.md    # Orchestration skill (chains all 4)
 ├── templates/
 │   ├── prd-base.md            # Universal PRD template (always used)
 │   └── sections/              # Modular section packs (pick what applies)
@@ -128,14 +129,21 @@ For **greenfield projects** with no code yet: tell the setup agent your planned 
     │   ├── Produces {initiative}-prd.md
     │   └── 🔵 Gate 2: You review draft
     │
-    └── Phase 3: PRD Reviewer
-        ├── Runs universal + project-specific checks
-        ├── Produces {initiative}-prd-review.md
-        ├── 🔵 Gate 3: You review findings + approve lessons & glossary terms
-        └── Up to 3 revision cycles, then escalates
+    ├── Phase 3: PRD Reviewer
+    │   ├── Runs universal + project-specific checks
+    │   └── Produces {initiative}-prd-review.md
+    │
+    └── Phase 3.5: Senior PM
+        ├── Judges every FAIL on evidence + impact, collapses duplicates
+        ├── Decides the product questions, rejects the noise
+        ├── Produces {initiative}-senior-pm-review.md (tickets for the writer)
+        ├── 🔵 Gate 3: You review decisions + escalations + approve lessons & glossary terms
+        └── Up to 3 revision cycles (writer applies tickets), then escalates
 ```
 
 Human gates between every phase. Nothing runs without your approval.
+
+The senior PM sits between the reviewer and the writer on purpose: **reviewer → senior PM → Gate 3 → writer**. See [Senior PM judgment](#senior-pm-judgment).
 
 ### Output
 
@@ -145,8 +153,10 @@ docs/initiatives/search-filters/
 └── _artifacts/
     ├── search-filters-research.md     # Codebase research
     ├── search-filters-prd-review.md   # Review with PASS/FAIL verdicts
+    ├── search-filters-senior-pm-review.md  # Dispositions, decisions, tickets
     ├── search-filters-prd-handoff.json
-    └── search-filters-prd-review-handoff.json
+    ├── search-filters-prd-review-handoff.json
+    └── search-filters-senior-pm-handoff.json
 ```
 
 All agents commit their output. Nothing is pushed automatically.
@@ -157,9 +167,29 @@ All agents commit their output. Nothing is pushed automatically.
 Run the researcher agent on "search-filters"
 Run the prd-writer agent on "search-filters"
 Run the prd-reviewer agent on "search-filters"
+Run the prd-senior-pm agent on "search-filters"
 ```
 
 Each agent reads `.claude/project-context.md` on every run.
+
+### Senior PM judgment
+
+The reviewer is a mechanical checker. On a large PRD it fills hundreds of matrix cells and can emit 90+ FAILs, and those FAILs used to go straight to the writer, which caused two problems: reviewer noise became work (many FAILs are variance, overreach, or the same root cause seen from four matrices), and product decisions got invented (a FAIL like "no attempt cap defined" needs a PM call, so the writer made one up and speculation became spec).
+
+`agents/prd-senior-pm.md` is the judgment layer between them. It runs on `fable` — the highest-judgment tier — and reads the PRD, the full review, the research doc, and the writer's Q&A log. It collapses FAIL cells that share one root cause into a single finding, judges each finding on **two axes** (is it real, given the evidence? and does it matter, to users or to API consumers, downstream services, data correctness, and operations?), and judges the reviewer's *suggested fix* the same way — a technically-valid FAIL whose fix would make things worse gets a different fix, or gets rejected with the reasoning recorded. It then challenges the PRD as a product in its own right, decides the product questions from evidence, and writes tickets.
+
+Every finding gets exactly one disposition:
+
+| Disposition | Meaning | What the writer gets |
+|---|---|---|
+| `fix-technical` | Real, mechanical | A precise instruction: what to change, where |
+| `fix-product` | Real, needs a decision — the decision is made here | The decided behavior + a one-line rationale + evidence |
+| `reject` | Not real, overreach, variance, or the fix would make it worse | Nothing. The review row is overridden, with the reason recorded |
+| `escalate` | Cannot be grounded in any evidence; the owner must decide | A question with the agent's recommendation — rare by design (a sanity bound flags >5 as under-deciding) |
+
+**Full vs delta mode.** Full mode runs once, after the first review pass: judge everything, challenge the product, decide, ticket. Every later pass — including a final `READY` pass — runs in delta mode: verify each earlier ticket actually landed, judge only the FAILs that are new, and leave earlier dispositions alone. Decide once, then enforce; a fresh full judgment every cycle produces fresh opinions every cycle and the PRD never stabilizes.
+
+Everything it produces is a proposal you see at Gate 3 — disposition counts, the decisions with their rationale, the rejected FAILs with reasons, and the escalations as the only questions. You can answer the escalations, veto or override any disposition, or say "go". The agent never edits the PRD, the review, the lessons, the glossary, or the catalogs, and its "tickets" are internal artifacts only — it never touches GitHub issues, Jira, or any external tracker.
 
 ## Customization
 
@@ -204,12 +234,13 @@ Agents hand state to each other through JSON files in `_artifacts/`, and the pip
 **`scripts/validate-handoff.py`** validates a handoff against the shape documented in the agent that writes it:
 
 ```bash
-python3 scripts/validate-handoff.py --type writer   docs/.../_artifacts/search-filters-prd-handoff.json
-python3 scripts/validate-handoff.py --type reviewer docs/.../_artifacts/search-filters-prd-review-handoff.json
-python3 scripts/validate-handoff.py --type dispatch docs/.../_artifacts/search-filters-review-dispatch.json
+python3 scripts/validate-handoff.py --type writer    docs/.../_artifacts/search-filters-prd-handoff.json
+python3 scripts/validate-handoff.py --type reviewer  docs/.../_artifacts/search-filters-prd-review-handoff.json
+python3 scripts/validate-handoff.py --type dispatch  docs/.../_artifacts/search-filters-review-dispatch.json
+python3 scripts/validate-handoff.py --type senior-pm docs/.../_artifacts/search-filters-senior-pm-handoff.json
 ```
 
-Exit `0` valid, `1` invalid, `2` usage error. Output is one line per problem: `<field-path>: <problem>`. Beyond per-field types it enforces the invariants the agent docs state in prose — `totalCells == subAgentCells + orchestratorCells`, no midnight timestamp, all twelve `failsByMatrix` keys, `nextAgent` agreeing with `status`, and exactly the five sub-reviewer keys in the dispatch file's `models`/`promptFiles`/`outputFiles` (a dropped key there silently loses a whole sub-reviewer). It is called at four points: the writer after Step 6, the reviewer after Step 9, the reviewer at Step 3 before consuming the writer's handoff, and `/create-prd` at step 3.2 before dispatching sub-agents.
+Exit `0` valid, `1` invalid, `2` usage error. Output is one line per problem: `<field-path>: <problem>`. Beyond per-field types it enforces the invariants the agent docs state in prose — `totalCells == subAgentCells + orchestratorCells`, no midnight timestamp, all twelve `failsByMatrix` keys, `nextAgent` agreeing with `status`, exactly the five sub-reviewer keys in the dispatch file's `models`/`promptFiles`/`outputFiles` (a dropped key there silently loses a whole sub-reviewer), and — for `senior-pm` — `dispositionCounts` agreeing with the `tickets`/`rejectedFails`/`escalations` arrays, every ticket typed `technical` or `product`, `fix-product` tickets carrying a decision, `ticketsVerified` present exactly in `delta` mode, and `nextAgent` agreeing with the ticket count. It is called at five points: the writer after Step 6, the reviewer after Step 9, the reviewer at Step 3 before consuming the writer's handoff, the senior PM after Step 7, and `/create-prd` at steps 3.2 and 3.5.3.
 
 **`scripts/run-log.py`** builds run-log lines with `json.dumps` instead of shell string concatenation, and reads the pipeline timing file so the skill doesn't parse it with shell loops:
 
@@ -268,17 +299,19 @@ Add domain-specific review rules under **Project-Specific Review Checks** in `pr
 
 ### Model profiles
 
-The framework runs the agents in the Model Profile table, one pass per PRD. Each can use a different model independently — valid values are `opus`, `sonnet`, and `haiku`. Three presets are available:
+The framework runs the agents in the Model Profile table, one pass per PRD. Each can use a different model independently — valid values are `opus`, `sonnet`, `haiku`, and `fable`. Three presets are available:
 
-| Profile | Sonnet agents | Opus agents | Cost savings |
-|---------|--------------|-------------|--------------|
-| **reliable** | none | all agents | — |
-| **cost-optimized** | researcher, review-api, review-structure | prd-writer, prd-reviewer, review-flow, review-requirements, review-smells | ~40-50% |
-| **custom** | you pick | you pick | varies |
+| Profile | Sonnet agents | Opus agents | Fable agents | Cost savings |
+|---------|--------------|-------------|--------------|--------------|
+| **reliable** | none | every agent except prd-senior-pm | prd-senior-pm | — |
+| **cost-optimized** | researcher, review-api, review-structure | prd-writer, prd-reviewer, review-flow, review-requirements, review-smells | prd-senior-pm | ~40-50% |
+| **custom** | you pick | you pick | you pick | varies |
 
-The cost-optimized preset keeps Opus where judgment matters most — PRD synthesis, requirements quality (atomicity, feasibility, contradictions), smell detection, flow analysis, and cross-matrix verdicts — while switching mechanical agents (file reading, endpoint comparison, checklist verification) to Sonnet.
+The Model Profile table lists one row per agent, including `prd-senior-pm | fable`. The cost-optimized preset keeps Opus where judgment matters most — PRD synthesis, requirements quality (atomicity, feasibility, contradictions), smell detection, flow analysis, and cross-matrix verdicts — while switching mechanical agents (file reading, endpoint comparison, checklist verification) to Sonnet. `prd-senior-pm` stays on `fable` in both presets: judging which FAILs are real and making the product calls *is* the agent, so a cheaper tier there puts invented behavior back into the spec.
 
-The profile is stored in the **Model Profile** table in `project-context.md`. Change it anytime by editing the table directly — no re-setup needed. Model values are tier names resolved by Claude Code (`opus`, `sonnet`, `haiku`), not pinned model IDs — they track the current generation automatically.
+The profile is stored in the **Model Profile** table in `project-context.md`. Change it anytime by editing the table directly — no re-setup needed. Model values are tier names resolved by Claude Code (`opus`, `sonnet`, `haiku`, `fable`), not pinned model IDs — they track the current generation automatically.
+
+`fable` — highest-judgment tier; default for `prd-senior-pm`; overkill for mechanical agents.
 
 `haiku` is accepted for custom profiles. It is only appropriate for strictly mechanical work (e.g., review-structure checklist verification on small PRDs). Judgment-heavy agents (prd-writer, prd-reviewer, review-flow, review-requirements, review-smells) should stay on opus. Quality degradation on review agents shows up as false PASSes, which are invisible — prefer over-provisioning reviewers.
 
@@ -314,7 +347,7 @@ The reviewer agent incorporates techniques from requirements engineering researc
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI or IDE extension
-- Access to the Claude model tiers you assign — `opus`, `sonnet`, or `haiku` (configurable per agent via [model profiles](#model-profiles))
+- Access to the Claude model tiers you assign — `opus`, `sonnet`, `haiku`, or `fable` (configurable per agent via [model profiles](#model-profiles))
 
 ## Contributing
 
