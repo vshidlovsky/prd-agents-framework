@@ -1,6 +1,6 @@
 ---
 name: create-prd
-description: Full PRD creation pipeline — research, draft, and review with human gates between phases. Chains researcher → prd-writer → prd-reviewer agents.
+description: Full PRD creation pipeline — research, draft, review, and senior-PM judgment with human gates between phases. Chains researcher → prd-writer → prd-reviewer → prd-senior-pm agents.
 argument-hint: <initiative-name>
 ---
 
@@ -15,7 +15,7 @@ Run the full PRD workflow for `{argument}`.
    ```bash
    mkdir -p "{initiative_dir}/_artifacts"
    ```
-3. Read the **Model Profile** table from project-context.md. Extract the `Model` column for each agent row. Store as `MODEL_MAP` — a lookup from agent name to model (e.g., `researcher → sonnet`, `prd-writer → opus`). If the Model Profile section is missing, default all agents to `opus`.
+3. Read the **Model Profile** table from project-context.md. Extract the `Model` column for each agent row. Store as `MODEL_MAP` — a lookup from agent name to model (e.g., `researcher → sonnet`, `prd-writer → opus`, `prd-senior-pm → fable`). If the Model Profile section is missing, default all agents to `opus` — except `prd-senior-pm`, which defaults to `fable`. Pass every value through to the Agent spawn **as-is**: `opus`, `sonnet`, `haiku`, and `fable` are all valid tier names. Never rewrite `fable` to another tier because it looks unfamiliar.
 4. Check if **Run Logs** are enabled in project-context.md. If enabled:
    ```bash
    RUN_ID=$(date -u +%Y%m%d-%H%M%S)
@@ -56,8 +56,10 @@ Run the full PRD workflow for `{argument}`.
 All agents use this naming pattern — files go in the `_artifacts/` subdirectory of the initiative folder:
 - Writer handoff: `_artifacts/{initiative}-prd-handoff.json`
 - Reviewer handoff: `_artifacts/{initiative}-prd-review-handoff.json` (or `_artifacts/{initiative}-prd-review-v{N}-handoff.json` if versioned)
+- Senior-PM decision sheet: `_artifacts/{initiative}-senior-pm-review.md`
+- Senior-PM handoff: `_artifacts/{initiative}-senior-pm-handoff.json`
 
-These names are stable across revision cycles. The reviewer reads the writer's handoff by this name. Neither agent overwrites the other's file.
+These names are stable across revision cycles. The reviewer reads the writer's handoff by this name. The senior PM reads the reviewer's handoff and, on later passes, its own previous handoff — that is how it knows the run is a delta pass. No agent overwrites another's file.
 
 ## Phase 0: Scope Clarification
 
@@ -205,7 +207,7 @@ Exit 0 means clean. Any violations are mechanical facts, not opinions — surfac
 
 **Cycle 1 (first draft)**: Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."** If the lint run reported violations, append: **"prd-lint found N violation(s):"** followed by the violation lines. If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
 
-**Cycle 2+ (revision)**: Skip the human gate — the writer just fixed reviewer FAILs, no user review needed. Tell the user: **"Writer revised the PRD — running reviewer automatically."** Proceed directly to Phase 3.
+**Cycle 2+ (revision)**: Skip the human gate — the writer just applied a senior-PM ticket list the user already approved at Gate 3, so no second draft review is needed. Tell the user: **"Writer revised the PRD — running reviewer automatically."** Proceed directly to Phase 3.
 
 If run logging is enabled:
 ```bash
@@ -341,7 +343,72 @@ fi
 
 The reviewer now has the review file and handoff ready.
 
-### Gate 3: Review Results + Proposed Lessons
+## Phase 3.5: Senior PM Judgment
+
+The reviewer is a mechanical checker: its FAIL list is a set of claims, and some of them are variance, overreach, duplicates of one root cause, or valid findings whose suggested fix would make the product worse. Do NOT send that list to the writer. Spawn the senior PM to judge it first.
+
+**This phase runs on every review pass — including the pass that returns READY.** A clean technical review says the checklists are satisfied; it does not say the product is right.
+
+If run logging is enabled: `echo "senior_pm_start=$(date +%s)" >> "$TIMING_FILE"`
+
+Update state file — set `currentPhase: "senior-pm"`.
+
+### Step 3.5.1: Determine the run mode
+
+```bash
+[ -f "{initiative_dir}/_artifacts/{argument}-senior-pm-handoff.json" ] && echo "delta" || echo "full"
+```
+
+- **No prior senior-PM handoff** → this is the first review pass → `full` mode. The senior PM judges every FAIL, challenges the PRD as a product, makes the decisions, and writes tickets. A **first-pass READY verdict still gets `full` mode** — there are no FAILs to judge, but the product challenge applies.
+- **A prior senior-PM handoff exists** → this is a later pass → `delta` mode. The senior PM verifies its earlier tickets were applied, judges only the NEW FAILs, and does not revisit earlier dispositions. A **later-pass READY verdict gets `delta` mode**, not a skip: the tickets still need verifying.
+
+Decide once, then enforce — re-running a full judgment every cycle produces new opinions every cycle and the PRD never stabilizes.
+
+### Step 3.5.2: Spawn the senior PM
+
+Spawn an Agent using `.claude/agents/prd-senior-pm.md`, with `model: MODEL_MAP[prd-senior-pm]` (default `fable`), and the prompt:
+
+> "Judge the review for initiative '{argument}'. Run mode: **{full|delta}** (this is review pass {N}). The PRD is at {prd_path}. The technical review is at {review_path} and its handoff at {review_handoff_path}; the verdict was {READY|NEEDS_REVISION}. The research doc is at {research_path} and the writer's Q&A log at {qa_path} if it exists. {In delta mode: 'Your previous decision sheet is at {senior_pm_review_path} and your previous handoff at {senior_pm_handoff_path} — verify each prior ticket was applied, judge only NEW FAILs, and do not revisit earlier dispositions.'} Write the decision sheet and the handoff JSON, then commit them. Do not edit the PRD or the review."
+
+If run logging is enabled: `echo "senior_pm_end=$(date +%s)" >> "$TIMING_FILE"`
+
+### Step 3.5.3: Validate the senior-PM handoff
+
+If `scripts/validate-handoff.py` exists, run it before consuming the handoff:
+
+```bash
+python3 scripts/validate-handoff.py --type senior-pm \
+  "{initiative_dir}/_artifacts/{argument}-senior-pm-handoff.json"
+```
+
+Exit 0 means the decision sheet's counts, tickets, and dispositions are internally consistent. On exit 1, STOP and tell the user: "The senior PM wrote an invalid handoff: [paste the reported problems]. Re-run Phase 3.5." Do not present a Gate 3 whose disposition counts disagree with its own ticket list. If the script is absent, skip this check.
+
+### Step 3.5.4: Log the senior-PM entry
+
+Append the `senior-pm` JSONL entry:
+
+```bash
+python3 scripts/run-log.py append --log-file "$LOG_FILE" --entry-type senior-pm \
+  --field "runId=$RUN_ID" \
+  --field "initiative={argument}" \
+  --field "agent=prd-senior-pm" \
+  --field "model=$MODEL_MAP_SENIOR_PM" \
+  --field "cycle=<current_cycle>" \
+  --field "startedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get senior_pm_start --iso)" \
+  --field "completedAt=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --get senior_pm_end --iso)" \
+  --field "durationSeconds=$(python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta senior_pm_start senior_pm_end)" \
+  --field "inputSummary=<mode> judgment of <failCount> FAILs in <review path>" \
+  --field "outputSummary=<ticketCount> tickets, <reject count> FAILs rejected, <escalations> escalations" \
+  --field "artifactPath=<senior-pm decision sheet path>" \
+  --field "handoffPath=<senior-pm handoff path>" \
+  --field 'metrics=<{"mode":…,"failsJudged":…,"rootCauses":…,"dispositionCounts":{…},"ticketCount":…,"escalations":…,"ticketsVerified":{…}} — built from the handoff, verbatim JSON>'
+```
+
+If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
+
+Update state file — set `currentPhase: "gate3"`, push the senior-pm phase into `completedPhases`.
+
+### Gate 3: Senior-PM Decisions + Proposed Lessons
 
 If run logging is enabled:
 ```bash
@@ -349,11 +416,20 @@ echo "gate3_prompt=$(date +%s)" >> "$TIMING_FILE"
 ```
 Update state file — set `currentPhase: "gate3"`.
 
-Present the review verdict AND proposed lessons together in one output:
+Present the senior-PM decision sheet AND proposed lessons together in one output. **The raw reviewer FAIL list is NOT the gate content** — the senior PM has already judged it, and re-presenting 90 unjudged FAILs is exactly the noise this phase exists to remove. Read `_artifacts/{argument}-senior-pm-handoff.json` and its decision sheet and present, in this order:
 
-**First**, the verdict:
-- If **READY**: "PRD approved with all checks passing."
-- If **NEEDS_REVISION**: Present every FAIL item with its description.
+**First**, the verdict and the judgment summary:
+- The reviewer verdict (READY / NEEDS_REVISION), the senior-PM run mode (`full` / `delta`), and the deflation: "the reviewer raised N FAIL cells; the senior PM judged them into M root causes."
+- The **disposition counts** from `dispositionCounts`: `fix-technical`, `fix-product`, `reject`, `escalate`.
+- In `delta` mode, the `ticketsVerified` counts — applied / partial / not-applied — so the user can see whether the last revision actually landed.
+
+**Then**, the **decisions made** — every `fix-product` ticket, with its decided behavior, its one-line rationale, and its evidence. These are calls the senior PM made on the user's behalf; the user sees each one before any revision starts. Also surface any "Harmful Fixes Overridden" rows: what the reviewer suggested, why it would have hurt, and what the ticket says instead.
+
+**Then**, the **rejected FAILs** — each `rejectedFails` entry with its matrix row and reason (not real / overreach / variance / no impact / fix would harm). These will NOT be fixed. The user is seeing them precisely so an override is possible.
+
+**Then**, the **escalations** — and these are the only questions in the gate. For each: the question, why it could not be grounded in evidence, and the senior PM's recommendation. If `escalate` is 0, say "No escalations — every finding was decided from evidence." If it is greater than 5, say so and note that the senior PM flagged itself as under-deciding.
+
+**Then**, the **ticket list** — IDs, types, and one-line instructions, so the user knows exactly what the writer will do.
 
 **Then**, immediately show proposed lessons (if any). For each lesson, show:
 - Number, name
@@ -378,9 +454,17 @@ If no glossary terms were proposed, say "No new glossary terms proposed."
 
 If no vocabulary entries were proposed, say "No new vocabulary entries proposed."
 
-**Then**, ask for action — one prompt covering verdict, lessons, glossary terms, and vocabulary:
-- If READY: **"Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Approve vocabulary entries: all / specific / skip. Then we're done."**
-- If NEEDS_REVISION: **"For the review: 'revise' to send back to prd-writer, or 'override' to approve as-is. For lessons: all / specific / skip. For glossary terms: all / specific / skip. For vocabulary entries: all / specific / skip."**
+**Then**, ask for action — one prompt covering the dispositions, lessons, glossary terms, and vocabulary. The user has three powers over the senior PM's work:
+
+- **(a) Answer the escalations** — each answer becomes an additional ticket for the writer, carrying the user's decision verbatim.
+- **(b) Veto or override any disposition** — turn a `reject` back into a ticket ("fix F-14 after all"), drop a ticket ("skip T-3"), or replace a `fix-product` decision with a different one. The senior PM's dispositions are proposals with authority, not commands. Record every override: it changes the ticket list you pass to the writer, and the writer applies the amended list.
+- **(c) Say "go"** — accept the dispositions as written and start the revision.
+
+Phrase it as:
+- If there are zero tickets (READY with no findings, or a delta pass where everything landed): **"No revision needed. Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Approve vocabulary entries: all / specific / skip. Then we're done."**
+- If there are tickets: **"'go' to send the N tickets to prd-writer, or veto/override any disposition first (e.g., 'un-reject F-14', 'drop T-3', 'change T-5's decision to X'). Answer any escalations above. Or 'override' to approve the PRD as-is without revising. For lessons: all / specific / skip. For glossary terms: all / specific / skip. For vocabulary entries: all / specific / skip."**
+
+Apply every veto/override to the ticket list before spawning the writer. Do NOT ask the senior PM to re-run: the user's decision is final and does not need re-judging.
 
 If run logging is enabled:
 ```bash
@@ -395,10 +479,12 @@ On vocabulary entry approval, spawn a new Agent using `.claude/agents/prd-review
 
 If lessons, glossary terms, and vocabulary entries are all approved, spawn all three callbacks in parallel — they write to different files and don't conflict.
 
-If "revise": increment the revision count. If run logging is enabled, increment `cycle` in the state file and set `currentPhase: "revision"`.
-  - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the review at {review_path}. Follow Step 3.5 (Revision Mode) — fix each FAIL in the review's Issues Found list. Do not rewrite the entire PRD." The writer's Step 3.5 handles versioning, targeted fixes, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review.**
-  - If revision count = 3: tell the user: **"This PRD has gone through 3 revision cycles and still has FAILs. Remaining issues: [list]. Options: 'override' to approve as-is, 'continue' to try one more cycle, or 'stop' to pause and resolve issues manually."**
+If "go" (or "revise"): increment the revision count. If run logging is enabled, increment `cycle` in the state file and set `currentPhase: "revision"`.
+  - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the senior-PM ticket file at {senior_pm_review_path} (handoff: {senior_pm_handoff_path}). Follow Step 3.5 (Revision Mode) — apply each ticket exactly. `fix-product` tickets carry a decision already made: implement it as written, do not re-decide. Do not fix anything on the Rejected FAILs list — those were overridden. If something needs a product decision no ticket covers, leave it and add an Open Question tagged `ASK:PM`. Do not rewrite the entire PRD. [If the user vetoed or added anything at Gate 3: 'The user amended the ticket list: <list the amendments>.']" **Pass the ticket file, not the raw review** — the writer's Step 3.5 consumes tickets. The writer handles versioning, targeted edits, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review**, which will be followed by Phase 3.5 in `delta` mode.
+  - If revision count = 3: tell the user: **"This PRD has gone through 3 revision cycles and still has open tickets. Remaining tickets: [list]. Options: 'override' to approve as-is, 'continue' to try one more cycle, or 'stop' to pause and resolve issues manually."**
 If "override": mark as approved and end.
+
+The **cycle-2+ Gate-2 skip stays as it is** (see Gate 2): the writer just applied a ticket list the user already saw and approved at Gate 3, so there is no second draft review to hold. The senior-PM gate has already happened.
 
 ## Completion
 
@@ -433,7 +519,7 @@ If run logging is enabled in project-context.md, finalize the log before summari
    ```
    Gate deltas come from the helper too — `--delta gate1_prompt gate1_resume` per gate; skip a gate whose pair is missing. If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
 
-   Individual agent entries (researcher, writer, reviewer) were already appended after each phase completed — the pipeline entry is the final summary that ties them together via `runId`.
+   Individual agent entries (researcher, writer, reviewer, senior-pm) were already appended after each phase completed — the pipeline entry is the final summary that ties them together via `runId`.
 
 4. Delete the timing file and state file:
    ```bash
@@ -460,6 +546,8 @@ Each line in `.claude/prd-run-log.jsonl` is one of these entry types:
 
 **`"reviewer"`** metrics: `totalCells`, `filledCells`, `subAgentCells`, `orchestratorCells`, `failCount`, `failsByMatrix` (A/B/C/S/D1/D2/E/F/G/H/I/P), `smellDetection` (totalChecked/linguisticSmellsFound/separationSmellsFound), `spotCheckOverrides`, `verdict`, `reviewMode`, `isReReview`, `previousFailsVerified`, `defectTaxonomy` (omission/ambiguity/inconsistency/incorrectFact/extraneousInfo/misplacedRequirement), `proposedLessons`, `proposedGlossaryTerms`. Plus `subAgentDurations` (scaffold/api/structure/flow/requirements/smells/assembly — null in single mode).
 
+**`"senior-pm"`** metrics: `mode` ("full" | "delta"), `failsJudged` (FAIL cells read — NEW cells only in delta mode), `rootCauses` (findings after collapse), `dispositionCounts` (fixTechnical/fixProduct/reject/escalate), `ticketCount`, `escalations`, and — delta mode only — `ticketsVerified` (applied/partial/notApplied)
+
 **`"pipeline"`** metrics: `totalCycles`, `finalVerdict`, `humanWaitSeconds`, `agentDurationSeconds`, `gateDurations` (gate1/gate2/gate3), `lessonsApproved`, `glossaryTermsApproved`
 
 **`"terminated"`** (abandoned runs): `diedInPhase`, `completedPhases` (array of phase summaries), `reason` ("abandoned")
@@ -474,6 +562,7 @@ Summarize what was produced:
 - Research document path
 - PRD path (with version)
 - Review path
+- Senior-PM decision sheet path, with the final disposition counts
 - Handoff file paths
 - Final verdict
 - Lessons added (if any)
