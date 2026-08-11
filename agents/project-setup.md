@@ -297,10 +297,11 @@ Ask the user:
 
 **"How should agents pick their LLM model?**
 
-- **Reliable** — every agent in the profile table uses Opus. Best quality, highest cost.
+- **Reliable** — every agent in the profile table uses Opus, except prd-senior-pm which uses Fable. Best quality, highest cost.
 - **Cost-optimized** — the mechanical agents switch to Sonnet, the rest stay on Opus. Saves ~40-50% on token costs.
   - Sonnet: **researcher** (reads files, extracts facts), **review-api** (compares endpoints against docs), **review-structure** (checklist verification)
   - Stays on Opus: **prd-writer** (synthesis, judgment), **prd-reviewer** (cross-matrix analysis, verdict), **review-flow** (dead-end/discoverability checks need judgment), **review-requirements** (requirements quality — atomicity, feasibility, contradictions), **review-smells** (smell detection needs nuanced language analysis)
+  - Stays on Fable: **prd-senior-pm** (judges the review and decides the product questions — judgment is the whole point of the agent, so it is not downgraded even in the cheap profile)
 - **Custom** — you pick the model for each agent individually.
 
 **You can change this anytime by editing the Model Profile table in `.claude/project-context.md`."**
@@ -314,6 +315,7 @@ Fill the Model Profile table in project-context.md based on the user's choice:
 | researcher | opus |
 | prd-writer | opus |
 | prd-reviewer | opus |
+| prd-senior-pm | fable |
 | review-api | opus |
 | review-structure | opus |
 | review-flow | opus |
@@ -327,15 +329,18 @@ Fill the Model Profile table in project-context.md based on the user's choice:
 | researcher | sonnet |
 | prd-writer | opus |
 | prd-reviewer | opus |
+| prd-senior-pm | fable |
 | review-api | sonnet |
 | review-structure | sonnet |
 | review-flow | opus |
 | review-requirements | opus |
 | review-smells | opus |
 
-**Custom:** Ask the user for each agent. Present the cost-optimized defaults as recommendations and let them override. Valid models: `opus`, `sonnet`, `haiku`. These are tier names resolved by Claude Code, not pinned model IDs — they track the current generation automatically.
+**Custom:** Ask the user for each agent. Present the cost-optimized defaults as recommendations and let them override. Valid models: `opus`, `sonnet`, `haiku`, `fable`. These are tier names resolved by Claude Code, not pinned model IDs — they track the current generation automatically.
 
 `haiku` is accepted for custom profiles. It is only appropriate for strictly mechanical work (e.g., review-structure checklist verification on small PRDs). Judgment-heavy agents (prd-writer, prd-reviewer, review-flow, review-requirements, review-smells) should stay on opus. Quality degradation on review agents shows up as false PASSes, which are invisible — prefer over-provisioning reviewers.
+
+`fable` — highest-judgment tier; default for prd-senior-pm; overkill for mechanical agents. Keep prd-senior-pm on fable in every profile: it is the agent that decides which reviewer FAILs are real and makes the product calls, and a weaker tier there puts invented behavior back into the spec.
 
 Remove the `> GUIDE` block from the Model Profile section after filling it in.
 
