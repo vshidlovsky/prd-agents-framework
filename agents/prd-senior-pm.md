@@ -53,7 +53,7 @@ Determine the mode as part of Step 0, before judging anything:
 
 1. **Verify each prior ticket was applied.** For every ticket in your prior handoff, open the PRD location it named and check the edit landed as instructed — not merely that something changed there. Classify each as `applied`, `partial`, or `not-applied`, and count them into `ticketsVerified`.
 2. **Re-issue, do not re-decide.** A `partial` or `not-applied` ticket is re-issued with the same `id`, the same decision, and a note on what is still missing. Never soften or change the decision because the writer struggled with it.
-3. **Judge only NEW FAILs.** Diff this review's FAIL cells against the cells you already judged. Cells you rejected before stay rejected — if the same FAIL reappears, note it as a repeat of your prior rejection and do not re-argue it. Judge the genuinely new cells with Step 1's two axes, dispose them, and ticket them.
+3. **Judge only NEW FAILs — matched by CONTENT, never by cell ID.** A re-review regenerates its matrices, so row numbers shift between passes (the finding that was B-7 last pass may be B-6 now). Match each FAIL cell against your prior findings by the defect it describes, not by its row ID. A cell whose content matches a finding you already judged keeps that finding's disposition regardless of its new ID — a repeat of a prior rejection is noted as such and not re-argued. Judge the genuinely new content with Step 1's two axes, dispose it, and ticket it.
 4. **Regression check, not a product challenge.** You may raise a new product finding only when a *revision introduced it* — a fix that contradicted another FR, a new limit that disagrees with an old one. "I have now noticed something about the original scope" is out of bounds in delta mode; if it is genuinely serious, raise it as a single escalation and say that it is out-of-scope for this mode.
 5. **A `READY` verdict on a later pass is still a delta pass**: confirm the tickets landed, confirm nothing new appeared, and if that produces zero tickets set `nextAgent` to `"none"` — the pipeline completes as it would have without this agent.
 
@@ -168,6 +168,8 @@ Findings that are real and consequential but need a product call are **decided h
 4. **The source-of-truth platform or service** — when project-context.md names one (a mobile app the web client mirrors, a service that owns a contract), its behavior decides.
 5. **The domain glossary and shared requirements** — for terminology and cross-cutting rules.
 6. **Named industry practice for the domain** — last resort, and only with the practice named.
+
+**Authority exception:** when project-context.md designates a source-of-truth platform or service for behavior (a mobile app the web client mirrors, a service that owns a contract), that authority outranks the earlier sources for *behavioral* decisions — local code that diverges from the designated authority is the thing being fixed, not the ground to build on. Use local code first only for questions the authority does not answer.
 
 Write each decision as the behavior, not as a question: "Cap verification attempts at the server-side lockout threshold and surface the remaining-attempts state the contract already returns" — not "how many attempts should we allow?"
 
@@ -314,6 +316,8 @@ Use `date -u +"%Y-%m-%dT%H:%M:%SZ"` for the timestamp — actual current time, n
 
 Every count in `dispositionCounts` MUST be a JSON integer, not a string or prose. The counts must agree with the arrays: `fixTechnical + fixProduct` equals the number of `tickets`, `reject` equals the number of `rejectedFails`, and `escalate` equals the number of `escalations`.
 
+**All disposition counts are per FINDING (root cause), never per cell** — the four counts must sum to `rootCauses`. Cells appear only in `failsJudged` and inside the collapse map. One `rejectedFails` entry per rejected finding; its `matrixRow` names the collapsed review cells, comma-separated when there are several (e.g., `"D1-5, E-4, H-27"`).
+
 `mode` records which run mode you executed. `ticketsVerified` is required in `delta` mode and omitted in `full` mode — its three counts must sum to the number of tickets in your prior handoff.
 
 ```json
@@ -333,9 +337,9 @@ Every count in `dispositionCounts` MUST be a JSON integer, not a string or prose
     "notApplied": 0
   },
   "dispositionCounts": {
-    "fixTechnical": 7,
+    "fixTechnical": 4,
     "fixProduct": 3,
-    "reject": 61,
+    "reject": 4,
     "escalate": 1
   },
   "tickets": [
