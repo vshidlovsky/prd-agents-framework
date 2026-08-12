@@ -124,6 +124,8 @@ Ask about:
 
 If the research document already tagged ambiguities with resolution methods, carry those through — don't re-classify.
 
+Write every question and every answer option in plain English (B1-B2 — the same bar as the PRD itself). This matters more than it looks: the owner usually answers by picking an option, so **the words you wrote in that option become the recorded decision**. Spec-ese in an option becomes spec-ese in the Q&A log becomes spec-ese in the next PRD. Say "hide the invite button" — not "suppress the entry-point affordance".
+
 Present questions with your recommended answer based on codebase and API research. Example:
 > "The API returns `pricing_tiers` as an array — should we show all tiers upfront or only the tier for the selected plan? I recommend showing only the selected plan's pricing since the selection step comes first."
 
@@ -199,7 +201,7 @@ Follow the PRD template exactly. Every Tier 1 section is required. Include the s
 
 **Glossary tracking**: While drafting, track any term you use that (a) isn't in the Domain Glossary but could be confused with another term, or (b) is in the glossary but the definition doesn't match how it's actually used in the codebase. These become glossary proposals in Step 5.
 
-**Words-used tracking**: While drafting, keep the **Words used in this document** block (early in the PRD, in Context) up to date. Every coined or borrowed term the document relies on gets one entry with a one-sentence plain definition: a term the document invents ("arrival"), a term of art kept because it does distinguishing work ("fail open"), or an everyday word used with a narrower meaning ("resolve"). A term used once does not earn an entry — reword that sentence in plain words instead. The reviewer checks that every recurring coined term appears in the block (a conformance check, not advice): a recurring term with no entry is a term the reader has to guess.
+**No coined terms — say it plainly instead**: The PRD does not get a glossary, and it does not get to invent words. If you find yourself coining a term ("arrival", "surface") or borrowing a term of art ("fail open", "in-flight"), rewrite the sentence in plain words instead: "each time the user opens the screen", "the entry point and the screen", "when the setting cannot be read, the feature shows itself anyway". Domain words the product already owns (referral code, share link, reward balance) are fine — they name real things. The test: could you explain this sentence to a child, or to a colleague reading English as a second language, without stopping to define anything? If not, the sentence is not done.
 
 **Vocabulary tracking**: While drafting, build the **Semantic Vocabulary** table in the Behavioral Contract. Assign V-numbers sequentially across all endpoints (first endpoint gets V1-Vn, second continues from Vn+1). For each field:
 - If a vocabulary file exists for the endpoint and the field has a semantic name: copy it into the PRD table and use it exactly
@@ -395,7 +397,7 @@ Before saving, run the deterministic lint gate, then three mechanical scans on t
 
 7. **Computed-example scan.** List every worked example containing numbers — Display Rules rows, currency conversions, date/time outputs, rounding or bucketing examples. For each, confirm the value came from actually running the computation (Quality Standard #27) — you should be able to paste the verification command (the node/python one-liner with the target locale and timezone) for it. An example you cannot back with a command was written by eye, not computed: run it now and replace the value with the command's output.
 
-8. **Words-used scan.** Collect every coined or borrowed term that recurs in the document — invented terms, kept terms of art, everyday words used with a narrower meaning. Confirm each has an entry in the **Words used in this document** block, one plain sentence per term. Add any missing entry; delete any entry for a term the document no longer uses.
+8. **Coined-term scan.** Collect every coined or borrowed term in the document — invented terms ("arrival", "surface"), terms of art ("fail open", "in-flight"), everyday words used with a narrower meaning. For each, rewrite the sentences that use it in plain words (see "No coined terms" in Step 4). Domain words the product already owns (referral code, share link) stay. The finished document must read without a glossary: a reader at B1-B2 English understands every sentence on first read, or the sentence is rewritten.
 
 If any check produces fixes, re-run Quality Standard #13 (consistency pass) on the affected sections.
 

@@ -35,21 +35,6 @@
 
 ---
 
-### Words used in this document
-
-> **GUIDE**
-> **What**: The special words this document relies on — one plain sentence each. Required in every PRD; it sits early so readers meet the words before the rules that use them.
-> **Why**: Every term the document coins and does not define here is a term the reader has to guess. Owner reviews catch exactly these — undefined coined terms and the confusion they cause.
-> **How**:
-> - One entry per coined or borrowed term the document relies on: a term the document invents (e.g., "arrival"), a term of art kept because it does distinguishing work (e.g., "fail open"), or an everyday word used with a narrower meaning (e.g., "resolve").
-> - Define each in one plain sentence a reader with basic English understands on first read. Bold the term.
-> - A term used once does not earn an entry — reword that sentence in plain words instead. A term used throughout does.
-> - The reviewer checks that every recurring coined term appears here (a conformance check, not advice).
-
-- **[Term]** — [one plain sentence saying what it means in this document].
-
----
-
 ### User Story
 
 > **GUIDE**
