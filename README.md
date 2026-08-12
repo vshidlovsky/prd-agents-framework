@@ -389,7 +389,7 @@ The framework uses `docs/api-sources.md` as the index of all API documentation s
 The reviewer agent incorporates techniques from requirements engineering research:
 
 - **Perspective-Based Reading** (Basili et al., University of Maryland, 1998) — reviews each screen/flow from end-user, QA, and support perspectives to catch different defect classes
-- **Requirements Smell Detection** (Femmer et al., TU Munich, 2017 — adapted and extended) — scans FR and AC text for 10 linguistic anti-patterns (vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, subjective language, temporal comparisons, implementation delegation)
+- **Requirements Smell Detection** (Femmer et al., TU Munich, 2017 — adapted and extended) — scans FR and AC text for 11 linguistic anti-patterns (vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, subjective language, temporal comparisons, implementation delegation, under-specified renders)
 - **Defect Taxonomy Cross-Check** (derived from NASA/IBM defect classification) — categorizes findings into 6 defect types and does a second pass on any category with zero findings to catch blind spots
 - **BABOK Verification Techniques** — requirement quality characteristics (atomic, necessary, feasible, consistent) applied as matrix columns
 

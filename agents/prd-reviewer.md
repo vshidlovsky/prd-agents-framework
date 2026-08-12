@@ -235,7 +235,7 @@ Also add a meta row (mark per-item columns as `N/A`):
 
 **Matrix S: Smell Detection** — one row per FR, then one row per AC
 
-This matrix runs as a **dedicated quality pass** separate from Matrix B/C. The smell agent focuses exclusively on smell patterns — no other quality judgments compete for attention. The agent reads each FR/AC text against all 17 smell patterns (10 linguistic + 7 separation) with nothing else in working memory.
+This matrix runs as a **dedicated quality pass** separate from Matrix B/C. The smell agent focuses exclusively on smell patterns — no other quality judgments compete for attention. The agent reads each FR/AC text against all 18 smell patterns (11 linguistic + 7 separation) with nothing else in working memory.
 
 | ID | Item | Linguistic Smells | Separation Smells |
 |----|------|-------------------|-------------------|
@@ -243,7 +243,7 @@ This matrix runs as a **dedicated quality pass** separate from Matrix B/C. The s
 | S-N+1 | AC-001: [text] | [PENDING] | [PENDING] |
 
 Column definitions:
-- **Linguistic Smells**: Scan against the 10 linguistic patterns (vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, subjective language, temporal comparisons, implementation delegation). `PASS` if clean. `FAIL` if any pattern detected — list each pattern with the offending text quoted.
+- **Linguistic Smells**: Scan against the 11 linguistic patterns (vague verbs, loopholes, ambiguous pronouns, passive voice, open-ended lists, superlatives, incomplete conditionals, subjective language, temporal comparisons, implementation delegation, under-specified renders). `PASS` if clean. `FAIL` if any pattern detected — list each pattern with the offending text quoted.
 - **Separation Smells**: Scan against the 7 behavioral/technical separation patterns (API field leak, enum leak, wire-detail leak [paths, status codes, headers], UI copy/localization-key in requirement, analytics event name inline, framework terminology/implementation mechanism, design decision in requirement). Apply the three generic tests (rename / designer-choice / QA-observability), not example-matching. `PASS` if clean. `FAIL` if any pattern detected — list each pattern with the offending text quoted. See `.claude/rules/behavioral-separation.md`.
 
 **Matrix D1: Flow Completeness** — one row per screen/state (or request flow for backend services)
@@ -287,6 +287,8 @@ The writer generates edge cases using systematic checklists (entity × dimension
 For entities that are (or contain) discriminated unions — a type/kind discriminator selecting which sibling object is populated — verify the PRD documents field paths per variant and that every FR/AC/fixture consuming the union uses its own variant's path. Applying one variant's field path to another is a FAIL even when the field names are individually correct.
 
 For every equality or change-detection comparison of API-sourced figures (amounts, rates, timestamps), verify the declared type matches the API contract (decimal string vs number) and that a normalization/precision rule is stated (integer minor units, fixed precision, or tolerance). Type drift against the contract or an unstated normalization rule on monetary/rate comparisons is a FAIL.
+
+For every entity or field whose value is *rendered*, verify the PRD states what determines its presentation: timezone for timestamps derived from a moment, currency/minor-unit/symbol rules for money, ordering for lists, truncation for free text. A format specification alone ("locale-aware short date", "formatted amount") is NOT sufficient when the observable output depends on an unstated determinant — FAIL. If the source value is already presentation-resolved (a plain date string, a preformatted amount), the PRD must say so, since converting it would be a defect.
 
 **Matrix F: Structure Checklist** — one row per check
 
@@ -396,12 +398,12 @@ Read the "Project-Specific Review Checks" section. Each check becomes a row:
 
 ### Smell Pattern Reference
 
-Smell patterns are defined in `.claude/agents/prd-smell-patterns.md`. The smell agent reads that file directly — do not paste the patterns into sub-agent prompts. 17 patterns in two categories:
+Smell patterns are defined in `.claude/agents/prd-smell-patterns.md`. The smell agent reads that file directly — do not paste the patterns into sub-agent prompts. 18 patterns in two categories:
 
-1. **Linguistic smells** (10 patterns): vague verb, loophole, ambiguous pronoun, passive voice hiding actor, open-ended list, superlative/comparative, incomplete conditional, subjective language, temporal comparison, implementation delegation.
+1. **Linguistic smells** (11 patterns): vague verb, loophole, ambiguous pronoun, passive voice hiding actor, open-ended list, superlative/comparative, incomplete conditional, subjective language, temporal comparison, implementation delegation, under-specified render.
 2. **Behavioral/technical separation smells** (7 patterns): API field leak, enum leak, wire-detail leak (paths, status codes, headers), UI copy / localization key in requirement, analytics event name inline, framework terminology / implementation mechanism, design decision in requirement. These are detected by applying the three generic tests (rename / designer-choice / QA-observability) together with the two canonical enumerations in `.claude/rules/behavioral-separation.md` — "Quick Reference: Allowed in the Behavioral Layer" and "Quick Reference: Forbidden in the Behavioral Layer" — never by matching against example lists pasted into this file.
 
-Smell detection is handled exclusively by **Matrix S** via a dedicated agent (Agent 5: Smell Reviewer). This separation ensures smell patterns get full attention — the agent reads each FR/AC against all 17 patterns with no other quality judgments competing. Matrix S is the **single owner** of every per-item smell and implementation-leak judgment on FR/AC text. No other matrix or agent re-scans that text:
+Smell detection is handled exclusively by **Matrix S** via a dedicated agent (Agent 5: Smell Reviewer). This separation ensures smell patterns get full attention — the agent reads each FR/AC against all 18 patterns with no other quality judgments competing. Matrix S is the **single owner** of every per-item smell and implementation-leak judgment on FR/AC text. No other matrix or agent re-scans that text:
 
 - **Matrix B and C do NOT check smells.** Agent 4 (Requirements Reviewer) judges atomicity, necessity, feasibility, contradictions, testability, FR linkage and state coverage — nothing else. It must NOT scan FRs or ACs for implementation-detail leaks or delegation patterns. Matrix C's "Implementation Detail Leak" column is `N/A` by default (see its column definition) and never carries a smell FAIL.
 - **Matrix F does NOT re-scan items.** Agent 2 (Structure Reviewer) judges F-25 as a *structural* check — is the separation mechanism present (semantic names with `[V#]` markers, per-endpoint vocabulary tables, Matrix S complete) — and must NOT re-apply the three generic tests (rename / designer-choice / QA-observability) to every FR and AC.
@@ -607,7 +609,7 @@ Prompt provides:
 - Scaffold file path + instruction: "Read your matrix scaffolds (D1, D2, E) from `{scaffold_file}` using the section markers"
 - Column definitions for D1 (Entry From, Actions/Transitions, Exit To, Error Recovery, Dead End?, Error Msg Actionable, Discoverable), D2 (QA: Deterministic, QA: Negative Testable, Support: State Identifiable, Support: Errors Distinguishable), and E (Nullable Handled, Boundary Values, Error Scenario, Concurrent Access, Branch Complete) — inline
 - Note for backend services: rows are request flows or processing stages, not UI screens
-- Instruction: for each screen/state, map flow from all three perspectives (end-user, QA, support). For each entity, check edge case coverage across all columns. For any step re-entered by an authoritative reactive backstop (e.g., a server rejection that re-opens the step), trace the step's proactive gates: a gate that fail-opens unconditionally ("for any reason") with no carve-out for the backstop origin is a FAIL — the flow can loop reject → re-open → fail-open → reject, and the required behavior in the backstop origin is undefined when the gate's input is unreadable.
+- Instruction: for each screen/state, map flow from all three perspectives (end-user, QA, support). For each entity, check edge case coverage across all columns. For every rendered value, verify the PRD states its presentation determinant (timezone for moment-derived timestamps, currency/minor-unit/symbol rules for money, ordering for lists, truncation for free text) — a format name alone is a FAIL when the observable output depends on an unstated determinant, and a presentation-resolved source must be declared as such. For any step re-entered by an authoritative reactive backstop (e.g., a server rejection that re-opens the step), trace the step's proactive gates: a gate that fail-opens unconditionally ("for any reason") with no carve-out for the backstop origin is a FAIL — the flow can loop reject → re-open → fail-open → reject, and the required behavior in the backstop origin is undefined when the gate's input is unreadable.
 
 **Agent 4: Requirements Reviewer** — Matrix B, C → `_artifacts/{initiative}-review-requirements.md`
 
@@ -626,7 +628,7 @@ Prompt provides:
 - File paths: PRD at `{prd_path}`, smell patterns at `{smell_patterns_path}`, separation rules at `.claude/rules/behavioral-separation.md`, vocabulary files at `{vocabulary_file_paths}`
 - Scaffold file path + instruction: "Read your matrix scaffold (S) from `{scaffold_file}` using the section markers `<!-- MATRIX:S:START -->` / `<!-- MATRIX:S:END -->`"
 - Column definitions for S (Linguistic Smells, Separation Smells) — inline
-- Instruction: You are a quality reviewer focused on requirements clarity and behavioral/technical separation. Your job is to verify that FRs and ACs describe observable behavior without leaking implementation details or making design decisions. **Before judging anything, read two files cover to cover: the smell patterns file (the 17 pattern definitions) and `.claude/rules/behavioral-separation.md` — including both of its canonical enumerations, "Quick Reference: Allowed in the Behavioral Layer" and "Quick Reference: Forbidden in the Behavioral Layer". Those two sections carry the full allowed/forbidden item lists; this prompt deliberately does not restate them, so you MUST read them from disk or you will misjudge the carve-outs.** Then for each FR and AC in the PRD: (1) Read the full text of the item. (2) Check against all 10 linguistic smell patterns. If a word or phrase matches a pattern, mark FAIL — quote the offending text and name the pattern. (3) Check against all 7 behavioral/technical separation smell patterns. Same standard — any match is FAIL. Judge by the three generic tests (rename / designer-choice / QA-observability) and settle every boundary case against the two Quick Reference lists: anything on the Allowed list is a product requirement and must NOT be flagged; anything on the Forbidden list is a FAIL. Carry the per-item remedy into your note — a barred item that the rule file says relocates goes to the Technical Contract, while an item the rule file says is only rephrased (CS jargon describing testable behavior) stays as an FR: note "CS jargon — rephrase to QA-verifiable language, keep as FR" and do NOT suggest moving it to TC. Do NOT suggest replacement text — just flag the problem and name the pattern. The writer should craft their own fix. (4) Only mark PASS if the text is genuinely clean against all 17 patterns. Work through one item at a time. Do NOT batch or skim.
+- Instruction: You are a quality reviewer focused on requirements clarity and behavioral/technical separation. Your job is to verify that FRs and ACs describe observable behavior without leaking implementation details or making design decisions. **Before judging anything, read two files cover to cover: the smell patterns file (the 18 pattern definitions) and `.claude/rules/behavioral-separation.md` — including both of its canonical enumerations, "Quick Reference: Allowed in the Behavioral Layer" and "Quick Reference: Forbidden in the Behavioral Layer". Those two sections carry the full allowed/forbidden item lists; this prompt deliberately does not restate them, so you MUST read them from disk or you will misjudge the carve-outs.** Then for each FR and AC in the PRD: (1) Read the full text of the item. (2) Check against all 11 linguistic smell patterns. If a word or phrase matches a pattern, mark FAIL — quote the offending text and name the pattern. (3) Check against all 7 behavioral/technical separation smell patterns. Same standard — any match is FAIL. Judge by the three generic tests (rename / designer-choice / QA-observability) and settle every boundary case against the two Quick Reference lists: anything on the Allowed list is a product requirement and must NOT be flagged; anything on the Forbidden list is a FAIL. Carry the per-item remedy into your note — a barred item that the rule file says relocates goes to the Technical Contract, while an item the rule file says is only rephrased (CS jargon describing testable behavior) stays as an FR: note "CS jargon — rephrase to QA-verifiable language, keep as FR" and do NOT suggest moving it to TC. Do NOT suggest replacement text — just flag the problem and name the pattern. The writer should craft their own fix. (4) Only mark PASS if the text is genuinely clean against all 18 patterns. Work through one item at a time. Do NOT batch or skim.
 
 ### Dispatch flow (Path B only)
 
@@ -732,7 +734,7 @@ python3 scripts/prd-lint.py {review_file} --mode review
 
 To genuinely verify (not just eyeball), read the source material for each spot-checked cell:
 - **Matrix A PASS**: read the actual API doc and confirm the endpoint/param exists
-- **Matrix S PASS**: read the FR/AC text and the smell patterns file, scan for each of the 17 patterns individually
+- **Matrix S PASS**: read the FR/AC text and the smell patterns file, scan for each of the 18 patterns individually
 - **Matrix D1/D2 PASS**: read the PRD's flow section and confirm the transition/state is specified
 - **Matrix F PASS**: read the PRD section the check references and confirm it exists
 
@@ -763,7 +765,7 @@ Fill the Defect Taxonomy Scorecard (replace the `—` placeholders with actual c
 | Category | Second Pass: Re-examine |
 |----------|------------------------|
 | Omission | In Matrix C, check that every entity from Matrix E has at least one AC with an FR Link. In Matrix D1, check every screen has loading + error rows. |
-| Ambiguity | In Matrix S, re-read the 3 longest PASS cells — verify the FR/AC text was scanned against all 17 patterns. |
+| Ambiguity | In Matrix S, re-read the 3 longest PASS cells — verify the FR/AC text was scanned against all 18 patterns. |
 | Inconsistency | In Matrix B, cross-check all "Contradicts FR: PASS" cells — verify the sub-agent compared against ALL other FRs, not just adjacent ones. |
 | Incorrect Fact | In Matrix A, verify any PASS cell where the Notes column is empty — a PASS with no evidence may be unchecked. |
 | Extraneous Info | In Matrix S, re-read the "Separation Smells" cells for the 3 longest ACs — verify the implementation-delegation and leak patterns were actually applied (Matrix C's "Implementation Detail Leak" column is `N/A` by default and carries no leak judgment). Also check Matrix F's F-21 note for document-level leaks. |

@@ -200,7 +200,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **GUIDE**
 > **What**: Boundary conditions, nullable fields, concurrent actions, failure modes.
 > **Why**: Edge cases are where bugs live. The #1 complaint about AI-generated PRDs is missing edge cases.
-> **How**: Generate systematically, not from intuition. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data. For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: indeterminate condition, rapid toggle mid-flow. Then deduplicate and remove impossible scenarios.
+> **How**: Generate systematically, not from intuition. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data, render determinant (timezone, currency, ordering, truncation). For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: indeterminate condition, rapid toggle mid-flow. Then deduplicate and remove impossible scenarios.
 > **Separation check**: Use semantic names with `[V#]` markers where applicable. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but the same separation rule applies — see the Quick Reference lists in `.claude/rules/behavioral-separation.md`.
 
 | # | Condition | Expected Behavior |
