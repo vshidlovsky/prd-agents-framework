@@ -84,6 +84,26 @@
 - **Semantic vocabulary**: `semantic-vocabulary/` (per-endpoint vocabulary files mapping API fields to semantic names — see `rules/semantic-vocabulary.md`). Writer and reviewer propose entries; user must explicitly approve before any entry is written.
 - **Shared requirements**: `docs/shared-requirements.md` (cross-cutting requirements every PRD inherits — see `rules/shared-requirements.md`). Set to "none" if not used.
 
+### Technical Contract
+
+> GUIDE: "slim" (default) — the PRD carries Product Constants, Semantic Vocabulary and Display
+> Rules in the behavioral layer; API tables, error-code mappings, component paths and config
+> attributes are dev-owned and live in the team's technical design.
+> "full" — the PRD also carries the Technical Contract sections (legacy behavior).
+>
+> Pick by who owns the technical design. Working solo end-to-end? "full" — the technical
+> contract is your own build plan and one document beats two. Handing specs to developers?
+> "slim" — the team owns the technical design, and a PM-authored API table is a guess the
+> team has to re-verify.
+>
+> The mode is resolved per run, not only per project: `/create-prd <initiative> --tc full`
+> overrides this setting for a single initiative (a solo spike inside a team project, or one
+> initiative handed to devs inside a personal project). Precedence: run override >
+> this setting > `slim` default. The writer records the resolved mode in its handoff so the
+> reviewer and senior PM judge the PRD in the mode it was written in.
+
+- **Mode**: slim
+
 ### PRD Versioning
 
 > GUIDE: How PRD versions are tracked. Set to "none" if you don't need versioning.

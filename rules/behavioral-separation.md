@@ -12,6 +12,8 @@ Decide whether a phrase belongs in the behavioral layer with three generic tests
 2. **Designer-choice test** — could a designer present the same behavior with a different component, layout, emphasis, or visual treatment? If yes, the phrase is a design decision → remove it; describe what the user sees, learns, or does instead. This applies regardless of platform; see "Quick Reference: Forbidden in the Behavioral Layer" for what counts.
 3. **QA-observability test** — can a tester confirm it purely by using the running app, with no knowledge of how it is built or stored? If no, it is an implementation detail → move it to the Technical Contract; do not reword it into the behavioral layer.
 
+**Placement rule — the value axis, decided before the three tests.** *Every number, rule, and policy a user can perceive lives in the behavioral layer. A constant, format, ordering, or policy may never live only in a technical table, a discrepancy row, or a section the reader has to reconstruct it from.* The three tests above exclude **wire vocabulary and mechanism**, never values the user perceives: a field name, endpoint path, status code, header or config key is technical; a timeout the user waits through, a money format they read, and a sort order they see are not. When a test fires on a user-perceivable value, the remedy is a **Product Constants** row (bounds), a **Display Rules** row (rendered formats, ordering, truncation) or a **Semantic Vocabulary** row (concept names) — all three in the Behavioral Contract. The Technical Contract may repeat such a value; it may never be its only home, because it is optional (see "Technical Contract" below) and goes to the team with the technical design.
+
 **Product-requirement carve-out:** when the mechanic *is* the product requirement, it stays in the behavioral layer even if it names UI or input mechanics. The test: is this a PM decision about *what the product does*, or a designer/engineer decision about *how it is rendered or built*? Only the former belongs here. The full carve-out list is in "Quick Reference: Allowed in the Behavioral Layer" below.
 
 ## Quick Reference: Allowed in the Behavioral Layer
@@ -23,6 +25,8 @@ This is the single canonical carve-out list. Every other framework file points h
 - **Shipped design-system component names** — carousel, skeleton, bottom sheet — when the PM explicitly chose them because the DS ships that component.
 - **Behavioral placement** — "inline beneath the input", "near the triggering element". These say where the user sees feedback and distinguish feedback strategies (field-level vs page-level). Only placement that prescribes CSS positioning is forbidden (see the Forbidden list).
 - **PM-decided display formats** — "MM:SS", "0:30", "zero-padded".
+- **User-perceivable constants** — deadlines, freshness windows, timeouts the user waits through, retry limits, cooldowns, list ceilings, behavior thresholds. These live in **Product Constants** and are cited by ID from the FR/AC that depends on them; never relocate one to a technical table.
+- **Presentation determinants for rendered values** — timezone, currency and minor-unit handling, symbol vs code, sort key and direction, truncation rule. These live in **Display Rules** with a worked example.
 - **User-visible navigation** — "new browser tab".
 - **Platform concepts** — "browser's one-time-code autofill", "device identifier header", "browser's reported language".
 - **Generic UI vocabulary used without a visual qualifier** — button, link, input, field, error message, page, screen, form, list, item, section, label, text, header, tab, menu, notification, dialog, alert, indicator, grid.
@@ -59,7 +63,7 @@ Final user-facing copy, localization keys, and translations are **design deliver
 
 ## Behavioral Contract
 
-Contains: FRs, ACs, Edge Cases, Key Entities, Feature Flags, Success Criteria, Security, Accessibility, Compliance, Support/Observability.
+Contains: FRs, ACs, Edge Cases, Key Entities, **Product Constants**, **Semantic Vocabulary**, **Display Rules**, Feature Flags, Success Criteria, Security, Accessibility, Compliance, Support/Observability. The three bolded sections are Tier 1 in both Technical Contract modes — they are what keeps a PRD buildable when the technical contract is not part of it.
 
 Rules for this layer:
 - Use **semantic concept names** for data attributes (e.g., "order identifier" not `order_id`)
@@ -71,7 +75,9 @@ Rules for this layer:
 
 ## Technical Contract
 
-Contains: Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Vocabulary tables + Error Handling, Component Mapping, Visual References, Screen Flow, MSW Mock Data, Configuration Attributes, Dependencies. (Copy, localization keys, and translations are NOT here — they are design deliverables; see "Copy and Localization Are Design-Owned" above.)
+**Optional — `slim` (default) or `full`.** `project-context.md` → PRD Configuration → Technical Contract → **Mode** selects it, and a `/create-prd … --tc` run override wins. In `slim` mode the PRD-owned technical content is dev-owned: it lives in the team's technical design, and a PRD is not incomplete for omitting it. In `full` mode the PRD carries it (legacy behavior).
+
+Contains (in `full` mode): Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Vocabulary tables + Error Handling, Component Mapping, Visual References, Screen Flow, MSW Mock Data, Configuration Attributes, Dependencies. In `slim` mode only Dependencies and the section packs that insert here remain. (Copy, localization keys, and translations are NOT here — they are design deliverables; see "Copy and Localization Are Design-Owned" above.)
 
 Rules for this layer:
 - **Cross-cutting concerns defined once**: Error classification, query config, route mapping each live in one table as implementation reference
@@ -79,9 +85,9 @@ Rules for this layer:
 
 ## `[V#]` Vocabulary References
 
-FRs and ACs use `[V#]` markers to link semantic names to their definitions in per-endpoint vocabulary tables inside the Technical Contract.
+FRs and ACs use `[V#]` markers to link semantic names to their definitions: the **Semantic Vocabulary** table in the Behavioral Contract, which every PRD carries, and — in `full` mode — the per-endpoint vocabulary tables inside the Technical Contract that bind the same V-numbers to API fields. Repeating a V-number across the two layers is expected; splitting the set across them is not.
 
-**Scope**: V-numbers are exclusively for API field mappings — concepts that resolve to a field in an endpoint's request or response. Non-API concepts (routing destinations, configuration URLs, client-side state) do not get V-numbers. Use a consistent semantic name and reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)").
+**Scope**: V-numbers are exclusively for API field mappings — concepts that resolve to a field in an endpoint's request or response. Non-API concepts (routing destinations, configuration URLs, client-side state) do not get V-numbers. Use a consistent semantic name; in `full` mode reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)"), and in `slim` mode name it semantically and stop there — the destination and the setting are dev-owned.
 
 **Format**: `[V1]`, `[V2]`, `[V3]`, etc. — sequential across all endpoints in the PRD.
 
@@ -93,7 +99,20 @@ FRs and ACs use `[V#]` markers to link semantic names to their definitions in pe
 - FR-002: System MUST display the order identifier and the order status [V3].
 ```
 
-Each `[V#]` resolves to exactly one row in a per-endpoint vocabulary table:
+Each `[V#]` resolves to exactly one row in the Semantic Vocabulary table:
+
+```
+### Semantic Vocabulary
+
+| V# | Semantic Name | Type | Required | Notes |
+|----|---------------|------|----------|-------|
+| V1 | order identifier | string | yes | |
+| V2 | shipping method label | string | no | |
+| V3 | order status | enumeration | yes | |
+```
+
+`API Field` is an optional, dev-owned column. In `full` mode the binding lives in the per-endpoint
+Vocabulary tables instead, repeating the same V-numbers:
 
 ```
 ### GET /v1/orders/{id}
@@ -107,7 +126,7 @@ Each `[V#]` resolves to exactly one row in a per-endpoint vocabulary table:
 | V3 | order status | status | string | yes | |
 ```
 
-V-numbers are local to a single PRD. Vocabulary files (`semantic-vocabulary/`) provide the cross-initiative source of truth for semantic names. The writer copies entries from vocabulary files into the PRD's tables, assigning V-numbers. The PRD is self-contained.
+V-numbers are local to a single PRD. Vocabulary files (`semantic-vocabulary/`) provide the cross-initiative source of truth for semantic names. The writer copies entries from vocabulary files into the PRD's Semantic Vocabulary table, assigning V-numbers. The PRD is self-contained.
 
 ## Detection
 
