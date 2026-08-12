@@ -171,7 +171,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 #### Loading States
 
 > **GUIDE**: What the user/caller sees while processing. Cover three distinct cases:
-> - **Initial load**: no cached data exists — what placeholder/skeleton does the user see?
+> - **Initial load**: no cached data exists — state that a loading presentation shows until the gating reads resolve, referencing the shared loading requirement where one exists. The placeholder's composition and shape are design-owned — no "shaped like the code block and list" prescriptions.
 > - **Background refetch with cached data**: stale time elapsed, refetch in flight, but previous data is on screen — does the UI show cached data unchanged (no skeleton, no spinner), or does it overlay a loading indicator?
 > - **Background refetch failure**: For every read-only endpoint with a refetch policy, include a dedicated AC for background-refetch failure. Default: preserve cached data on-screen, fire a `<feature>_refetch_failed` analytics event, do NOT swap to error state. Make the choice explicit in an AC — do not assume.
 > - **Mutation in-flight**: a write operation is pending — what disables, what spins?

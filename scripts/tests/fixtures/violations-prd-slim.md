@@ -11,7 +11,8 @@
 > Product Constant and a bare inline bound in an AC (LINT-010), transport
 > taxonomy in an Analytics Events property cell (LINT-011), a wire encoding in
 > a Semantic Vocabulary Type cell (LINT-012), a route constant and repo path in
-> a Navigation entry point (LINT-013).
+> a Navigation entry point (LINT-013), design-mechanism phrases (politeness
+> levels, stacking order) in the behavioral layer (LINT-014).
 
 ---
 
@@ -100,6 +101,18 @@ As a returning shopper, I want to see my past orders so that I do not have to co
 #### Entry Points
 
 - The account menu's order history item, routed via `paths.orderHistory` in `apps/web/src/config/paths.ts`. <!-- expect: LINT-013 -->
+
+---
+
+### Accessibility
+
+- The cancellation confirmation announces politely; failure messages announce assertively. <!-- expect: LINT-014 -->
+
+---
+
+### Responsive Layout
+
+- [ ] Mobile viewport: the order list renders as a single column with the rows stacked in that order. <!-- expect: LINT-014 -->
 
 ---
 

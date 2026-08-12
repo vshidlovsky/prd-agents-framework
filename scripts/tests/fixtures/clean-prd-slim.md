@@ -171,6 +171,14 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
+### Accessibility
+
+- The cancellation confirmation and the retry-able error message are announced to assistive technology when they appear; announcement priority and mechanism are design-owned under the project's accessibility baseline.
+- Activating retry must not lose the keyboard or screen-reader user's place; specific focus targets are design-owned.
+- The loading placeholder is presented per the project's shared loading requirement; its composition is design-owned.
+
+---
+
 ### Feature Flags / Remote Config
 
 | Field | Value |
@@ -209,6 +217,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 | ASM-001 | The orders service returns monetary totals as decimal strings, never floats. | API reference ([orders-service router](https://github.com/example-org/orders-service/blob/9f2c1ab/src/orders/router.py)) | Totals compared as floats would drift and mis-render. |
 | ASM-002 | Almost every shopper stays under the unpaginated order ceiling. | Analytics query on order counts | The truncation notice would become the common case rather than the exception. |
 | ASM-003 | The cancellation endpoint is idempotent for an already-cancelled order. | Verbal confirmation from the orders platform team | A double submit could produce two cancellation records. |
+| ASM-004 | The mobile app's cancellation flow keeps its two-valued conversion state. | Mobile evidence ([`cancel_page.dart`](https://github.com/example-org/mobile-app/blob/172ab42/lib/pages/cancel_page.dart)) | The web copy of the state machine would drift from mobile. |
 
 ---
 

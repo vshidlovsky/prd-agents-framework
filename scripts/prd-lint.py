@@ -58,9 +58,15 @@ Checks, mode `prd`:
     LINT-013  slim shape only: no code wiring outside the Dependencies
               section — repo path fragments (`src/…`, `packages/…`),
               source-file references (`.ts` / `.tsx` / `.dart`), and
-              backticked `paths.*` route constants. Occurrences inside
-              http(s) URLs are exempt (commit-pinned evidence links are
-              citations, not wiring); full mode is exempt entirely
+              backticked `paths.*` route constants. Markdown evidence links
+              (text + http(s) target) and bare URLs are exempt — pinned
+              citations, e.g. Mobile Baseline links into a mobile repo, are
+              evidence, not web wiring; full mode is exempt entirely
+    LINT-014  slim shape only, heuristic: design-mechanism phrases in the
+              Behavioral Contract — "politely", "assertively", "stacked in
+              that order", "single column", "shaped like". Deliberately
+              narrow (wording varies); the reviewer's separation pass is the
+              real net for design-mechanism prescriptions
 
 Checks, mode `review`:
     LINT-101  zero [PENDING] cells
@@ -875,9 +881,12 @@ def check_012_vocabulary_type_encoding(doc: Document, out: List[Violation]) -> N
 
 
 # Code wiring a slim PRD must not carry outside Dependencies: repo path
-# fragments, source-file references, and route path constants. URLs are
-# stripped before matching — a commit-pinned evidence permalink that happens
-# to contain `src/` is a citation, not wiring.
+# fragments, source-file references, and route path constants. Whole markdown
+# evidence links and bare URLs are stripped before matching — a commit-pinned
+# permalink whose target (or link text) names a source file is a citation, not
+# web wiring. This is what keeps Mobile Baseline citations to a pinned mobile
+# repo legal.
+MD_EVIDENCE_LINK_RE = re.compile(r"\[[^\]]*\]\(\s*https?://[^)]*\)")
 URL_RE = re.compile(r"https?://\S+")
 CODE_WIRING_RE = re.compile(
     r"(?<![\w./-])(?:src|packages)/[\w./-]+"
@@ -896,7 +905,7 @@ def check_013_code_wiring(doc: Document, out: List[Violation]) -> None:
     for idx, line in doc.live_lines():
         if idx in exempt:
             continue
-        m = CODE_WIRING_RE.search(URL_RE.sub("", line))
+        m = CODE_WIRING_RE.search(URL_RE.sub("", MD_EVIDENCE_LINK_RE.sub("", line)))
         if m:
             add(
                 out,
@@ -908,6 +917,38 @@ def check_013_code_wiring(doc: Document, out: List[Violation]) -> None:
                 "ticket carry the wiring (evidence permalinks and "
                 "ds-gap/api-canonical-gap issue references are the allowed "
                 "homes)" % m.group(0).strip("`"),
+            )
+
+
+# Design-mechanism phrases the behavioral layer must not prescribe in slim
+# mode: live-region politeness levels, stacking/composition order, skeleton
+# shape. The list is deliberately narrow — wording varies, so this check is a
+# low-confidence tripwire; the reviewer's separation pass is the real net.
+DESIGN_MECHANISM_RE = re.compile(
+    r"\bpolitely\b|\bassertively\b|stacked in that order|single column"
+    r"|shaped like",
+    re.IGNORECASE,
+)
+
+
+def check_014_design_mechanism(doc: Document, out: List[Violation]) -> None:
+    if not is_slim(doc):
+        return
+    bc = doc.section("Behavioral Contract", 2)
+    if bc is None:
+        return
+    for idx, line in doc.live_lines(*bc):
+        m = DESIGN_MECHANISM_RE.search(line)
+        if m:
+            add(
+                out,
+                "LINT-014",
+                idx,
+                "design-mechanism phrase `%s` in the behavioral layer — the "
+                "PRD states perceivable outcomes and their priority; "
+                "ordering, skeleton shape, live-region politeness and focus "
+                "targets are design-owned (heuristic check; the reviewer's "
+                "separation pass is the real net)" % m.group(0),
             )
 
 
@@ -1009,6 +1050,7 @@ PRD_CHECKS = (
     check_011_analytics_wire_taxonomy,
     check_012_vocabulary_type_encoding,
     check_013_code_wiring,
+    check_014_design_mechanism,
 )
 
 REVIEW_CHECKS = (
