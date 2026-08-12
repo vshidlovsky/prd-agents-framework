@@ -9,7 +9,8 @@
 > (LINT-009 slim-anchor branch), a `[V#]` marker with no Semantic Vocabulary row
 > and a duplicate V-number inside the behavioral layer (LINT-001), an unused
 > Product Constant and a bare inline bound in an AC (LINT-010), transport
-> taxonomy in an Analytics Events property cell (LINT-011).
+> taxonomy in an Analytics Events property cell (LINT-011), a wire encoding in
+> a Semantic Vocabulary Type cell (LINT-012).
 
 ---
 
@@ -58,6 +59,7 @@ As a returning shopper, I want to see my past orders so that I do not have to co
 | V2 | order placement time | timestamp | no | Absent on legacy orders. |
 | V5 | fulfillment status | enumeration | yes | Unrecognised members render neutrally. |
 | V2 | cancellation time | timestamp | yes | Duplicate V-number inside one layer. <!-- expect: LINT-001 --> |
+| V6 | order placement epoch | number (epoch milliseconds) | no | Wire encoding planted in the Type cell. <!-- expect: LINT-012 --> |
 
 ---
 

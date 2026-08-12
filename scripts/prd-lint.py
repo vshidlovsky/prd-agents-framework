@@ -49,6 +49,12 @@ Checks, mode `prd`:
               classes are product-semantic (`unreachable`, `rejected`,
               `unusable_response`, `incomplete_record`); wire encodings are
               dev-owned diagnostics. Never fires in full mode
+    LINT-012  slim shape only: Semantic Vocabulary Type cells are semantic
+              types (money amount, instant, string, enumeration, list of
+              <entity>) — no `minor units`, `epoch`, `milliseconds`/`seconds`,
+              `ISO-` bases, and no parenthesized encoding after a base type
+              ("number (minor units)"). Full mode may keep encoded types in
+              its per-endpoint tables, so the check never fires there
 
 Checks, mode `review`:
     LINT-101  zero [PENDING] cells
@@ -822,6 +828,46 @@ def check_011_analytics_wire_taxonomy(doc: Document, out: List[Violation]) -> No
                 )
 
 
+# Wire-encoding vocabulary that must not appear in a slim Semantic Vocabulary
+# Type cell: unit qualifiers, epoch bases, and parenthesized encodings after a
+# base type. Semantic types (money amount, instant, enumeration, list of
+# <entity>) carry none of these — the Display Rules worked example fixes the
+# raw-value mapping, and encoding traps live in the canonical API reference.
+TYPE_ENCODING_RE = re.compile(
+    r"minor[\s-]?units?|epoch|milli\s*seconds?|(?<![A-Za-z])seconds?\b"
+    r"|\bISO[- ]?\d*\b|\([^)]*\)",
+    re.IGNORECASE,
+)
+
+
+def check_012_vocabulary_type_encoding(doc: Document, out: List[Violation]) -> None:
+    if not is_slim(doc):
+        return
+    for table in behavioral_vocabulary_tables(doc):
+        col = table.column(r"type")
+        if col is None:
+            continue
+        for idx, cells in table.rows:
+            if col >= len(cells):
+                continue
+            cell = cells[col]
+            if PLACEHOLDER_RE.match(strip_cell(cell)):
+                continue
+            m = TYPE_ENCODING_RE.search(cell)
+            if m:
+                add(
+                    out,
+                    "LINT-012",
+                    idx,
+                    "wire encoding `%s` in a Semantic Vocabulary Type cell — "
+                    "slim-mode types are semantic (money amount, instant, "
+                    "string, enumeration, list of <entity>); the encoding is "
+                    "dev-owned, fixed implicitly by the Display Rules worked "
+                    "example and documented in the canonical API reference"
+                    % m.group(0).strip(),
+                )
+
+
 # --------------------------------------------------------------------------
 # Mode `review` checks
 # --------------------------------------------------------------------------
@@ -918,6 +964,7 @@ PRD_CHECKS = (
     check_009_template_conformance,
     check_010_product_constants,
     check_011_analytics_wire_taxonomy,
+    check_012_vocabulary_type_encoding,
 )
 
 REVIEW_CHECKS = (

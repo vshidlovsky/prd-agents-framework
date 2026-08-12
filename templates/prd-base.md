@@ -127,6 +127,8 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - V-numbers are sequential across the whole PRD and are assigned to API-backed concepts only. Never assign a V-number to a routing destination, a configuration URL, or client-side state.
 > - Copy semantic names from `semantic-vocabulary/` files when they exist; propose new entries in the handoff rather than inventing a competing name.
 > - Every `[V#]` marker in the behavioral layer resolves to a row here; every row is used by at least one FR/AC/Edge Case.
+> - **Type column (`slim` mode): semantic types only** — `money amount`, `instant`, `string`, `boolean`, `enumeration`, `list of <entity>`, `error signal`. No units, no epoch bases, no encodings: "number (minor units)", "number (epoch milliseconds)", "ISO-8601 string" are facts about the wire format — exactly the binding the `[V#]` indirection exists to keep dev-owned. (`full` mode may keep encoded types in the per-endpoint tables.)
+> - **Notes carry product semantics** — what an absent value means, which affordance consumes it — and point to the Display Rule that owns the rendering. Encoding facts the team must not miss (a unit mismatch, an epoch-base trap that differs from the rest of the product) are recorded in the canonical API reference entry for the endpoint, which the row may cite — they are developer warnings, not product vocabulary.
 > - **`API Field` is an optional, dev-owned column.** Omit it in `slim` mode. Add it only when the project keeps a PRD-owned technical contract (`Mode: full`) and wants the binding in one place — in that case do not also duplicate the V-numbers in a per-endpoint table.
 
 | V# | Semantic Name | Type | Required | Notes |
@@ -141,6 +143,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **What**: One row per rendered value, stating what determines its presentation and showing a worked example.
 > **Why**: A format the user reads is a product decision, not a rendering detail. Timezone, currency and minor-unit handling, symbol-vs-code, ordering, and truncation change what the user believes — they must not live only in a technical table or be left to the implementer.
 > **How**: For every value the user sees, state the determinant — which clock/timezone a time is rendered in, which currency and how minor units are handled, whether the symbol or the ISO code is shown, what the sort key and direction are, where and how text truncates — then give one concrete worked example (input → rendered output).
+> **Worked examples carry the encoding**: use raw wire values as the example input. An example demonstrates the mapping ("`2550` + `usd` → `$25.50`") without owning the contract — it survives even if the backend later documents the field differently, where a normative "minor units, divide by 100" claim does not. This is the sanctioned home for encoding knowledge in `slim` mode; the Semantic Vocabulary Type column stays semantic.
 > **Coverage**: every value named in an FR or AC that is displayed to a user needs a row. Mark `N/A — no rendered values` for services with no user-facing output.
 
 | ID | Rendered Value | Presentation Determinant | Worked Example |

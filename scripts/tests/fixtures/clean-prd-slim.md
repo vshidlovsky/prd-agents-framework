@@ -77,7 +77,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 |----|---------------|------|----------|-------|
 | V1 | order reference number | string | yes | Human-readable, shown to the shopper. |
 | V2 | order placement time | timestamp | no | Absent for orders migrated from the legacy platform. |
-| V3 | order total | decimal amount | yes | Compared and summed in integer minor units, never as a float. |
+| V3 | order total | money amount | yes | Rendered per DR-002 — the worked example fixes the raw-value mapping; the encoding is documented in the canonical API reference. |
 | V4 | billing currency | currency code | no | Absent on legacy orders. |
 | V5 | fulfillment status | enumeration | yes | The storefront branches on not-yet-shipped vs everything else; unrecognised members render neutrally. |
 | V6 | ordered items | list | yes | Each element carries product name, quantity, and unit price. |
