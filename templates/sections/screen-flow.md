@@ -8,6 +8,7 @@
 > **GUIDE**
 > **What**: A Mermaid flowchart showing every state the user can be in and every transition between states.
 > **Why**: Without a flow diagram, the reader must mentally reconstruct the state machine from scattered ACs. An AI coding agent uses this diagram to implement navigation and state management — missing nodes become missing code paths.
+> **Derived view — the contract wins**: The diagram is a **derived view** of the FRs, ACs, and edge cases it cites — never a second source of truth. When diagram and contract disagree, the contract wins and the diagram is the defect. Regenerate the diagram from the contract after any change to states, transitions, or gates; never edit behavior into the diagram first.
 > **How**:
 > - Use Mermaid `flowchart TD` (top-down) syntax. Do not use ASCII art.
 > - Show: states as rounded boxes `([State Name])`, transitions as labeled arrows `-->|trigger|`, decision points as diamonds `{condition}`

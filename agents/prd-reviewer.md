@@ -343,7 +343,7 @@ Section pack check definitions (add rows only for included packs):
 
 `design-prototype`: Visual References table exists with one row per screen | Every screen in ACs has a table row | Visual references point to DS components or Figma (not `__prototype__/` files) | Referenced DS component files exist on disk
 `user-journey`: Entry path names at least one concrete preceding screen AND the interaction on it that brings the user here — "user navigates to the screen" with no named origin = FAIL | Non-UI entries (deep link, redirect, notification) each listed with their gates, or an explicit "None" | Trigger specified | Current behavior described | Exit specified
-`screen-flow`: Diagram exists (Mermaid or equivalent) | Shows happy + error + cancel paths | All AC screens appear in diagram | Transitions labeled with triggers
+`screen-flow`: Diagram exists (Mermaid or equivalent) | Shows happy + error + cancel paths | All AC screens appear in diagram | Transitions labeled with triggers | Diagram agrees with the contract — the diagram is a derived view, so on any diagram/contract mismatch the contract wins: file the mismatch ONCE here as a diagram defect (template-conformance class), never additionally as a behavioral FAIL against the FR/AC/edge in Matrix B/C/D1/D2/E
 `navigation`: Entry points specified | Back/dismiss behavior per screen | Deep link support (if applicable) | Consistent with screen flow diagram
 `analytics-events`: Every screen has a view event | Names follow convention | No duplicates vs codebase | Properties documented
 `component-mapping`: Every UI element maps to a design system component | Referenced component source paths exist on disk — FAIL if a cited file is missing or its name differs from the citation | Every cited prop exists in the component's prop definitions — grep the component source for each prop name; FAIL on non-existent props | If an existing composed page/template component is referenced, every mapped component appears in it or a gap/divergence note exists
@@ -534,6 +534,7 @@ REVIEW RULES:
 - Don't nitpick formatting. Focus on whether the dev builds the right thing.
 - Don't manufacture issues. If a check genuinely passes, mark PASS.
 - Never read generated pipeline outputs (e.g., `__prototype__/` directories, generated mocks) as evidence — they were built from earlier PRD versions and produce false FAILs.
+- The Screen Flow diagram is a DERIVED view of the FRs/ACs/edge cases, never authority for them. On a diagram/contract mismatch the contract wins: do not FAIL an FR, AC, edge case, or flow row against the diagram. The mismatch is filed once, by the structure reviewer, as a screen-flow diagram defect (Matrix G).
 
 SCOPE:
 - Only fill the matrices assigned to you. Do NOT fill Matrix H, Matrix I, or the Scorecard — those are orchestrator-only.
