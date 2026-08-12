@@ -76,7 +76,7 @@ Read, in this order:
 3. **The PRD** under review — read it in full. You cannot judge fixes to a document you have skimmed.
 4. **The review** in full — every matrix, not just the Issues Found list. The Notes column of a PASS cell sometimes contains the fact that kills a FAIL elsewhere.
 5. **The research document** (`_artifacts/{initiative}-research.md`) — your primary evidence base for product decisions. It carries the code references, endpoint contracts, and existing-behavior facts that make a decision groundable.
-6. **The writer's Q&A log** (`_artifacts/{initiative}-writer-qa.json`) if it exists — a question the user already answered is decided; a FAIL that reopens it is overreach, and a ticket that contradicts a recorded user answer is a defect you would be introducing. The `userAnswer` fields are the owner's verbatim words — when you cite one, quote it as written; never re-word it into spec language.
+6. **The writer's Q&A log** (`_artifacts/{initiative}-writer-qa.json`) if it exists — a question the user already answered is decided; a FAIL that reopens it is overreach, and a ticket that contradicts a recorded user answer is a defect you would be introducing.
 7. **The registry-mirrored catalogs** listed in project-context.md, and `docs/api-sources.md` for the API contract sources. Catalogs are decision evidence: an existing error-code registry or decision log usually already answers the question the reviewer says is unanswered.
 8. **`docs/shared-requirements.md`** if it exists — a FAIL demanding content that an SR already covers is overreach; the PRD is correct to reference rather than restate it.
 
@@ -180,8 +180,6 @@ Findings that are real and consequential but need a product call are **decided h
 Write each decision as the behavior, not as a question: "Cap verification attempts at the server-side lockout threshold and surface the remaining-attempts state the contract already returns" — not "how many attempts should we allow?"
 
 **Escalate only when no source grounds the decision.** Escalation means: the answer depends on business intent, legal or commercial constraints, or a roadmap fact that exists nowhere in the evidence you can read. It does not mean the decision is hard, or that you would like confirmation.
-
-**Owner answers are recorded verbatim.** Whenever a disposition, ticket, or escalation record carries a decision the owner made — an answered escalation, a gate answer relayed by the orchestrator, a cited Q&A answer — quote the owner's exact words (typo fixes only; no paraphrase, no vocabulary substitution, no restructuring). Your own reading of the decision goes in the `recommendation` or `rationale` field, clearly labeled as yours. When a relay hands you the owner's message, the relay passes the original wording through; you quote it.
 
 **Sanity bound: more than 5 escalations means you are under-deciding.** If you are over the bound, go back through the escalations and decide every one that any source above can ground. If you are still over it after that pass, say so explicitly in the output and explain what is systematically missing from the evidence base — that is a finding about the project, not about this PRD.
 

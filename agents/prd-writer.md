@@ -139,8 +139,6 @@ After all questions are answered and before proceeding to Step 4, save the compl
 
 **File**: `_artifacts/{initiative}-writer-qa.json`
 
-**`userAnswer` is verbatim — the owner's words, quoted.** Copy the answer exactly as the owner gave it. Allowed cleanup: typos and obvious slips, nothing else. No paraphrase, no vocabulary substitution, no restructuring. If the owner said "hide the block, never show wrong money", the field says that — not "cached availability governs both surfaces during revalidation". This file is the only place the owner's own voice enters the pipeline; rewriting it into spec language here teaches every downstream reader the wrong register. When the answer reaches you through a relay (the orchestrator passes the owner's message on), quote the relayed original wording — the relay passes it through unchanged. Your own reading of the decision goes in the optional `agentInterpretation` field, clearly the agent's text — never in `userAnswer`.
-
 ```json
 {
   "agent": "prd-writer",
@@ -154,8 +152,7 @@ After all questions are answered and before proceeding to Step 4, save the compl
       "question": "<exact question text>",
       "resolutionMethod": "ASK:PM",
       "recommendedAnswer": "<your recommendation>",
-      "userAnswer": "<the owner's answer, verbatim — typo fixes only>",
-      "agentInterpretation": "<optional: your reading of the decision, labeled as the agent's — omit when the answer needs no interpretation>",
+      "userAnswer": "<exact user response>",
       "resolvedValue": "<the concrete value used in the PRD>",
       "srCandidate": true,
       "srCandidateReason": "<one line: why this answer is initiative-independent — omit both fields when the answer is initiative-specific>"
