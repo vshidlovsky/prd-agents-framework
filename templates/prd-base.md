@@ -12,7 +12,7 @@
 >
 > **Separation principle**: The Behavioral Contract describes *what* the system does (observable by users and testers). The Technical Contract describes *how* it's built (readable by engineers). A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `.claude/rules/behavioral-separation.md` for the full rules.
 >
-> **Placement rule (governs both contracts)**: *Every number, rule, and policy a user can perceive lives in the behavioral layer. A constant, format, ordering, or policy may never live only in a technical table, a discrepancy row, or a section the reader has to piece it together from.* The Technical Contract may repeat a user-perceivable value; it must never be its only home.
+> **Placement rule (governs both contracts)**: *Every number, rule, and policy the user can see or feel lives in the behavioral layer. A value, format, ordering, or policy may never live only in a technical table, a discrepancy row, or scattered pieces the reader has to assemble.* The Technical Contract may repeat such a value; it must never be its only home.
 >
 > **Technical Contract mode**: `project-context.md` → PRD Configuration → **Technical Contract → Mode** selects `slim` (default) or `full`; a `/create-prd <initiative> --tc full|slim` run override wins over the project setting. In `slim` mode the PRD-owned technical tables below are omitted and the team's technical design owns that content — the PRD still carries Product Constants, Semantic Vocabulary and Display Rules in the behavioral layer. In `full` mode the PRD also carries the Technical Contract tables (legacy behavior).
 >
@@ -103,14 +103,14 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 ### Product Constants
 
 > **GUIDE**
-> **What**: Every user-perceivable number the requirements depend on — deadlines, freshness windows, timeouts the user waits through, retry limits, cooldowns, list ceilings, behavior thresholds. One row each.
+> **What**: Every number the user can notice that the requirements depend on — deadlines, how long data stays fresh, timeouts the user waits through, retry limits, cooldowns, list size limits, thresholds that change behavior. One row each.
 > **Why**: This makes the placement rule part of the document's structure. A value that lives only in a technical table is gone when the technical contract goes to the team — and the requirement that depends on it can no longer be built. The value lives here, in the behavioral layer, once.
 > **How**:
 > - Give every constant a stable ID (PC-001, PC-002, ...) and a semantic name.
 > - **Every FR/AC that depends on a bound cites the constant by ID** — `PC-001` — instead of restating the bare number inline. The value appears in this table and nowhere else.
 > - Every row must be referenced by at least one FR, AC, or Edge Case. An unreferenced constant is dead spec — delete it (Quality Standard #9).
-> - Values that are *not* user-perceivable (connection pool sizes, buffer lengths, internal batch sizes) do NOT belong here — they are dev-owned.
-> - **Deadlines are per network interaction** — every read *and* write runs under one. When a sequence spans several interactions (a write plus its follow-up read), state whether the constant bounds each step or the whole sequence (e.g., "PC-001 bounds each recovery call").
+> - Values the user cannot notice (connection pool sizes, buffer lengths, internal batch sizes) do NOT belong here — they are dev-owned.
+> - **Every call to the server has a time limit** — reads and writes alike. When one action makes several calls (a write, then a read to check it), say whether the constant limits each call or the whole chain (e.g., "PC-001 limits each call").
 > **Both modes**: this section is Tier 1 in `slim` and `full` alike. In `full` mode the Technical Contract may repeat a value; it must never be its only home.
 
 | ID | Constant | Value | What it bounds | Referenced by |
@@ -123,13 +123,13 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 > **GUIDE**
 > **What**: The concept dictionary for this PRD. One row per semantic concept name used in the behavioral layer with a `[V#]` marker.
-> **Why**: This is the vocabulary bridge — the PRD names the concepts, the team binds them to fields using the canonical API reference. Naming the concept is the PM's job; binding it to a wire field is the team's.
+> **Why**: The PRD names each idea; the team connects that name to the real API field using the canonical API reference. Naming the idea is the PM's job; connecting it to the API is the team's.
 > **How**:
-> - V-numbers are sequential across the whole PRD and are assigned to API-backed concepts only. Never assign a V-number to a routing destination, a configuration URL, or client-side state.
+> - V-numbers run in order through the whole PRD and are given only to ideas that come from the API. Never give a V-number to a routing destination, a configuration URL, or client-side state.
 > - Copy semantic names from `semantic-vocabulary/` files when they exist; propose new entries in the handoff rather than inventing a competing name.
 > - Every `[V#]` marker in the behavioral layer resolves to a row here; every row is used by at least one FR/AC/Edge Case.
 > - **Type column (`slim` mode): semantic types only** — `money amount`, `instant`, `string`, `boolean`, `enumeration`, `list of <entity>`, `error signal`. No units, no epoch bases, no encodings: "number (minor units)", "number (epoch milliseconds)", "ISO-8601 string" are facts about the wire format — exactly what the `[V#]` link exists to keep dev-owned. (`full` mode may keep encoded types in the per-endpoint tables.)
-> - **Notes carry product meaning** — what a missing value means, which button or action uses it — and point to the Display Rule that owns how it is shown. Encoding facts the team must not miss (a unit mismatch, an epoch-base trap that differs from the rest of the product) are recorded in the canonical API reference entry for the endpoint, which the row may cite — they are developer warnings, not product vocabulary.
+> - **Notes carry product meaning** — what a missing value means, which button or action uses it — and point to the Display Rule that owns how it is shown. Facts about the raw format the team must not miss (a unit mismatch, a time value counted differently than the rest of the product) are recorded in the canonical API reference entry for the endpoint, which the row may cite — they are developer warnings, not product vocabulary.
 > - **`API Field` is an optional, dev-owned column.** Omit it in `slim` mode. Add it only when the project keeps a PRD-owned technical contract (`Mode: full`) and wants the binding in one place — in that case do not also duplicate the V-numbers in a per-endpoint table.
 
 | V# | Semantic Name | Type | Required | Notes |
@@ -172,10 +172,10 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 #### Loading States
 
 > **GUIDE**: What the user/caller sees while processing. Cover three distinct cases:
-> - **Initial load**: no cached data exists — say that a loading state shows until the reads that gate the screen finish, referencing the shared loading requirement where one exists. What the placeholder looks like is design-owned — no "shaped like the code block and list" instructions.
-> - **Background refetch with cached data**: the cached data is old, a re-read is running, but the previous data is still on screen — does the UI show the cached data unchanged (no skeleton, no spinner), or does it add a loading indicator on top?
-> - **Background refetch failure**: For every read-only endpoint that re-reads in the background, include a dedicated AC for a failed background re-read. Default: keep the cached data on screen, fire a `<feature>_refetch_failed` analytics event, do NOT switch to the error state. Make the choice explicit in an AC — do not assume.
-> - **Mutation in-flight**: a write is running — what is disabled, what shows progress?
+> - **Initial load**: the screen has no data yet — say that a loading state shows until the data the screen needs has loaded, referencing the shared loading requirement where one exists. What the placeholder looks like is design-owned — no "shaped like the code block and list" instructions.
+> - **Background reload with old data on screen**: the saved data is old and a fresh read is running, but the old data is still showing — does the screen keep showing it unchanged (no skeleton, no spinner), or add a loading sign on top?
+> - **Background reload fails**: for every read that reloads in the background, include a dedicated AC for the reload failing. Default: keep the old data on screen, fire a `<feature>_refetch_failed` analytics event, do NOT switch to the error state. Make the choice explicit in an AC — do not assume.
+> - **While a write is running**: what is disabled, what shows progress?
 > For backend services: cover async processing indicators, queue states, or in-flight request states if applicable. Mark `N/A` if the service is purely synchronous with no user-visible wait states.
 
 - [ ] **AC-NNN**: [Loading behavior].
@@ -204,7 +204,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **GUIDE**
 > **What**: Boundary conditions, nullable fields, concurrent actions, ways to fail.
 > **Why**: Edge cases are where bugs live. The #1 complaint about AI-generated PRDs is missing edge cases.
-> **How**: Generate them mechanically, not from gut feeling. For each Key Entity, run through: null/missing, empty, min boundary, max boundary, just-outside-boundary, invalid format, stale data, render determinant (timezone, currency, ordering, truncation). For each API endpoint: network failure, timeout, auth expiry, rate limit, partial response, concurrent mutation. For each conditional FR: the condition cannot be decided, the condition flips mid-flow. Then merge duplicates and remove impossible scenarios.
+> **How**: Generate them mechanically, not from gut feeling. For each Key Entity, run through: missing, empty, smallest allowed, largest allowed, just past the limit, wrong format, old data, and how it is shown (timezone, currency, order, cut-off text). For each API endpoint: network failure, timeout, session expiry, rate limit, partial response, two changes at once. For each conditional FR: the condition cannot be decided, the condition changes mid-flow. Then merge duplicates and remove impossible cases.
 > **Separation check**: Use semantic names with `[V#]` markers where applicable. Edge cases can be slightly more specific than FRs/ACs (they describe concrete data scenarios), but the same separation rule applies — see the Quick Reference lists in `.claude/rules/behavioral-separation.md`.
 
 | # | Condition | Expected Behavior |
@@ -232,7 +232,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 >
 > In `slim` mode every piece of content still has a home: Dependencies lives in Boundaries (both modes), the user-facing section packs (screen-flow, navigation, design-prototype, responsive-layout) insert into the Behavioral Contract per their `slim` insertion tags, and the implementation packs (component-mapping, database-changes, service-integration, monitoring) are `full`-mode only. Content that is *purely* implementation reference is **dev-owned by default**: component paths, configuration attributes, mock data, error-code-to-class mappings, query/cache configuration, route constants, and API request/response shapes live in the team's technical design, not in the PRD. A PRD is not incomplete for leaving them out.
 >
-> The behavioral anchors stay in the Behavioral Contract in both modes: **Product Constants**, **Semantic Vocabulary**, **Display Rules**. Never move a user-perceivable number, format, ordering, or policy down here — this section may repeat one, but it may never be its only home.
+> The behavioral anchors stay in the Behavioral Contract in both modes: **Product Constants**, **Semantic Vocabulary**, **Display Rules**. Never move a number, format, ordering, or policy the user can notice down here — this section may repeat one, but it may never be its only home.
 >
 > **Organization (`full` mode)**:
 > 1. Cross-cutting tables — Data Sources, Query Configuration, Error Classification, Route Mapping
@@ -420,7 +420,7 @@ None — all questions resolved.
 > **Insert into**: Behavioral Contract — after Acceptance Criteria [position: 2]
 
 > **GUIDE**
-> **When**: Any PRD whose ACs will be handed to an implementer (i.e. effectively always; omit only for exploratory specs that will not be built from directly).
+> **When**: Any PRD whose ACs will be handed to an implementer (i.e. effectively always; omit only for exploratory drafts nobody will build from).
 > **What**: How each acceptance criterion gets verified, and how states that cannot occur naturally in a test environment are produced.
 > **Both modes**: behavioral-layer content — it describes how the product's observable behavior gets verified, not how the code is structured. Keep it in `slim` and `full` mode alike.
 > **How**: Bind every AC (or AC group) to a verification approach — unit / integration / E2E where a UI exists; unit / integration / contract for backend services (E2E is not required where no UI exists) — or designate it `manual` with its trigger described. An AC that no test type claims and no manual designation covers will silently not be verified. Add an environment-override row for every state a test must be able to force but that cannot occur naturally (a denied permission, an absent platform capability, a dismissed native sheet).
@@ -466,20 +466,20 @@ None — all questions resolved.
 > **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
 
 > **GUIDE**
-> **When**: Features with degraded states that have no user-visible distinguisher (e.g., silent background failures, identical error copy for different failure classes), OR features where the on-screen signal collapses multiple underlying classes into one user-facing message.
+> **When**: Features with failure states the user sees no sign of (e.g., silent background failures), OR features that show one identical message for several different underlying problems.
 > **What**: Symptom-to-query mappings for support engineers. This section is MANDATORY when any of these conditions hold.
 >
 > **Required sub-sections**:
 >
 > 1. **Silent-state workflows**: For every FR/AC with "fail silently" / "silently suppress" / "no visible change" behavior, include: (a) the analytics event that is the SOLE signal of this state, (b) the user-reported symptom that should trigger a proactive support query, (c) explicit note: "this state has no UI signal — query [event] using user_id + timestamp window."
 >
-> 2. **Collapsed-error workflows**: For every page state where N underlying classes produce one user-facing message, include: (a) the user-reported symptom phrase, (b) the analytics query to identify the user + window, (c) property-to-action mapping from each underlying class to a support runbook action, (d) either a visible distinguisher in the UI (error code, correlation ID) OR explicit documentation of the analytics-based support workflow.
+> 2. **One message, several causes**: For every page state where several different problems produce the same user-facing message, include: (a) the phrase a user would use when reporting it, (b) the analytics query to find the user + time window, (c) for each underlying problem, what support does about it, (d) either something visible in the UI that tells the causes apart (error code, correlation ID) OR explicit documentation of the analytics-based support workflow.
 >
 > 3. **Multi-gated suppression**: When a UI element has multiple gates that can suppress it, include a single internal analytics event with a discriminator (`reason` enum) covering every suppression path.
 >
 > 4. **Cross-initiative hand-offs**: When a silent state's analytics is delegated to another initiative, name (a) the specific event name, (b) the specific property/sentinel, (c) the symptom-to-query mapping. Soft hand-offs without a named event are insufficient — log as an Open Question if the owning initiative hasn't defined the event yet.
 >
-> **Semantic classes, not wire taxonomy (`slim` mode)**: support workflows reference the semantic failure classes carried on the analytics events (`unreachable | rejected | unusable_response | incomplete_record`, or the initiative's equivalents) and state what support DOES per class. Never build a workflow on reading HTTP encodings ("`error_status_code: 200` + `parse_error` → escalate") — the mapping from wire observation to class is dev-owned, and deeper discrimination lives in the dev-owned diagnostic properties documented in the analytics catalog.
+> **Name failures by what they mean, not by HTTP code (`slim` mode)**: support workflows use the failure classes carried on the analytics events (`unreachable | rejected | unusable_response | incomplete_record`, or the initiative's equivalents) and say what support DOES for each class. Never build a workflow on reading HTTP codes ("`error_status_code: 200` + `parse_error` → escalate") — turning a wire observation into a class is the developers' job, and finer detail lives in the dev-owned diagnostic properties documented in the analytics catalog.
 
 ---
 

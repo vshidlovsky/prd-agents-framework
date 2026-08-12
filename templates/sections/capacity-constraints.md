@@ -13,7 +13,7 @@
 > **Frontend / Mobile examples**:
 > - List size: "Max 200 list rows — no virtualization needed"
 > - Payload size: "Response ≤ 50KB — no streaming/pagination needed"
-> - Concurrent items: "Max 3 in-flight requests — queue additional"
+> - Items at the same time: "Max 3 requests running at once — queue the rest"
 >
 > **Backend stateless examples**:
 > - Request rate: "Peak 500 req/s — single instance sufficient"
