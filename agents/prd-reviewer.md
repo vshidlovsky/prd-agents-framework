@@ -45,6 +45,25 @@ Read `.claude/project-context.md`. Extract:
 - **Output paths** — where to save the review
 - **Conventions** — naming, file paths
 - **Model Profile** — the per-agent model table (used in Phase 2 for sub-agent dispatch)
+- **Technical Contract mode** — the `Mode` value under PRD Configuration → Technical Contract
+
+### Technical Contract mode (`TC_MODE`)
+
+Judge the PRD in the mode it was written in — never in the mode you would have chosen. Resolve `TC_MODE` once, here, in this order:
+
+1. **The writer's handoff** (`_artifacts/{initiative}-prd-handoff.json` → `technicalContractMode`). This is authoritative: it records the mode the document was actually written in, including a per-run override the project file knows nothing about. Do **not** re-resolve the mode from project-context when the handoff carries it.
+2. **project-context.md** → PRD Configuration → Technical Contract → **Mode**, when the handoff is absent or the field is missing.
+3. **`slim`**, when neither states a mode.
+
+Record `TC_MODE` and its source at the top of the scaffold, pass it verbatim to every sub-agent prompt, and carry it into the review handoff (`technicalContractMode`). A review that judged a slim PRD by full-mode rules is invalid regardless of its findings.
+
+**What `slim` changes:**
+
+- F-7, F-26, F-27, F-32 → `N/A — slim mode: dev-owned technical content` (see the Matrix F rows for the exact wording).
+- F-28 resolves `[V#]` markers against the **Semantic Vocabulary** section in the Behavioral Contract.
+- Matrix A verifies endpoints against the API documentation, the code, and the research document — **not** against PRD tables that do not exist in this mode. A missing Data Sources table is not an endpoint finding.
+- F-33 (Product Constants) and F-34 (Display Rules) carry the weight the technical tables used to: they are how a slim PRD stays buildable.
+- **Missing API, component, route, cache, or config detail is not an omission** — it is dev-owned by project configuration. Never FAIL for it.
 
 Verify the PRD template exists at the extracted path. If missing, STOP. Tell the orchestrator: "PRD template not found at {path}."
 
@@ -115,7 +134,7 @@ python3 scripts/validate-handoff.py --type writer {writer_handoff_file}
 
 Exit 0 means every field below is present and well-formed. On exit 1, do NOT abort the review — instead treat each flagged field as unreliable: recover it from the PRD itself (extract endpoints from the API tables, counts from the FR/AC lists) and record a Matrix I finding that the writer's handoff was malformed, quoting the problem lines. If the script is absent, skip this check and read the handoff as-is.
 
-Then read it. Extract key fields: `prdPath`, `apiEndpoints`, `existingCodeReferenced`. Use `apiEndpoints` to pre-populate Matrix A rows in Phase 1 (one row per listed endpoint). Use `existingCodeReferenced` paths as additional inputs for Agent 1 when verifying endpoints against code.
+Then read it. Extract key fields: `prdPath`, `technicalContractMode`, `apiEndpoints`, `existingCodeReferenced`. `technicalContractMode` sets `TC_MODE` (Step 1) — read it from here rather than re-resolving it from project-context.md, because a `--tc` run override lives only in the handoff. Use `apiEndpoints` to pre-populate Matrix A rows in Phase 1 (one row per listed endpoint). Use `existingCodeReferenced` paths as additional inputs for Agent 1 when verifying endpoints against code.
 
 Use `apiEndpoints` to load vocabulary files for each endpoint:
 - Convert each endpoint to a vocabulary filename (lowercase method + path with `/` → `-`, `{param}` → param name)
@@ -197,7 +216,7 @@ Also add meta rows (mark per-item columns as `N/A`):
 Column definitions:
 - **Atomic**: Exactly one capability. "and" joining two distinct behaviors = FAIL, cite the text and suggest splitting
 - **Necessary**: Which user story does it serve? No link = orphan = FAIL
-- **Feasible**: Does the API/data it requires appear in the Technical section? If not = FAIL
+- **Feasible**: Is the data and every bound the FR requires actually pinned down somewhere in the PRD? In `full` mode that means the Technical section lists the API/data. In `slim` mode it means the concept has a Semantic Vocabulary row and every bound it names has a Product Constant — the absence of an API table is not infeasibility. If not = FAIL
 - **Contradicts FR**: Does it conflict with any other FR? If yes, cite the other FR
 
 **Matrix C: AC Quality** — one row per AC
@@ -279,7 +298,7 @@ For every equality or change-detection comparison of API-sourced figures (amount
 | F-4 | Behavioral Contract: Key Entities defined | [PENDING] | [PENDING] |
 | F-5 | Behavioral Contract: ACs with testable checkboxes | [PENDING] | [PENDING] |
 | F-6 | Behavioral Contract: Edge Cases table | [PENDING] | [PENDING] |
-| F-7 | Technical Contract: Data Sources with endpoint details | [PENDING] | [PENDING] |
+| F-7 | Technical Contract: Data Sources with endpoint details (`N/A — slim mode` when `TC_MODE` is slim) | [PENDING] | [PENDING] |
 | F-8 | Technical Contract: Dependencies section | [PENDING] | [PENDING] |
 | F-9 | Boundaries: Out of Scope section | [PENDING] | [PENDING] |
 | F-10 | Boundaries: Open Questions is empty | [PENDING] | [PENDING] |
@@ -297,14 +316,16 @@ For every equality or change-detection comparison of API-sourced figures (amount
 | F-22 | Shared Requirements section present and references `docs/shared-requirements.md` | [PENDING] | [PENDING] |
 | F-23 | No SR content restated inline — only referenced by ID | [PENDING] | [PENDING] |
 | F-24 | Feature-specific SR overrides are justified | [PENDING] | [PENDING] |
-| F-25 | Behavioral/Technical separation **mechanism** is in place: Behavioral Contract uses semantic concept names with `[V#]` markers (spot-check 3 FRs), per-endpoint vocabulary tables exist, and Matrix S is complete with zero `[PENDING]`. Structural check only — Matrix S owns per-item smell detection; FAIL only if the mechanism is absent (no markers at all, no vocabulary tables) or Matrix S is incomplete | [PENDING] | [PENDING] |
-| F-26 | Technical Contract: Cross-cutting tables defined (Data Sources, Error Classification, Route Mapping at minimum; Route Mapping N/A for services with no user-facing navigation) | [PENDING] | [PENDING] |
-| F-27 | Technical Contract: Per-endpoint blocks have Vocabulary table (V-numbered) + Error Handling | [PENDING] | [PENDING] |
-| F-28 | Every `[V#]` marker in the behavioral layer resolves to a row in a per-endpoint vocabulary table; no V-numbers assigned to non-API concepts (routing destinations, config URLs, client-side state) | [PENDING] | [PENDING] |
+| F-25 | Behavioral/Technical separation **mechanism** is in place: Behavioral Contract uses semantic concept names with `[V#]` markers (spot-check 3 FRs), a vocabulary table exists for them to resolve against (Semantic Vocabulary in slim mode, per-endpoint tables in full mode), and Matrix S is complete with zero `[PENDING]`. Structural check only — Matrix S owns per-item smell detection; FAIL only if the mechanism is absent (no markers at all, no vocabulary tables) or Matrix S is incomplete | [PENDING] | [PENDING] |
+| F-26 | Technical Contract: Cross-cutting tables defined (Data Sources, Error Classification, Route Mapping at minimum; Route Mapping N/A for services with no user-facing navigation). **`N/A — slim mode` when `TC_MODE` is slim** | [PENDING] | [PENDING] |
+| F-27 | Technical Contract: Per-endpoint blocks have Vocabulary table (V-numbered) + Error Handling. **`N/A — slim mode` when `TC_MODE` is slim** | [PENDING] | [PENDING] |
+| F-28 | Every `[V#]` marker in the behavioral layer resolves to a Semantic Vocabulary row (slim mode) or a per-endpoint vocabulary table row (full mode); no V-numbers assigned to non-API concepts (routing destinations, config URLs, client-side state) | [PENDING] | [PENDING] |
 | F-29 | Semantic vocabulary compliance: FRs and ACs use semantic names from vocabulary files for endpoints that have them — no invented alternatives for already-mapped fields | [PENDING] | [PENDING] |
 | F-30 | Template conformance: top-level section names match the template exactly (`## Behavioral Contract`, `## Technical Contract`, `## Boundaries` — not `## Contract`/`## Technical`); per-endpoint Vocabulary tables present (not one consolidated global vocabulary table) | [PENDING] | [PENDING] |
 | F-31 | Registry lockstep: rows mirrored from/to catalogs listed in project-context.md are in sync (additions present, removals deleted or DEPRECATED, rewrites propagated); all writer-confirmation checkboxes in section-pack blocks are checked | [PENDING] | [PENDING] |
-| F-32 | Route Mapping resolution: every row whose Code Constant exists in the codebase resolves to the stated URL | [PENDING] | [PENDING] |
+| F-32 | Route Mapping resolution: every row whose Code Constant exists in the codebase resolves to the stated URL. **`N/A — slim mode` when `TC_MODE` is slim** | [PENDING] | [PENDING] |
+| F-33 | Product Constants complete: every bound, deadline, limit, window, cooldown, threshold and ceiling the requirements depend on has a Product Constants row; no FR/AC carries a bare inline number that is not in the table; no Product Constant is referenced by zero requirements. FAIL if a requirement's bound is undetermined | [PENDING] | [PENDING] |
+| F-34 | Display Rules complete: every value an FR or AC says the user sees has a Display Rules row stating its presentation determinant (timezone, currency + minor units, symbol vs code, sort key + direction, truncation) with a worked example | [PENDING] | [PENDING] |
 
 **Matrix G: Section Pack Checks** — generate rows dynamically based on included packs
 
@@ -411,10 +432,14 @@ Apply the same `<!-- MATRIX:X:START -->` / `<!-- MATRIX:X:END -->` markers to ev
 Count `[PENDING]` cells across matrices A through H, S, and P. Exclude Matrix I (starts empty) and Scorecard (filled in Phase 3). Record two counts at the top of the scaffold — sub-agent cells (A, B, C, S, D1, D2, E, F, G, P) and orchestrator cells (H):
 
 ```
+TECHNICAL_CONTRACT_MODE: slim
+TECHNICAL_CONTRACT_MODE_SOURCE: writer-handoff
 SUB_AGENT_CELLS: 231
 ORCHESTRATOR_CELLS: 16
 TOTAL_CELLS: 247
 ```
+
+`TECHNICAL_CONTRACT_MODE` is `slim` or `full`; its source is `writer-handoff`, `project-context`, or `default`. Both lines are prose for the reader and for Phase 3 re-entry — only the three cell counts are integers checked by `LINT-103`.
 
 All three MUST be plain integers. `TOTAL_CELLS` = `SUB_AGENT_CELLS` + `ORCHESTRATOR_CELLS`. This split makes cell ownership explicit: sub-agents (including the smell agent) are responsible for `SUB_AGENT_CELLS`, the orchestrator fills `ORCHESTRATOR_CELLS` (Matrix H) in step 8.1.1. In single mode, all cells are yours — the split still applies for traceability.
 
@@ -443,6 +468,7 @@ The skill prompt tells you: "If parallel mode, write prompt files and dispatch J
      "reviewMode": "parallel",
      "scaffoldPath": "<absolute path to scaffold/review file>",
      "prdPath": "<absolute path to the PRD>",
+     "technicalContractMode": "slim",
      "subAgentCells": 231,
      "orchestratorCells": 16,
      "totalCells": 247,
@@ -493,6 +519,14 @@ REVIEW RULES:
 - Be specific: cite the exact text, endpoint, or field that's wrong, and suggest a fix.
 - PRD describes the desired end state. Do NOT flag "X doesn't exist yet." Only flag if something is wrong.
 - PRD is product-focused. Do NOT flag missing architecture, DI, state management, or testing strategy.
+- TECHNICAL CONTRACT MODE: {TC_MODE}. In `slim` mode, do NOT FAIL this PRD for missing API tables,
+  endpoint request/response shapes, error-code-to-class mappings, component paths, route constants,
+  cache/query configuration, or configuration attributes. That content is dev-owned by project
+  configuration, not an omission — the team's technical design owns it. Mark such checks
+  `N/A — slim mode` and move on.
+- In `slim` mode, every number, format, ordering and policy the user can perceive must still be in
+  the behavioral layer (Product Constants, Display Rules, Semantic Vocabulary). A bound that exists
+  nowhere in the document IS a FAIL — "dev-owned" covers mechanism, never user-perceivable values.
 - Don't nitpick formatting. Focus on whether the dev builds the right thing.
 - Don't manufacture issues. If a check genuinely passes, mark PASS.
 - Never read generated pipeline outputs (e.g., `__prototype__/` directories, generated mocks) as evidence — they were built from earlier PRD versions and produce false FAILs.
@@ -545,6 +579,7 @@ Prompt provides:
 - File paths: PRD at `{prd_path}`, API docs at `{api_docs_paths}`
 - Scaffold file path + instruction: "Read your matrix scaffold between `<!-- MATRIX:A:START -->` and `<!-- MATRIX:A:END -->` from `{scaffold_file}`"
 - Column definitions: Exists in Docs/Code, Method Correct, Request Params Match, Response Fields Match, Missing Params/Fields
+- `TC_MODE` and, in `slim` mode, the research document path. **In `slim` mode Matrix A is verified against the API documentation, the code, and the research document — never against PRD tables, which do not exist in this mode.** Take the endpoint list from the writer's handoff (`apiEndpoints`) plus the endpoints the behavioral requirements imply. Columns that can only be judged from a PRD table (Request Params Match, Response Fields Match, Missing Params/Fields) are `N/A — slim mode: dev-owned`; the meta row still asks whether the initiative needs an endpoint nobody verified.
 - Instruction: verify every endpoint against API docs/code. Check exists, method, request shape, response shape. Check for missing endpoints the initiative needs. For every FR/AC that branches on an API field's enumerated values, read the field's documented description and verify the value axis matches the branch logic — a correctly named field can encode a different classification axis than the behavior needs; if the documented values cannot produce the required distinction, FAIL even though the field name and shape are correct. If an endpoint is verified only from code (absent from the API docs), verify the PRD tracks it as a Dependency or Open Question — a bare "from code" note with no tracking is a FAIL. Conversely, for every PRD claim that the API documentation lacks an endpoint, field, or error code, search the docs yourself before accepting it; if the entry exists, FAIL with its location — a stale gap claim is an Incorrect Fact. Field names and enum values must match the documented wire contract exactly, casing included — a client-side DTO or accessor name is not the wire name. For enum values the docs do not pin, check shipped code and fixtures; FAIL on casing drift between the PRD and the wire values in use.
 
 **Agent 2: Structure Reviewer** — Matrix F, G, P → `_artifacts/{initiative}-review-structure.md`
@@ -558,9 +593,10 @@ Prompt provides:
 - Shared requirements file path: `docs/shared-requirements.md` (if it exists)
 - SR check guidance (inline): F-22: PASS if a "Shared Requirements" section exists in the PRD and references the shared-requirements doc. N/A if the project has no shared-requirements.md. F-23: PASS if no SR content is copy-pasted into the PRD body (grep for specific SR rule text appearing outside the Shared Requirements section). FAIL if cross-cutting behavior is re-described inline. F-24: PASS if every override in the "Feature-specific overrides" block includes a justification. FAIL if an SR is overridden without explanation.
 - Behavioral/technical separation rule file path: `.claude/rules/behavioral-separation.md`
-- Separation check guidance (inline): F-25: Verify the separation **mechanism** is in place — a structural check, not a per-item scan. **Read `.claude/rules/behavioral-separation.md` first, including both of its Quick Reference sections** — "Quick Reference: Allowed in the Behavioral Layer" (the product-requirement carve-outs, and which barred items are only rephrased rather than relocated) and "Quick Reference: Forbidden in the Behavioral Layer" (what is barred, per tier). Those two sections are the canonical enumerations; this prompt deliberately does not restate them, and you use them only to recognize the mechanism's parts, not to re-judge items. Then check three things: (a) the Behavioral Contract uses semantic concept names with `[V#]` markers — spot-check 3 FRs, (b) per-endpoint vocabulary tables exist in the Technical Contract, (c) Matrix S was completed with zero `[PENDING]` cells (if you run in parallel with Agent 5, Matrix S will still read `[PENDING]` — judge (a) and (b) and note "Matrix S completeness confirmed by the orchestrator's Phase 3 completeness verification"). **Do NOT re-scan every FR and AC and do NOT apply the three generic tests item by item — Matrix S owns per-item smell and leak detection.** FAIL only if the mechanism is absent (no `[V#]` markers at all, no vocabulary tables) or Matrix S is incomplete. F-26: PASS if Technical Contract has at minimum Data Sources, Error Classification, and Route Mapping tables. Route Mapping is N/A for services with no user-facing navigation (pure backend APIs) — mark it N/A with a note rather than FAIL. FAIL if any applicable cross-cutting table is missing. F-27: PASS if each API endpoint has a per-endpoint block with a V-numbered Vocabulary table and Error Handling subsection. FAIL if any endpoint lacks one of these. F-28: Collect all `[V#]` markers from the Behavioral Contract. For each, verify a corresponding row exists in a per-endpoint vocabulary table. Also check that no V-numbers are assigned to non-API concepts (routing destinations, configuration URLs, client-side state — these should use consistent semantic names with a TC section reference instead, e.g., "post-sign-in destination (see Route Mapping)"). PASS if all markers resolve to API field rows and no non-API concepts have V-numbers. FAIL with list of dangling markers or misassigned V-numbers. F-29: For each endpoint that has a vocabulary file (paths provided below), verify every API field referenced in the behavioral layer uses the exact semantic name from the vocabulary file. If the writer invented a new name for a field that already has a vocabulary entry, FAIL with the mismatch. If no vocabulary file exists for an endpoint, PASS. F-30: Compare the PRD's top-level headings against the template. FAIL if required sections are renamed (e.g., `## Contract` instead of `## Behavioral Contract`, `## Technical` instead of `## Technical Contract`), or if the Technical Contract consolidates fields into one global vocabulary table instead of per-endpoint Vocabulary tables — structural drift causes downstream checks (F-26/F-27/F-28) to misfire silently rather than fail. F-31: Read the Registry-Mirrored Catalogs list in project-context.md. N/A if "none". Otherwise, for every PRD table row mirrored from/to a listed catalog, open the catalog and verify sync: new rows exist in the catalog, removed rows are deleted or marked DEPRECATED, and rewritten content matches. A changelog row claiming a removal while the catalog row is still live = FAIL ("Catalog-removal lockstep violation"). Separately, grep the PRD for unchecked writer-confirmation checkboxes (`- [ ]`) inside section-pack confirmation blocks — any unchecked box = FAIL (deferral is not permitted; unmet prerequisites belong under Dependencies with a tracking ID). Do NOT count Acceptance Criteria checkboxes — those are verification artifacts for testers, legitimately unchecked. F-32: For each Route Mapping row citing a code constant, search the codebase for the constant. If it exists and its resolved value does not match the URL column (and the destination the surrounding PRD prose describes), FAIL with the actual value — a dev following the PRD would ship the wrong destination. If the constant does not exist yet, PASS (desired end state) — but verify the intended destination is unambiguous from the PRD text. N/A if the PRD has no Route Mapping table.
+- Separation check guidance (inline): F-25: Verify the separation **mechanism** is in place — a structural check, not a per-item scan. **Read `.claude/rules/behavioral-separation.md` first, including both of its Quick Reference sections** — "Quick Reference: Allowed in the Behavioral Layer" (the product-requirement carve-outs, and which barred items are only rephrased rather than relocated) and "Quick Reference: Forbidden in the Behavioral Layer" (what is barred, per tier). Those two sections are the canonical enumerations; this prompt deliberately does not restate them, and you use them only to recognize the mechanism's parts, not to re-judge items. Then check three things: (a) the Behavioral Contract uses semantic concept names with `[V#]` markers — spot-check 3 FRs, (b) a vocabulary table exists for those markers to resolve against — the **Semantic Vocabulary** table in the Behavioral Contract when `TC_MODE` is `slim`, per-endpoint vocabulary tables in the Technical Contract when it is `full`, (c) Matrix S was completed with zero `[PENDING]` cells (if you run in parallel with Agent 5, Matrix S will still read `[PENDING]` — judge (a) and (b) and note "Matrix S completeness confirmed by the orchestrator's Phase 3 completeness verification"). **Do NOT re-scan every FR and AC and do NOT apply the three generic tests item by item — Matrix S owns per-item smell and leak detection.** FAIL only if the mechanism is absent (no `[V#]` markers at all, no vocabulary tables) or Matrix S is incomplete. F-7 / F-26 / F-27 / F-32: **if `TC_MODE` is `slim`, mark all four `N/A — slim mode: dev-owned technical content` and do not inspect the Technical Contract for them.** Otherwise — F-7: PASS if a Data Sources table lists each endpoint with its details. F-26: PASS if Technical Contract has at minimum Data Sources, Error Classification, and Route Mapping tables. Route Mapping is N/A for services with no user-facing navigation (pure backend APIs) — mark it N/A with a note rather than FAIL. FAIL if any applicable cross-cutting table is missing. F-27: PASS if each API endpoint has a per-endpoint block with a V-numbered Vocabulary table and Error Handling subsection. FAIL if any endpoint lacks one of these. F-28: Collect all `[V#]` markers from the Behavioral Contract. For each, verify a corresponding row exists — in `slim` mode in the **Semantic Vocabulary** table inside the Behavioral Contract, in `full` mode in a per-endpoint vocabulary table (a marker that resolves in the Semantic Vocabulary table also passes in full mode; the two layers repeat V-numbers by design, so a number appearing in both is not a duplicate). Also check that no V-numbers are assigned to non-API concepts (routing destinations, configuration URLs, client-side state — these should use consistent semantic names with a TC section reference instead, e.g., "post-sign-in destination (see Route Mapping)"). PASS if all markers resolve to API field rows and no non-API concepts have V-numbers. FAIL with list of dangling markers or misassigned V-numbers. F-29: For each endpoint that has a vocabulary file (paths provided below), verify every API field referenced in the behavioral layer uses the exact semantic name from the vocabulary file. If the writer invented a new name for a field that already has a vocabulary entry, FAIL with the mismatch. If no vocabulary file exists for an endpoint, PASS. F-30: Compare the PRD's top-level headings against the template. FAIL if required sections are renamed (e.g., `## Contract` instead of `## Behavioral Contract`, `## Technical` instead of `## Technical Contract`), or if the Technical Contract consolidates fields into one global vocabulary table instead of per-endpoint Vocabulary tables — structural drift causes downstream checks (F-26/F-27/F-28) to misfire silently rather than fail. F-31: Read the Registry-Mirrored Catalogs list in project-context.md. N/A if "none". Otherwise, for every PRD table row mirrored from/to a listed catalog, open the catalog and verify sync: new rows exist in the catalog, removed rows are deleted or marked DEPRECATED, and rewritten content matches. A changelog row claiming a removal while the catalog row is still live = FAIL ("Catalog-removal lockstep violation"). Separately, grep the PRD for unchecked writer-confirmation checkboxes (`- [ ]`) inside section-pack confirmation blocks — any unchecked box = FAIL (deferral is not permitted; unmet prerequisites belong under Dependencies with a tracking ID). Do NOT count Acceptance Criteria checkboxes — those are verification artifacts for testers, legitimately unchecked. F-32: For each Route Mapping row citing a code constant, search the codebase for the constant. If it exists and its resolved value does not match the URL column (and the destination the surrounding PRD prose describes), FAIL with the actual value — a dev following the PRD would ship the wrong destination. If the constant does not exist yet, PASS (desired end state) — but verify the intended destination is unambiguous from the PRD text. N/A if the PRD has no Route Mapping table. F-33: Read the **Product Constants** table in the Behavioral Contract. Then read every FR, AC and Edge Case and list each bound they depend on — a duration, deadline, freshness window, timeout, retry limit, cooldown, ceiling, or threshold that flips behavior. Three failure shapes, each a FAIL: (a) a requirement names a bound with a bare inline number instead of citing a `PC-NNN` row; (b) a requirement depends on a bound the document never states — FAIL as undetermined, do not accept "the team will decide"; (c) a `PC-NNN` row referenced by zero requirements — dead spec. PASS only when every bound has exactly one home in the table and every row earns its place. This check has the same weight in both modes; in `slim` mode it is the primary guarantee that the PRD is buildable without the technical design. FAIL if the table is missing entirely and the requirements name any bound. N/A only when the requirements depend on no bound at all. F-34: Read the **Display Rules** table. For every value an FR or AC says the user sees — a time, a money amount, an ordered list, a truncated string, a count — verify a row states what determines its presentation (timezone, currency and minor-unit handling, symbol vs code, sort key and direction, truncation rule) and shows a worked example. FAIL per rendered value with no determinant, and FAIL a determinant stated without a worked example (an unworked rule is where minor-unit and timezone bugs hide). N/A for services with no user-facing output, marked as such in the PRD.
 - Vocabulary file paths: `{vocabulary_file_paths}`
-- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above. For separation checks (F-25/F-26/F-27/F-28/F-29), read the separation rule file and vocabulary files, then verify compliance per the guidance above.
+- `TC_MODE` (`slim` | `full`) and its source, verbatim from the orchestrator
+- Instruction: verify each checklist item against the PRD. For section packs, read the pack file at its path and verify the section is filled. For project-specific checks, execute and record. For SR checks (F-22/F-23/F-24), read the shared requirements file and verify compliance per the guidance above. For separation checks (F-25/F-26/F-27/F-28/F-29), read the separation rule file and vocabulary files, then verify compliance per the guidance above. For placement checks (F-33/F-34), read the Product Constants and Display Rules tables and apply the guidance above — these two rows carry the buildability guarantee in `slim` mode, so do not soften them because other technical rows are `N/A`.
 
 **Agent 3: Flow & Edge Case Reviewer** — Matrix D1, D2, E → `_artifacts/{initiative}-review-flow.md`
 
@@ -578,7 +614,8 @@ Prompt provides:
 - Core rules with output file path
 - File paths: PRD at `{prd_path}`
 - Scaffold file path + instruction: "Read your matrix scaffolds (B, C) from `{scaffold_file}` using the section markers"
-- Column definitions for B (Atomic, Necessary/Story Link, Feasible/API in Technical section, Contradicts FR) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, and Implementation Detail Leak — owned by Matrix S: mark `N/A` unless the AC delegates verification to a function name so directly that testability is broken, in which case FAIL under Testable and put the note in this column) — inline
+- `TC_MODE`, and for B's Feasible column: in `full` mode check the Technical section lists the API/data; in `slim` mode check the concept has a Semantic Vocabulary row and every bound the FR names has a Product Constant — a missing API table is never infeasibility in slim mode
+- Column definitions for B (Atomic, Necessary/Story Link, Feasible/data and bounds pinned down, Contradicts FR) and C (Testable/Running App, FR Link, Has Loading State, Has Error State, Has Empty State, and Implementation Detail Leak — owned by Matrix S: mark `N/A` unless the AC delegates verification to a function name so directly that testability is broken, in which case FAIL under Testable and put the note in this column) — inline
 - Instruction: For each FR, check atomicity, necessity, feasibility (does the Technical section list the API/data the FR requires?), and contradictions. For each AC, check testability, FR linkage, and state coverage. **Do NOT scan for smells or implementation leaks — Matrix S owns those. Judge Testable/FR-Link/state-coverage only.** Fill B-X (orphan entities not referenced by any FR — read the Key Entities section), B-Y (orphan FRs with no AC), and C-X (ACs that test for testing's sake).
 
 **Agent 5: Smell Reviewer** — Matrix S → `_artifacts/{initiative}-review-smells.md`
@@ -627,7 +664,7 @@ Note: this check covers the 5 sub-agent files only (`SUB_AGENT_CELLS`). Matrix H
 
 When the skill calls you with "Run Phase 3 only," you are a fresh agent with no memory of Phase 1. The skill's prompt provides the dispatch file path. Before proceeding to Step 8:
 
-1. Read the dispatch file at the path provided in the skill's prompt (fall back to `_artifacts/{initiative}-review-dispatch.json` in the initiative directory if no path given)
+1. Read the dispatch file at the path provided in the skill's prompt (fall back to `_artifacts/{initiative}-review-dispatch.json` in the initiative directory if no path given). Take `TC_MODE` from its `technicalContractMode` field — Phase 1 already resolved it, so do not re-resolve it here
 2. Re-read `.claude/project-context.md` — extract all paths and configuration
 3. Re-read `.claude/prd-lessons.md` if it exists — re-apply the Step 1 lifecycle filter (skip `superseded-by:*` and `graduated:*`; absent fields mean `active` + `always`)
 4. Re-read the PRD (path from dispatch JSON or project-context.md)
@@ -806,6 +843,7 @@ Use `date -u +"%Y-%m-%dT%H:%M:%SZ"` to capture the actual current time. Do NOT u
 
 **Reviewed**: [actual ISO8601 timestamp from date command]
 **PRD Version**: [filename or version number]
+**Technical Contract mode**: [slim | full] (source: [writer-handoff | project-context | default])
 
 ## Summary
 [1-2 sentence assessment]
@@ -875,6 +913,7 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
   "status": "READY | NEEDS_REVISION",
   "prdPath": "<relative path to the PRD that was reviewed>",
   "reviewPath": "<relative path to review>",
+  "technicalContractMode": "slim | full",
   "subAgentCells": 231,
   "orchestratorCells": 16,
   "totalCells": 247,

@@ -20,6 +20,28 @@ Read `.claude/project-context.md`. Extract:
 - **Output paths** — where to save the PRD and handoff
 - **Included section packs** — checked (`[x]`) items in the section packs list
 - **PRD versioning** — how versions are tracked
+- **Technical Contract mode** — the `Mode` value under PRD Configuration → Technical Contract
+
+**Resolve the Technical Contract mode before you read the template.** Precedence, highest first:
+
+1. **Run override** — the caller's prompt names a mode (`--tc full`, `--tc slim`, or "Technical Contract mode: full"). A run override always wins.
+2. **project-context.md** — PRD Configuration → Technical Contract → **Mode**.
+3. **Default** — `slim`, when neither of the above states a mode (including an older project-context.md that predates the setting).
+
+State the resolved mode and where it came from in your Step 5 summary, and record it in the handoff (`technicalContractMode`) so the reviewer and senior PM judge the PRD in the mode it was written in. Never re-resolve it mid-draft.
+
+**What the mode changes:**
+
+| | `slim` (default) | `full` |
+|---|---|---|
+| Product Constants, Semantic Vocabulary, Display Rules | Required (Tier 1) | Required (Tier 1) |
+| Data Sources, Query Configuration, Error Classification, Route Mapping | **Do not produce** | Produce |
+| Per-endpoint blocks (Vocabulary + Error Handling) | **Do not produce** | Produce |
+| Component Mapping, Configuration Attributes, mock-data sections | **Do not produce** | Produce |
+| Dependencies, section packs inserted into the Technical Contract | Produce | Produce |
+| Endpoint research and verification (Step 2) | Unchanged | Unchanged |
+
+In `slim` mode you still verify that every endpoint exists and every field is real — you simply do not transcribe the contract into the PRD. The team owns the technical design; a PM-authored API table is a guess they have to re-verify, and inventing an HTTP semantic to fill a required row is how a false implementation claim enters a spec.
 
 Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Writer rule" — these are active constraints you MUST follow during drafting. They represent patterns that caused review failures in past PRDs. Violating a lesson means the reviewer will catch it and fail the spec.
 
@@ -32,7 +54,7 @@ Read `.claude/prd-lessons.md` if it exists. Each lesson has a "Writer rule" — 
 
 Read `.claude/rules/domain-glossary.md`. You must NOT add terms to the Domain Glossary directly. Instead, track terms you encounter during drafting that are missing, ambiguous, or conflated in the glossary, and propose them in Step 5.
 
-Read `.claude/rules/semantic-vocabulary.md` if it exists. You must NOT write to vocabulary files directly. Instead, track fields that need semantic names and propose them in Step 5. When drafting the PRD, you will copy vocabulary entries into per-endpoint vocabulary tables inside the Technical Contract, assigning V-numbers.
+Read `.claude/rules/semantic-vocabulary.md` if it exists. You must NOT write to vocabulary files directly. Instead, track fields that need semantic names and propose them in Step 5. When drafting the PRD, you will copy vocabulary entries into the **Semantic Vocabulary** table in the Behavioral Contract, assigning V-numbers. In `full` mode you additionally bind those same V-numbers to API fields in the per-endpoint Vocabulary tables inside the Technical Contract.
 
 Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements (SR-01 through SR-NN) that apply to every authenticated page/feature. You MUST NOT restate SR content inline in the PRD — instead, reference this document in the "Shared Requirements" section. If the feature needs an override or exclusion for any SR, document it explicitly with justification. If the file doesn't exist, skip the Shared Requirements section in the PRD template.
 
@@ -149,6 +171,7 @@ If the orchestrator passes a senior-PM ticket list, this is a revision cycle —
 
 Then:
 
+0. **Carry the mode forward.** Read `technicalContractMode` from your previous handoff and keep it — a revision never changes the Technical Contract mode. If the caller passes a different mode mid-pipeline, say so in the handoff rather than silently re-writing the document in the other shape.
 1. Read the existing PRD (the one the reviewer examined)
 2. Read every ticket, in order, with its instruction, decision, rationale, and evidence
 3. For each ticket: make the edit exactly as instructed. Do NOT rewrite surrounding sections unless the edit requires it.
@@ -170,11 +193,17 @@ Follow the PRD template exactly. Every Tier 1 section is required. Include the s
 
 **Glossary tracking**: While drafting, track any term you use that (a) isn't in the Domain Glossary but could be confused with another term, or (b) is in the glossary but the definition doesn't match how it's actually used in the codebase. These become glossary proposals in Step 5.
 
-**Vocabulary tracking**: While drafting, build the per-endpoint vocabulary tables in the Technical Contract. Assign V-numbers sequentially across all endpoints (first endpoint gets V1-Vn, second continues from Vn+1). For each field:
+**Vocabulary tracking**: While drafting, build the **Semantic Vocabulary** table in the Behavioral Contract. Assign V-numbers sequentially across all endpoints (first endpoint gets V1-Vn, second continues from Vn+1). For each field:
 - If a vocabulary file exists for the endpoint and the field has a semantic name: copy it into the PRD table and use it exactly
 - If a vocabulary file exists but the field is not in it: add it to the PRD table and propose adding the entry to the vocabulary file
 - If no vocabulary file exists for the endpoint: add all fields to the PRD table and propose creating a new vocabulary file with all entries
 Also track any existing vocabulary entry whose semantic name you believe is wrong or misleading — propose a change with justification.
+
+The Semantic Vocabulary table is `V# | Semantic Name | Type | Required | Notes`. `API Field` is an **optional, dev-owned column** — omit it in `slim` mode. In `full` mode, bind the same V-numbers to their API fields in the per-endpoint Vocabulary tables; repeat the numbers there, never split the set across the two layers.
+
+**Constants tracking**: While drafting, build the **Product Constants** table alongside the requirements. Every bound the requirements depend on that a user can perceive — a deadline, a freshness window, a timeout the user waits through, a retry limit, a cooldown, a list ceiling, a threshold that flips behavior — gets a `PC-NNN` row carrying the value, and the FR/AC cites the constant **by ID**. Do not restate the number inline; do not park it in a technical table.
+
+**Display-rule tracking**: For every value the user reads, record what determines its presentation — timezone, currency and minor-unit handling, symbol-vs-code, sort key and direction, truncation — plus one worked example, in the **Display Rules** table.
 
 In the behavioral layer, add `[V#]` markers on the first use of each semantic name. Subsequent uses of the same term do not repeat the marker.
 
@@ -182,7 +211,7 @@ In the behavioral layer, add `[V#]` markers on the first use of each semantic na
 
 Build the PRD in this order:
 1. **Title**: Use the format `# {Initiative Name} — PRD`. Do not vary this format.
-2. Start with the base template sections (Context, Behavioral Contract, Technical Contract, Boundaries). Use the exact section names from the template: `## Behavioral Contract`, `## Technical Contract`, `## Boundaries`. Do not abbreviate (e.g., never use `## Contract` or `## Technical`).
+2. Start with the base template sections (Context, Behavioral Contract, Technical Contract, Boundaries). Use the exact section names from the template: `## Behavioral Contract`, `## Technical Contract`, `## Boundaries`. Do not abbreviate (e.g., never use `## Contract` or `## Technical`). In `slim` mode the `## Technical Contract` heading stays — it is the home for the section packs that insert there and for Dependencies — but its PRD-owned technical sub-sections are omitted (see the mode table in Step 0).
 3. For each section pack listed in project-context.md, read the section pack file. Find its `Insert into` tag with a `[position: N]` number. Insert packs at the matching HTML comment marker in the template. **Ordering rule**: within each insertion point, insert packs in ascending position number. Packs sharing the same position number go in alphabetical order by section name. Remove the HTML comment after insertion.
 4. For Tier 2 sections (Success Criteria, Security Constraints, Cross-Initiative Alignment): check if their condition applies. If yes, move the section from the Tier 2 block at the bottom of the template to the insertion point specified in its `Insert into` tag, respecting position order. If no, delete the section entirely.
 5. For backend/API projects with no UI: mark AC sub-sections (Loading States, Error States, Empty States) as `N/A — backend service` if they don't apply. Loading States may still apply (e.g., async processing indicators). Only include sub-sections that are meaningful for the project type.
@@ -190,31 +219,35 @@ Build the PRD in this order:
 
 ### Behavioral/Technical Separation
 
-The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Key Entities) describes *what* the system does — observable by users and testers. The **Technical Contract** describes *how* it's built — readable by engineers. A requirement passes the behavioral test if a QA engineer can verify it without reading source code; decide each phrase with the three generic tests — rename, designer-choice, QA-observability.
+The PRD has two contracts. The **Behavioral Contract** (FRs, ACs, Edge Cases, Key Entities, Product Constants, Semantic Vocabulary, Display Rules) describes *what* the system does — observable by users and testers. The **Technical Contract** describes *how* it's built — readable by engineers. A requirement passes the behavioral test if a QA engineer can verify it without reading source code; decide each phrase with the three generic tests — rename, designer-choice, QA-observability.
+
+**The three tests exclude wire vocabulary and mechanism — never values the user perceives.** The rename test bars an API field name, an endpoint path, a status code, a header, a config key; it does not bar the *timeout the user waits through*, the *money format they read*, or the *sort order they see*. The designer-choice test bars a component variant or a spacing token; it does not bar a PM-decided display format. The QA-observability test bars where a value is stored or how it is transported; it does not bar the value itself. When a test fires on a user-perceivable number, format, ordering, or policy, the remedy is **a Product Constant or a Display Rule row in the behavioral layer** — never relocation to a technical table. Sending such a value to the Technical Contract is the exact failure this rule exists to prevent: when the technical contract goes to the team, the requirement loses its bound.
 
 **Read `.claude/rules/behavioral-separation.md` before drafting the Behavioral Contract**, including both of its canonical enumerations: "Quick Reference: Allowed in the Behavioral Layer" (the product-requirement carve-outs) and "Quick Reference: Forbidden in the Behavioral Layer" (what is barred, and per tier whether the remedy is relocation to the Technical Contract, rephrasing in place, or nothing at all). Those two sections are the single source of truth — this file does not restate them.
 
 **When writing the Behavioral Contract (FRs, ACs, Edge Cases, Key Entities):**
 - Use **semantic concept names** for data attributes — "order identifier", not `order_id`
-- Add **`[V#]` markers** on first use of each semantic name, linking it to the vocabulary table in the Technical Contract. Do not repeat the marker on subsequent uses of the same term
+- Add **`[V#]` markers** on first use of each semantic name, linking it to the Semantic Vocabulary table. Do not repeat the marker on subsequent uses of the same term
 - Each semantic name maps to exactly one API field; if ambiguous, make the name more specific
-- **Do not assign V-numbers to non-API concepts** — routing destinations, configuration URLs, client-side state, and other concepts that don't map to an API field do not get `[V#]` markers. Use a consistent semantic name and reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)")
+- **Cite every bound by Product Constant ID** — `PC-001`, not a bare `30 seconds` inline
+- **Do not assign V-numbers to non-API concepts** — routing destinations, configuration URLs, client-side state, and other concepts that don't map to an API field do not get `[V#]` markers. Use a consistent semantic name; in `full` mode reference the relevant TC section on first use (e.g., "post-sign-in destination (see Route Mapping)", "configured terms URL (see Configuration Attributes)"). In `slim` mode name it semantically and stop there — the destination and the setting are dev-owned
 - **Never embed API vocabulary, wire details, framework terminology, or implementation mechanism**: they fail the rename or QA-observability test and belong in the Technical Contract. No literal UI copy or localization keys either — copy is design-owned; describe it by intent per state. The canonical list, and which tier is relocated versus rephrased in place versus acceptable as-is, is "Quick Reference: Forbidden in the Behavioral Layer" in `.claude/rules/behavioral-separation.md`
 - **Never make design decisions**: Apply the designer-choice test — if a designer could present the same behavior with a different component, layout, emphasis, or visual treatment, don't prescribe it. Don't over-specify either: an AC that lists several visual elements is a screen spec — assert one observable outcome and reference Visual References. When the mechanic *is* the product requirement, it stays: the carve-outs are enumerated in "Quick Reference: Allowed in the Behavioral Layer" in `.claude/rules/behavioral-separation.md`
 - Edge cases can be slightly more specific (concrete data scenarios), but should still use semantic names
 
-**When writing the Technical Contract:**
+**When writing the Technical Contract (`full` mode only — in `slim` mode skip this whole block):**
 - **Cross-cutting tables defined once**: Data Sources, Error Classification, Query Configuration, Route Mapping — each lives in one table as implementation reference
 - **Verify the value axis, not just the field name**: when an FR/AC branches on an API field's values, quote the field's documented description in the vocabulary row's Notes and confirm the field carries the distinction the behavior needs — a correctly named, correctly typed field can still encode a different classification axis than the one the behavior branches on. If the entity does not expose the attribute the behavior needs, flag the missing source explicitly — never repurpose an adjacent field
 - **Discriminated unions documented per variant**: when a payload field is a tagged union — a type/kind discriminator selects which sibling object is populated — document each variant's field paths as separate vocabulary rows, quoting the per-variant shapes from the API documentation. Never infer a shared shape across variants: the field path that is correct for one variant is typically wrong for its siblings. Every FR, AC, and fixture consuming the union must use the field path of its specific variant
 - **Wire values verbatim**: field names and enum values in vocabulary tables and enum mappings reproduce the wire contract exactly, casing included (snake_case vs camelCase). The wire contract — API documentation, or shipped requests/responses — wins over any client-side DTO or accessor naming, which may re-case fields. When documentation does not pin an enum's member values, grep shipped code, fixtures, and tests for the actual wire values and cite the source; never infer casing from the project's general naming convention
-- **Per-endpoint vocabulary tables**: For each API endpoint, create a vocabulary table with V-numbered rows (V# | Semantic Name | API Field | Type | Required | Notes). Copy entries from vocabulary files when they exist; add new rows for unmapped fields. V-numbers are sequential across all endpoints
-- **Per-endpoint error handling**: For each endpoint, include an Error Handling table (HTTP status → behavior)
+- **Per-endpoint vocabulary tables**: For each API endpoint, create a vocabulary table with V-numbered rows (V# | Semantic Name | API Field | Type | Required | Notes) binding the V-numbers already defined in the Semantic Vocabulary table. Copy entries from vocabulary files when they exist; add new rows for unmapped fields. V-numbers are sequential across all endpoints
+- **Per-endpoint error handling**: For each endpoint, include an Error Handling table (HTTP status → behavior). Never assert an HTTP semantic you have not read in the API documentation or shipped code — an unverified error-handling row is a false implementation claim, not a gap-filler
+- **Nothing user-perceivable lives only here**: a timeout, freshness window, retry limit, money format, or ordering that appears in a technical table must already have a Product Constants or Display Rules row. This section may repeat a value; it may never be its only home
 
 **V-number discipline:**
 - V-numbers are for API field mappings only — never assign a V-number to a routing destination, configuration URL, client-side state, or any concept that doesn't map to an API request/response field
-- Every `[V#]` marker in the behavioral layer MUST resolve to a row in a vocabulary table
-- Every vocabulary table row SHOULD correspond to a semantic name used in the behavioral layer
+- Every `[V#]` marker in the behavioral layer MUST resolve to a row in the Semantic Vocabulary table (and, in `full` mode, to the per-endpoint vocabulary table that binds it)
+- Every vocabulary row SHOULD correspond to a semantic name used in the behavioral layer
 
 ### Systematic Edge Case Generation
 
@@ -305,7 +338,8 @@ If project-context.md specifies versioned filenames:
 16. **Gate polarity must match bullet polarity** — when writing a multi-bullet gate FR, the headline MUST match the polarity of the bullets. Positive preconditions ("X is true") → "render when ALL are true." Suppression conditions ("X is false") → "suppress when ANY holds." Never mix polarities within a single gate FR.
 17. **FR atomicity — watch analytics and navigation pairs** — after writing an FR's first sentence, check: is the second sentence a clarification of the SAME capability, or an ADDITIONAL one? If additional, split into two FRs. Analytics-firing rules and navigation-affordance rules are almost always separate capabilities, even when they feel "obviously related" to the primary behavior.
 18. **ACs must bind success events, not just failures** — for every analytics event whose Trigger describes a successful data outcome (not just a user interaction), the writer MUST add an AC binding the event by name and listing every property. When the Analytics Events table is edited, grep ACs for every event name — if any event is named by zero ACs, add a binding AC.
-19. **Registry lockstep** — when project-context.md lists Registry-Mirrored Catalogs, every PRD edit that adds, changes, or removes a row mirrored from/to a catalog MUST update the catalog file in the same edit. Removals are deleted from the catalog or marked DEPRECATED with a date and reason; content rewrites propagate too — treat removals and rewrites with the same discipline as additions. The changelog row must name the catalog edit explicitly. If a catalog edit genuinely cannot land now, record it under Dependencies with a tracking ID — deferring it via an unchecked confirmation checkbox is not acceptable. All writer-confirmation checkboxes in section packs must be `[x]` before submission.
+19. **Placement rule — the governing principle for both contracts.** *Every number, rule, and policy a user can perceive lives in the behavioral layer. A constant, format, ordering, or policy may never live only in a technical table, a discrepancy row, or a section the reader has to reconstruct it from.* The technical contract may repeat such a value; it may never be its only home. Concretely: a bound goes in **Product Constants** and is cited by ID from the FR/AC that depends on it; a rendered format, ordering, or truncation rule goes in **Display Rules**; a concept name goes in **Semantic Vocabulary**. Test each value by asking whether the requirement is still buildable with the Technical Contract deleted — if the answer is no, the value is in the wrong place.
+20. **Registry lockstep** — when project-context.md lists Registry-Mirrored Catalogs, every PRD edit that adds, changes, or removes a row mirrored from/to a catalog MUST update the catalog file in the same edit. Removals are deleted from the catalog or marked DEPRECATED with a date and reason; content rewrites propagate too — treat removals and rewrites with the same discipline as additions. The changelog row must name the catalog edit explicitly. If a catalog edit genuinely cannot land now, record it under Dependencies with a tracking ID — deferring it via an unchecked confirmation checkbox is not acceptable. All writer-confirmation checkboxes in section packs must be `[x]` before submission.
 
 ## Step 4.5: Pre-Save Self-Review
 
@@ -317,7 +351,13 @@ Before saving, run the deterministic lint gate, then three mechanical scans on t
 
 2. **Wire-value scan.** Collect every `apiField` value from the per-endpoint vocabulary tables in the Technical Contract. For each, scan FRs, ACs, and Edge Cases (excluding analytics ACs) for that raw value. If found, replace with the semantic name from the vocabulary table — e.g., replace a raw enum value like `express-shipping` with its semantic group name ("expedited shipping method"), replace an error code like `resource_not_found` with the semantic name from its vocabulary entry. Then scan for other wire details that fail the rename test: endpoint paths (`METHOD /path`), raw HTTP status codes (`HTTP 201`, `429`, `5xx`), and header names (`Retry-After`). Replace each with the semantic outcome ("when the backend confirms…", "when the backend rate-limits further attempts") — these map in Error Classification / per-endpoint Error Handling, never in FRs/ACs.
 
-3. **Pack-obligation scan.** For every included section pack, re-read the pack file and enumerate each required sub-block, table, and confirmation checklist it defines. Confirm the PRD contains every one under its canonical heading. A different section that covers similar ground does NOT satisfy the pack — one pack's table does not stand in for another's required block. Produce the missing block, or mark it N/A only if the pack itself defines an N/A condition.
+3. **Placement scan (Product Constants + Display Rules).** Two directions, both mechanical:
+   - **Unused constants** — for every `PC-NNN` row, grep the FRs, ACs, and Edge Cases for that ID. A constant referenced by zero requirements is dead spec: delete the row, or add the requirement that depends on it. (`prd-lint.py` LINT-010 enforces this.)
+   - **Inline-number drift** — for every FR and AC, collect each bound it names (a duration, deadline, window, retry count, cooldown, ceiling, or threshold). Each one must appear as a `PC-NNN` citation, not as a bare number in the sentence. Replace the bare number with the constant ID and put the value in the table. If the bound is *undetermined*, that is not a formatting problem — the requirement has no bound, so add an Open Question tagged `ASK:PM` rather than inventing a value.
+   - **Rendered values** — for every value an FR or AC says the user sees, confirm a Display Rules row states its presentation determinant (timezone, currency and minor units, symbol vs code, sort key and direction, truncation) with a worked example. A displayed value with no determinant is a guess the implementer will have to make.
+   - In `slim` mode also confirm the inverse: no Product Constant, format, ordering, or policy the user perceives is stated *only* inside a section pack table or a technical block. Those sections go to the team; the behavioral layer must stand alone.
+
+4. **Pack-obligation scan.** For every included section pack, re-read the pack file and enumerate each required sub-block, table, and confirmation checklist it defines. Confirm the PRD contains every one under its canonical heading. A different section that covers similar ground does NOT satisfy the pack — one pack's table does not stand in for another's required block. Produce the missing block, or mark it N/A only if the pack itself defines an N/A condition.
 
 If any check produces fixes, re-run Quality Standard #13 (consistency pass) on the affected sections.
 
@@ -327,6 +367,7 @@ Save the PRD to the path specified in project-context.md.
 
 Provide a **HANDOFF SUMMARY** to the user:
 - Initiative area
+- Resolved Technical Contract mode and its source (run override / project-context / default)
 - Number of API endpoints involved
 - Key decisions made (and why — reference Q&A)
 - Proposed glossary terms (if any) — list each term with its proposed definition and why it's needed
@@ -346,6 +387,8 @@ Save to the `_artifacts/` subdirectory of the initiative directory:
   "timestamp": "<ISO8601>",
   "status": "draft_complete",
   "prdPath": "<relative path to PRD>",
+  "technicalContractMode": "slim | full",
+  "technicalContractModeSource": "run-override | project-context | default",
   "apiEndpoints": ["GET /v1/...", "POST /v1/..."],
   "existingCodeReferenced": ["<paths>"],
   "dependencies": [],
@@ -356,6 +399,8 @@ Save to the `_artifacts/` subdirectory of the initiative directory:
     "keyEntityCount": "<number of Key Entities>",
     "version": "<v1, v2, etc.>",
     "sectionPacksUsed": "<count of section packs included>",
+    "productConstantCount": "<number of PC-NNN rows>",
+    "displayRuleCount": "<number of DR-NNN rows>",
     "isFreshDraft": true,
     "failsAddressed": 0
   },
