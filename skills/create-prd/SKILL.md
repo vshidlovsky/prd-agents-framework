@@ -472,15 +472,22 @@ If no glossary terms were proposed, say "No new glossary terms proposed."
 
 If no vocabulary entries were proposed, say "No new vocabulary entries proposed."
 
-**Then**, ask for action — one prompt covering the dispositions, lessons, glossary terms, and vocabulary. The user has three powers over the senior PM's work:
+**Then**, show Proposed Shared Requirements (if any). Collect proposals from the writer's handoff, the senior PM's handoff, and the reviewer's handoff/review document (`proposedSharedRequirements` in each). Deduplicate by rule substance — if two agents proposed the same rule, keep one entry and note both origins. For each proposal, show:
+- Number, rule (stated as a rule, never a feature requirement)
+- Why universal — with the recurrence cited (which initiatives decided this before)
+- Origin (the question, finding, or decision that surfaced it)
+
+If no shared requirements were proposed, say "No new shared requirements proposed."
+
+**Then**, ask for action — one prompt covering the dispositions, lessons, glossary terms, vocabulary, and shared requirements. The user has three powers over the senior PM's work:
 
 - **(a) Answer the escalations** — each answer becomes an additional ticket for the writer, carrying the user's decision verbatim.
 - **(b) Veto or override any disposition** — turn a `reject` back into a ticket ("fix F-14 after all"), drop a ticket ("skip T-3"), or replace a `fix-product` decision with a different one. The senior PM's dispositions are proposals with authority, not commands. Record every override: it changes the ticket list you pass to the writer, and the writer applies the amended list.
 - **(c) Say "go"** — accept the dispositions as written and start the revision.
 
 Phrase it as:
-- If there are zero tickets (READY with no findings, or a delta pass where everything landed): **"No revision needed. Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Approve vocabulary entries: all / specific / skip. Then we're done."**
-- If there are tickets: **"'go' to send the N tickets to prd-writer, or veto/override any disposition first (e.g., 'un-reject F-14', 'drop T-3', 'change T-5's decision to X'). Answer any escalations above. Or 'override' to approve the PRD as-is without revising. For lessons: all / specific / skip. For glossary terms: all / specific / skip. For vocabulary entries: all / specific / skip."**
+- If there are zero tickets (READY with no findings, or a delta pass where everything landed): **"No revision needed. Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Approve vocabulary entries: all / specific / skip. Approve SRs: all / specific / skip. Then we're done."**
+- If there are tickets: **"'go' to send the N tickets to prd-writer, or veto/override any disposition first (e.g., 'un-reject F-14', 'drop T-3', 'change T-5's decision to X'). Answer any escalations above. Or 'override' to approve the PRD as-is without revising. For lessons: all / specific / skip. For glossary terms: all / specific / skip. For vocabulary entries: all / specific / skip. Approve SRs: all / specific / skip."**
 
 Apply every veto/override to the ticket list before spawning the writer. Do NOT ask the senior PM to re-run: the user's decision is final and does not need re-judging.
 
@@ -495,7 +502,9 @@ On glossary term approval, spawn a new Agent using `.claude/agents/prd-reviewer.
 
 On vocabulary entry approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 14. Write these approved vocabulary entries: [list the approved entries grouped by endpoint, with file paths and actions]. The initiative is {argument}." This is a targeted callback — the agent creates or updates vocabulary files in `semantic-vocabulary/`.
 
-If lessons, glossary terms, and vocabulary entries are all approved, spawn all three callbacks in parallel — they write to different files and don't conflict.
+On shared-requirement approval, spawn a new Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt: "Run only Step 15. Write these approved shared requirements to `docs/shared-requirements.md`: [list the approved rules with their whyUniversal and origin]. The initiative is {argument}." This is a targeted callback — the agent appends each approved rule with the next sequential `SR-NN` id and commits. "Skip" writes nothing; the write-guard in `.claude/rules/shared-requirements.md` allows this write only downstream of the user's explicit approval here.
+
+If lessons, glossary terms, vocabulary entries, and shared requirements are all approved, spawn all four callbacks in parallel — they write to different files and don't conflict.
 
 If "go" (or "revise"): increment the revision count. If run logging is enabled, increment `cycle` in the state file and set `currentPhase: "revision"`.
   - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the senior-PM ticket file at {senior_pm_review_path} (handoff: {senior_pm_handoff_path}). Follow Step 3.5 (Revision Mode) — apply each ticket exactly. `fix-product` tickets carry a decision already made: implement it as written, do not re-decide. Do not fix anything on the Rejected FAILs list — those were overridden. If something needs a product decision no ticket covers, leave it and add an Open Question tagged `ASK:PM`. Do not rewrite the entire PRD. [If the user vetoed or added anything at Gate 3: 'The user amended the ticket list: <list the amendments>.']" **Pass the ticket file, not the raw review** — the writer's Step 3.5 consumes tickets. The writer handles versioning, targeted edits, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review**, which will be followed by Phase 3.5 in `delta` mode.
@@ -533,7 +542,7 @@ If run logging is enabled in project-context.md, finalize the log before summari
      --field "outputSummary=<totalCycles> cycles: <summary of each cycle verdict>" \
      --field "artifactPath=<final prd path>" \
      --field "handoffPath=null" \
-     --field 'metrics={"totalCycles":<count>,"finalVerdict":"<READY|NEEDS_REVISION|OVERRIDE>","technicalContractMode":"<TC_MODE>","technicalContractModeSource":"<TC_MODE_SOURCE>","humanWaitSeconds":<sum>,"agentDurationSeconds":<total minus human>,"gateDurations":{"gate1":<delta|null>,"gate2":<delta|null>,"gate3":<delta|null>},"lessonsApproved":<count>,"glossaryTermsApproved":<count>}'
+     --field 'metrics={"totalCycles":<count>,"finalVerdict":"<READY|NEEDS_REVISION|OVERRIDE>","technicalContractMode":"<TC_MODE>","technicalContractModeSource":"<TC_MODE_SOURCE>","humanWaitSeconds":<sum>,"agentDurationSeconds":<total minus human>,"gateDurations":{"gate1":<delta|null>,"gate2":<delta|null>,"gate3":<delta|null>},"lessonsApproved":<count>,"glossaryTermsApproved":<count>,"sharedRequirementsApproved":<count>}'
    ```
    Gate deltas come from the helper too — `--delta gate1_prompt gate1_resume` per gate; skip a gate whose pair is missing. If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
 
@@ -566,7 +575,7 @@ Each line in `.claude/prd-run-log.jsonl` is one of these entry types:
 
 **`"senior-pm"`** metrics: `mode` ("full" | "delta"), `failsJudged` (FAIL cells read — NEW cells only in delta mode), `rootCauses` (findings after collapse), `dispositionCounts` (fixTechnical/fixProduct/reject/escalate), `ticketCount`, `escalations`, and — delta mode only — `ticketsVerified` (applied/partial/notApplied)
 
-**`"pipeline"`** metrics: `totalCycles`, `finalVerdict`, `technicalContractMode` ("slim" | "full"), `technicalContractModeSource` ("run-override" | "project-context" | "default"), `humanWaitSeconds`, `agentDurationSeconds`, `gateDurations` (gate1/gate2/gate3), `lessonsApproved`, `glossaryTermsApproved`
+**`"pipeline"`** metrics: `totalCycles`, `finalVerdict`, `technicalContractMode` ("slim" | "full"), `technicalContractModeSource` ("run-override" | "project-context" | "default"), `humanWaitSeconds`, `agentDurationSeconds`, `gateDurations` (gate1/gate2/gate3), `lessonsApproved`, `glossaryTermsApproved`, `sharedRequirementsApproved`
 
 **`"terminated"`** (abandoned runs): `diedInPhase`, `completedPhases` (array of phase summaries), `reason` ("abandoned")
 

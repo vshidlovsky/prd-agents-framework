@@ -131,6 +131,8 @@ Present questions with your recommended answer based on codebase and API researc
 
 If a research document exists, skip questions already resolved (`RESOLVED`) by the research. Carry forward all unresolved `ASK:role` items from the research — these are product/scope decisions the researcher surfaced but was not allowed to resolve. Present each with the researcher's recommended answer and ask the PM to decide. Also ask about UX decisions, scope boundaries, and business rules the research doesn't cover.
 
+**SR-candidate detection**: when a question's answer is initiative-independent — it would hold for any feature in this project, not just this one (e.g., "screen-view events fire only when a screen actually renders") — mark the Q&A entry with `"srCandidate": true` and a one-line reason, and carry it into the handoff's `proposedSharedRequirements` array (Step 6). Check recurrence mechanically: grep prior initiatives' `*-writer-qa.json` for the same resolved decision and cite any initiative where it recurred. See the promotion criteria in `.claude/rules/shared-requirements.md`. This is a proposal only — you NEVER write to `docs/shared-requirements.md`; the user approves at Gate 3. A rule already covered by an existing SR is not a candidate and not a question: reference the SR by ID and move on.
+
 ### Q&A Log
 
 After all questions are answered and before proceeding to Step 4, save the complete Q&A exchange as a JSON file in the `_artifacts/` subdirectory:
@@ -151,7 +153,9 @@ After all questions are answered and before proceeding to Step 4, save the compl
       "resolutionMethod": "ASK:PM",
       "recommendedAnswer": "<your recommendation>",
       "userAnswer": "<exact user response>",
-      "resolvedValue": "<the concrete value used in the PRD>"
+      "resolvedValue": "<the concrete value used in the PRD>",
+      "srCandidate": true,
+      "srCandidateReason": "<one line: why this answer is initiative-independent — omit both fields when the answer is initiative-specific>"
     }
   ]
 }
@@ -395,6 +399,7 @@ Provide a **HANDOFF SUMMARY** to the user:
 - Key decisions made (and why — reference Q&A)
 - Proposed glossary terms (if any) — list each term with its proposed definition and why it's needed
 - Proposed vocabulary entries (if any) — list each endpoint and its new/changed entries with semantic names and justification
+- Proposed shared requirements (if any) — each rule, why it's universal, and the originating question
 - Recommended next step: "Run prd-reviewer to validate"
 
 ## Step 6: Write Handoff File
@@ -450,9 +455,18 @@ Save to the `_artifacts/` subdirectory of the initiative directory:
       ]
     }
   ],
+  "proposedSharedRequirements": [
+    {
+      "rule": "<the universal rule, stated as a rule — never as a feature requirement>",
+      "whyUniversal": "<one line: why this holds for any feature in this project, citing recurrence (initiative names) where found>",
+      "originQuestion": "<the Q&A id or question that surfaced it>"
+    }
+  ],
   "nextAgent": "prd-reviewer"
 }
 ```
+
+Omit `proposedSharedRequirements` (or leave it empty) when no question produced an SR candidate. Proposals only — the write-guard in `.claude/rules/shared-requirements.md` stands.
 
 If `scripts/validate-handoff.py` exists, run it on the file you just wrote and fix every reported problem before proceeding:
 

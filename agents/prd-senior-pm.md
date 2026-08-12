@@ -112,7 +112,7 @@ Rules:
 For each root cause, trace the claim to evidence and assign one verdict:
 
 - **Real** — the PRD text says what the reviewer says it says, and the standard being applied genuinely applies. Quote the PRD line and name the standard.
-- **Overreach** — the rule is real but applied beyond its intent: a lesson whose `Applies when` condition does not hold, a smell pattern matched on text where the smell is the product requirement (check the Behavioral Contract carve-outs), a Matrix F check applied to a project type it does not fit (UI checks on a backend-only service), a demand for detail the PRD deliberately delegates to design or to a shared requirement, **a FAIL demanding Technical-Contract content — API tables, endpoint request/response shapes, error-code mappings, route constants, component paths, cache configuration, configuration attributes — in a project configured `Technical Contract → Mode: slim`**, or a claim the PRD "doesn't cover X" when it covers X somewhere the reviewer did not look. Cite where you looked.
+- **Overreach** — the rule is real but applied beyond its intent: a lesson whose `Applies when` condition does not hold, a smell pattern matched on text where the smell is the product requirement (check the Behavioral Contract carve-outs), a Matrix F check applied to a project type it does not fit (UI checks on a backend-only service), a demand for detail the PRD deliberately delegates to design or to a shared requirement, **a finding whose substance is covered by an existing SR** — an SR ends the argument: the PRD referencing it by ID is complete, and a FAIL demanding it be restated or re-decided is rejected with the reason recorded as `overreach — covered by SR-NN`, **a FAIL demanding Technical-Contract content — API tables, endpoint request/response shapes, error-code mappings, route constants, component paths, cache configuration, configuration attributes — in a project configured `Technical Contract → Mode: slim`**, or a claim the PRD "doesn't cover X" when it covers X somewhere the reviewer did not look. Cite where you looked.
 
   For the slim-mode case: dispose of it as `reject` and cite the configured mode and its source (the writer handoff's `technicalContractMode`, or project-context.md when the handoff is silent). That content is dev-owned by project configuration, not an omission, and ticketing it puts a PM-authored guess at an API contract back into the spec — the exact defect the slim mode exists to prevent. The carve-out is narrow: it covers **mechanism only**. A FAIL saying a *user-perceivable* value is missing or lives only in a technical table — a timeout the user waits through, a money format they read, a sort order they see, a retry limit, a freshness window — is **real**, not overreach, in either mode. The placement rule is: every number, rule and policy a user can perceive lives in the behavioral layer (Product Constants, Display Rules, Semantic Vocabulary).
 - **Not real** — the claim is factually wrong. The PRD does not say that, or the API documentation does not say what the reviewer says it says. Quote the contradicting text.
@@ -161,6 +161,8 @@ Independently of the review, challenge the PRD yourself. The reviewer checks con
 Findings from this step join the same disposition flow as review findings. Number them in the same series and mark their origin as `senior-pm` so the decision sheet shows which findings the review never raised.
 
 Be disciplined here: a product challenge with no consequence you can state is variance, exactly as it would be from the reviewer.
+
+**SR-candidate detection.** You see FAILs across the whole document and across passes, which makes you the best-placed detector for "this keeps coming up." Whenever a finding's resolution — here or in Step 3 — is a **universal rule** rather than an initiative decision (it would hold for any feature in this project), mark the disposition's evidence with `sr-candidate` and add a `{rule, whyUniversal, originQuestion}` object to the `proposedSharedRequirements` array in your handoff. Apply the promotion criteria in `.claude/rules/shared-requirements.md`: initiative-independent AND decided at least twice across initiatives (or once with the recurrence named — grep prior initiatives' `*-writer-qa.json` and cite them). An SR is a rule, never a feature requirement. Proposal only — you never write to `docs/shared-requirements.md`; the user approves at Gate 3.
 
 ## Step 3: Make the Decisions
 
@@ -297,6 +299,14 @@ If none: "None — every finding was decided from evidence."
 
 [Findings from Step 2, including the ones that ended as `reject` — the owner should see what you considered and dropped.]
 
+## Proposed Shared Requirements
+
+| Rule | Why universal | Origin |
+|---|---|---|
+| [the rule, stated as a rule] | [why it holds project-wide, recurrence cited] | [finding/decision id] |
+
+If none: "None — every resolution was initiative-specific."
+
 ## Tickets for Writer
 
 ### T-1 — technical
@@ -370,9 +380,18 @@ Every count in `dispositionCounts` MUST be a JSON integer, not a string or prose
       "reason": "<not real | overreach | variance | no impact | fix would harm — plus the evidence>"
     }
   ],
+  "proposedSharedRequirements": [
+    {
+      "rule": "<the universal rule, stated as a rule — never as a feature requirement>",
+      "whyUniversal": "<why this holds for any feature in this project, with the recurrence cited>",
+      "originQuestion": "<the finding or decision that surfaced it>"
+    }
+  ],
   "nextAgent": "prd-writer | none"
 }
 ```
+
+Omit `proposedSharedRequirements` (or leave it empty) when no disposition carried an `sr-candidate` marker.
 
 Set `nextAgent` to `"prd-writer"` when there is at least one ticket, and `"none"` when there are zero tickets — with zero tickets there is nothing for the writer to do, and the pipeline completes as it would have without this agent.
 

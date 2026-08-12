@@ -177,6 +177,8 @@ If the user wants shared requirements:
 
 5. Copy `rules/shared-requirements.md` to `.claude/rules/shared-requirements.md`
 
+Tell the user: this initial seed is a starting point, not a fixed list — SRs grow through the promotion path in `.claude/rules/shared-requirements.md` (writer, reviewer, and senior PM propose recurring universal rules; the user approves them at Gate 3 of `/create-prd`).
+
 If the user says skip, set the "Shared requirements" path in project-context.md to "none" and move on.
 
 ## Step 5.6.1: Migration Scan for Existing Shared Requirements (MANDATORY when the file predates this setup run)

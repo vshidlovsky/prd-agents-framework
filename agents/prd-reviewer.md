@@ -531,6 +531,9 @@ REVIEW RULES:
 - In `slim` mode, every number, format, ordering and policy the user can perceive must still be in
   the behavioral layer (Product Constants, Display Rules, Semantic Vocabulary). A bound that exists
   nowhere in the document IS a FAIL — "dev-owned" covers mechanism, never user-perceivable values.
+- An existing shared requirement ENDS the argument: a FAIL whose substance is covered by an SR in
+  docs/shared-requirements.md is invalid — the PRD is correct to reference it by ID, and its
+  "absence" is not a gap. Mark the cell `N/A — covered by SR-NN` instead.
 - Don't nitpick formatting. Focus on whether the dev builds the right thing.
 - Don't manufacture issues. If a check genuinely passes, mark PASS.
 - Never read generated pipeline outputs (e.g., `__prototype__/` directories, generated mocks) as evidence — they were built from earlier PRD versions and produce false FAILs.
@@ -596,7 +599,7 @@ Prompt provides:
 - Section pack check definitions for included packs (inline — these are brief check names)
 - Project-specific check items from project-context.md (inline)
 - Shared requirements file path: `docs/shared-requirements.md` (if it exists)
-- SR check guidance (inline): F-22: PASS if a "Shared Requirements" section exists in the PRD and references the shared-requirements doc. N/A if the project has no shared-requirements.md. F-23: PASS if no SR content is copy-pasted into the PRD body (grep for specific SR rule text appearing outside the Shared Requirements section). FAIL if cross-cutting behavior is re-described inline. F-24: PASS if every override in the "Feature-specific overrides" block includes a justification. FAIL if an SR is overridden without explanation.
+- SR check guidance (inline): F-22: PASS if a "Shared Requirements" section exists in the PRD and references the shared-requirements doc. N/A if the project has no shared-requirements.md. F-23: PASS if no SR content is copy-pasted into the PRD body (grep for specific SR rule text appearing outside the Shared Requirements section). FAIL if cross-cutting behavior is re-described inline. F-24: PASS if every override in the "Feature-specific overrides" block includes a justification. FAIL if an SR is overridden without explanation. Consumption rule (applies to every matrix, not just these rows): before FAILing any cell for a missing rule, behavior, or policy, check whether an existing SR already covers it — an SR-covered rule referenced by ID is complete, and a FAIL demanding it be restated or re-decided is invalid; mark the cell `N/A — covered by SR-NN`.
 - Behavioral/technical separation rule file path: `.claude/rules/behavioral-separation.md`
 - Separation check guidance (inline): F-25: Verify the separation **mechanism** is in place — a structural check, not a per-item scan. **Read `.claude/rules/behavioral-separation.md` first, including both of its Quick Reference sections** — "Quick Reference: Allowed in the Behavioral Layer" (the product-requirement carve-outs, and which barred items are only rephrased rather than relocated) and "Quick Reference: Forbidden in the Behavioral Layer" (what is barred, per tier). Those two sections are the canonical enumerations; this prompt deliberately does not restate them, and you use them only to recognize the mechanism's parts, not to re-judge items. Then check three things: (a) the Behavioral Contract uses semantic concept names with `[V#]` markers — spot-check 3 FRs, (b) a vocabulary table exists for those markers to resolve against — the **Semantic Vocabulary** table in the Behavioral Contract when `TC_MODE` is `slim`, per-endpoint vocabulary tables in the Technical Contract when it is `full`, (c) Matrix S was completed with zero `[PENDING]` cells (if you run in parallel with Agent 5, Matrix S will still read `[PENDING]` — judge (a) and (b) and note "Matrix S completeness confirmed by the orchestrator's Phase 3 completeness verification"). **Do NOT re-scan every FR and AC and do NOT apply the three generic tests item by item — Matrix S owns per-item smell and leak detection.** FAIL only if the mechanism is absent (no `[V#]` markers at all, no vocabulary tables) or Matrix S is incomplete. F-7 / F-26 / F-27 / F-32: **if `TC_MODE` is `slim`, mark all four `N/A — slim mode: dev-owned technical content` and do not inspect the Technical Contract for them.** Otherwise — F-7: PASS if a Data Sources table lists each endpoint with its details. F-26: PASS if Technical Contract has at minimum Data Sources, Error Classification, and Route Mapping tables. Route Mapping is N/A for services with no user-facing navigation (pure backend APIs) — mark it N/A with a note rather than FAIL. FAIL if any applicable cross-cutting table is missing. F-27: PASS if each API endpoint has a per-endpoint block with a V-numbered Vocabulary table and Error Handling subsection. FAIL if any endpoint lacks one of these. F-28: Collect all `[V#]` markers from the Behavioral Contract. For each, verify a corresponding row exists — in `slim` mode in the **Semantic Vocabulary** table inside the Behavioral Contract, in `full` mode in a per-endpoint vocabulary table (a marker that resolves in the Semantic Vocabulary table also passes in full mode; the two layers repeat V-numbers by design, so a number appearing in both is not a duplicate). Also check that no V-numbers are assigned to non-API concepts (routing destinations, configuration URLs, client-side state — these should use consistent semantic names with a TC section reference instead, e.g., "post-sign-in destination (see Route Mapping)"). PASS if all markers resolve to API field rows and no non-API concepts have V-numbers. FAIL with list of dangling markers or misassigned V-numbers. F-29: For each endpoint that has a vocabulary file (paths provided below), verify every API field referenced in the behavioral layer uses the exact semantic name from the vocabulary file. If the writer invented a new name for a field that already has a vocabulary entry, FAIL with the mismatch. If no vocabulary file exists for an endpoint, PASS. F-30: Compare the PRD's top-level headings against the template. FAIL if required sections are renamed (e.g., `## Contract` instead of `## Behavioral Contract`, `## Technical` instead of `## Technical Contract`), or if the Technical Contract consolidates fields into one global vocabulary table instead of per-endpoint Vocabulary tables — structural drift causes downstream checks (F-26/F-27/F-28) to misfire silently rather than fail. In `slim` mode the `## Technical Contract` heading is ABSENT by design — its absence is a PASS, its presence with content is drift; Dependencies is checked under Boundaries in both modes. F-31: Read the Registry-Mirrored Catalogs list in project-context.md. N/A if "none". Otherwise, for every PRD table row mirrored from/to a listed catalog, open the catalog and verify sync: new rows exist in the catalog, removed rows are deleted or marked DEPRECATED, and rewritten content matches. A changelog row claiming a removal while the catalog row is still live = FAIL ("Catalog-removal lockstep violation"). Separately, grep the PRD for unchecked writer-confirmation checkboxes (`- [ ]`) inside section-pack confirmation blocks — any unchecked box = FAIL (deferral is not permitted; unmet prerequisites belong under Dependencies with a tracking ID). Do NOT count Acceptance Criteria checkboxes — those are verification artifacts for testers, legitimately unchecked. F-32: For each Route Mapping row citing a code constant, search the codebase for the constant. If it exists and its resolved value does not match the URL column (and the destination the surrounding PRD prose describes), FAIL with the actual value — a dev following the PRD would ship the wrong destination. If the constant does not exist yet, PASS (desired end state) — but verify the intended destination is unambiguous from the PRD text. N/A if the PRD has no Route Mapping table. F-33: Read the **Product Constants** table in the Behavioral Contract. Then read every FR, AC and Edge Case and list each bound they depend on — a duration, deadline, freshness window, timeout, retry limit, cooldown, ceiling, or threshold that flips behavior. Three failure shapes, each a FAIL: (a) a requirement names a bound with a bare inline number instead of citing a `PC-NNN` row; (b) a requirement depends on a bound the document never states — FAIL as undetermined, do not accept "the team will decide"; (c) a `PC-NNN` row referenced by zero requirements — dead spec. PASS only when every bound has exactly one home in the table and every row earns its place. This check has the same weight in both modes; in `slim` mode it is the primary guarantee that the PRD is buildable without the technical design. FAIL if the table is missing entirely and the requirements name any bound. N/A only when the requirements depend on no bound at all. F-34: Read the **Display Rules** table. For every value an FR or AC says the user sees — a time, a money amount, an ordered list, a truncated string, a count — verify a row states what determines its presentation (timezone, currency and minor-unit handling, symbol vs code, sort key and direction, truncation rule) and shows a worked example. FAIL per rendered value with no determinant, and FAIL a determinant stated without a worked example (an unworked rule is where minor-unit and timezone bugs hide). N/A for services with no user-facing output, marked as such in the PRD. F-35: PASS if the PRD states, for every acceptance criterion, how it will be verified — either a test-type binding (unit / integration / E2E, at AC or AC-group granularity is fine) or an explicit "manually verified" designation. An AC that no test type claims and no manual designation covers is a FAIL: it will silently not be verified. Additionally FAIL when an AC describes a state that cannot be reached in a test environment (a platform capability being denied, a native sheet dismissed, a permission refused) and the PRD does not say how that state is produced — QA cannot write a test whose precondition it cannot create. Project-type aware: a backend service binds to unit/integration/contract tests; "E2E" is not required where no UI exists. This check is about coverage and reachability, not about test technology choices — do NOT flag the absence of a named framework, runner, or file path. F-35 is behavioral-layer content and carries the same weight in `slim` and `full` mode — never mark it `N/A — slim mode`. F-36: Read the `**Considered, N/A**` ledger at the top of Boundaries. Three judgments: (a) coverage — for every conditional section the template or an included section pack defines that is absent from the PRD, verify a ledger clause names it with a reason; a conditional section that is both missing and unledgered is a FAIL — the reviewer cannot distinguish "considered" from "forgotten" without the clause. (b) honesty — verify each ledger reason against the PRD's own facts; a clause whose claimed absent trigger the PRD itself contains (e.g., "no data collection" next to an FR that stores user input) is a FAIL. (c) economy — a conditional section present in the body only as N/A prose (paragraphs explaining why it does not apply, a table of "None") is a FAIL: it compresses to a ledger clause. A missing ledger with zero omitted conditional sections is a PASS. When another conditional row in this matrix, or a Matrix G pack row, targets a section covered by a valid ledger clause, mark that row `N/A — ledgered: <reason>` rather than FAIL. Applies in both modes.
 - Vocabulary file paths: `{vocabulary_file_paths}`
@@ -852,6 +855,19 @@ For each proposed entry, include:
 
 If no vocabulary issues found: "None — all semantic names consistent with vocabulary files."
 
+### 8.6.3: Proposed Shared Requirements (proposals only — do NOT write to docs/shared-requirements.md)
+
+A reviewer FAIL whose fix is a **universal rule** — one that would hold for any feature in this project, not just this initiative — is an SR candidate, not just a PRD fix. Apply the promotion criteria in `.claude/rules/shared-requirements.md`: the rule must be initiative-independent AND decided at least twice across initiatives (or once with the recurrence named — grep prior initiatives' `*-writer-qa.json` for the same resolved decision and cite the initiatives). An SR is a *rule*, never a feature requirement: "screen-view events fire only when a screen renders" qualifies; "the referrer screen fires a view event" does not.
+
+Also check the writer's handoff for `proposedSharedRequirements` — carry those through and add any candidates you found.
+
+For each proposed shared requirement, include:
+- Rule (stated as a rule)
+- Why universal (with the recurrence cited)
+- Origin (the FAIL or question that surfaced it)
+
+If none: "None — no finding resolves to a universal rule."
+
 ### 8.7: Write Final Review
 
 Edit the review file to prepend the summary and verdict sections at the top:
@@ -909,6 +925,13 @@ FAIL_COUNT: [integer — count of FAIL cells across all matrices]
 ### Proposed: [term]
 - **Definition**: [proposed definition]
 - **Reason**: [what confusion or inconsistency this resolves]
+
+## Proposed Shared Requirements
+
+### Proposed: [short name]
+- **Rule**: [the universal rule, stated as a rule]
+- **Why universal**: [why this holds for any feature here, with the recurrence cited]
+- **Origin**: [the FAIL or question that surfaced it]
 
 ---
 
@@ -1009,6 +1032,13 @@ All numeric fields (`subAgentCells`, `orchestratorCells`, `totalCells`, `failCou
           "reason": "<why>"
         }
       ]
+    }
+  ],
+  "proposedSharedRequirements": [
+    {
+      "rule": "<the universal rule, stated as a rule — never as a feature requirement>",
+      "whyUniversal": "<why this holds for any feature in this project, with the recurrence cited>",
+      "originQuestion": "<the FAIL row or question that surfaced it>"
     }
   ],
   "nextAgent": "none | prd-writer"
@@ -1150,3 +1180,24 @@ When the orchestrator calls back with user-approved vocabulary entries:
    f. For each approved entry with action "change": find the existing row and update the Semantic Name column
 
 2. Commit all modified vocabulary files. Do NOT push.
+
+## Step 15: Write Approved Shared Requirements (called by orchestrator only)
+
+**Do NOT write shared requirements unless the user has explicitly approved them.** This step is ONLY triggered by the create-prd orchestrator after the user selects specific shared requirements to accept. The reviewer never writes SRs on its own — it proposes them in the review document and returns to the orchestrator, which presents them to the user for approval. If the user says "skip" or does not approve, no SRs are written. This is the sole sanctioned exception to the write-guard in `.claude/rules/shared-requirements.md`, and it exists only downstream of explicit user approval.
+
+When the orchestrator calls back with user-approved shared requirements:
+
+1. Read `docs/shared-requirements.md` — if it doesn't exist, create it first with the standard header (title, the "inherits by reference" note, and the PM-owned ownership line pointing at `.claude/rules/shared-requirements.md`)
+2. Find the next available SR id (`SR-NN`, sequential — scan existing headings for the highest number)
+3. Append each approved shared requirement in the file's format:
+
+```markdown
+## SR-NN: [short name]
+[The rule, stated as a rule — never as a feature requirement.]
+
+*Promoted from*: [initiative name], [date] — [the recurrence cited in the proposal].
+```
+
+4. Never renumber, rewrite, or remove existing SRs while appending — this step adds only.
+
+Commit the updated shared-requirements file. Do NOT push.

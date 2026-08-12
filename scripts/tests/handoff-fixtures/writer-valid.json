@@ -6,7 +6,10 @@
   "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
   "technicalContractMode": "slim",
   "technicalContractModeSource": "project-context",
-  "apiEndpoints": ["GET /v1/catalog/search", "POST /v1/catalog/search/filters"],
+  "apiEndpoints": [
+    "GET /v1/catalog/search",
+    "POST /v1/catalog/search/filters"
+  ],
   "existingCodeReferenced": [
     "src/catalog/search/SearchController.kt",
     "src/catalog/search/FilterMapper.kt"
@@ -53,5 +56,12 @@
       ]
     }
   ],
-  "nextAgent": "prd-reviewer"
+  "nextAgent": "prd-reviewer",
+  "proposedSharedRequirements": [
+    {
+      "rule": "Screen-view analytics events fire only when a screen actually renders",
+      "whyUniversal": "Holds for any feature; decided in checkout-flow and profile-edit writer Q&A logs",
+      "originQuestion": "Q3"
+    }
+  ]
 }

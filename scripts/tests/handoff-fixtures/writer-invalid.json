@@ -4,8 +4,13 @@
   "timestamp": "10 Aug 2026",
   "status": "draft_complete",
   "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
-  "apiEndpoints": ["GET /v1/catalog/search", 42],
-  "existingCodeReferenced": ["src/catalog/search/SearchController.kt"],
+  "apiEndpoints": [
+    "GET /v1/catalog/search",
+    42
+  ],
+  "existingCodeReferenced": [
+    "src/catalog/search/SearchController.kt"
+  ],
   "dependencies": [],
   "prdMetrics": {
     "frCount": "eighteen",
@@ -29,5 +34,10 @@
       ]
     }
   ],
-  "nextAgent": "prd-reviewer"
+  "nextAgent": "prd-reviewer",
+  "proposedSharedRequirements": [
+    {
+      "whyUniversal": "Holds for any feature in this project"
+    }
+  ]
 }

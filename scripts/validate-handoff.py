@@ -526,6 +526,7 @@ def validate_writer(document: Dict[str, Any], problems: Problems) -> None:
 
     validate_glossary_proposals(document, problems, root)
     validate_vocabulary_proposals(document, problems, root)
+    validate_shared_requirement_proposals(document, problems, root)
 
     want_string(problems, document, root, "nextAgent", equals="prd-reviewer")
 
@@ -544,6 +545,27 @@ def validate_glossary_proposals(
         want_string(problems, term, path, "term")
         want_string(problems, term, path, "definition")
         want_string(problems, term, path, "reason")
+
+
+def validate_shared_requirement_proposals(
+    document: Dict[str, Any], problems: Problems, root: str
+) -> None:
+    """`proposedSharedRequirements` is optional in every handoff that carries
+    it (writer, reviewer, senior-pm): absent means "none proposed". When
+    present, each proposal needs the rule and its universality argument;
+    `originQuestion` is optional because a senior-pm or reviewer proposal may
+    originate from a finding rather than a Q&A entry."""
+    ok, proposals = want_list(
+        problems, document, root, "proposedSharedRequirements",
+        required=False, of="object",
+    )
+    if not ok:
+        return
+    for index, proposal in enumerate(proposals):
+        path = "proposedSharedRequirements[%d]" % index
+        want_string(problems, proposal, path, "rule")
+        want_string(problems, proposal, path, "whyUniversal")
+        want_string(problems, proposal, path, "originQuestion", required=False)
 
 
 def validate_vocabulary_proposals(
@@ -676,6 +698,7 @@ def validate_reviewer(document: Dict[str, Any], problems: Problems) -> None:
 
     validate_glossary_proposals(document, problems, root)
     validate_vocabulary_proposals(document, problems, root)
+    validate_shared_requirement_proposals(document, problems, root)
 
     next_ok = want_string(
         problems, document, root, "nextAgent", choices=("none", "prd-writer")
@@ -791,6 +814,8 @@ def validate_senior_pm(document: Dict[str, Any], problems: Problems) -> None:
             path = "rejectedFails[%d]" % index
             want_string(problems, entry, path, "matrixRow")
             want_string(problems, entry, path, "reason")
+
+    validate_shared_requirement_proposals(document, problems, root)
 
     # dispositionCounts must agree with the arrays it summarizes. A decision
     # sheet whose counts and lists disagree cannot be presented at Gate 3:

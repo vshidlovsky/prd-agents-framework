@@ -20,23 +20,23 @@
       "type": "technical",
       "instruction": "In the Technical Contract vocabulary table for the list endpoint, correct V7's API field to the documented snake_case spelling, and sweep the fixtures for the re-cased form.",
       "decision": null,
-      "rationale": "Root cause R-1 — cells F-20 and S-14 are one defect: the field was re-cased from the client DTO.",
-      "evidence": "docs/api-sources.md — list endpoint response schema; the wire contract wins over the client DTO"
+      "rationale": "Root cause R-1 \u2014 cells F-20 and S-14 are one defect: the field was re-cased from the client DTO.",
+      "evidence": "docs/api-sources.md \u2014 list endpoint response schema; the wire contract wins over the client DTO"
     },
     {
       "id": "T-2",
       "type": "product",
       "instruction": "Add an AC for the empty-result state under FR-018 asserting the decided behavior, and reference it from the Edge Cases table row for zero matches.",
       "decision": "An empty result set keeps the applied-filter state visible and offers a clear-all action; the list area shows the empty state, not a blank region.",
-      "rationale": "Root cause R-2 — cells F-11 and D1-4 are the same gap. Matching the shipped sibling keeps two lists from behaving differently.",
+      "rationale": "Root cause R-2 \u2014 cells F-11 and D1-4 are the same gap. Matching the shipped sibling keeps two lists from behaving differently.",
       "evidence": "sibling PRD saved-views FR-009 (shipped); research doc: existing list empty-state component"
     },
     {
       "id": "T-3",
       "type": "product",
-      "instruction": "Replace FR-012's unbounded retry with a bounded one: attempts stop at the server-side lockout threshold, and the remaining-attempts state the response already returns is surfaced. Do NOT apply the review's suggested fix (distinct error copy per failure cause) — the response carries no field that distinguishes those causes, so that copy would have to be guessed and would mislead the user.",
+      "instruction": "Replace FR-012's unbounded retry with a bounded one: attempts stop at the server-side lockout threshold, and the remaining-attempts state the response already returns is surfaced. Do NOT apply the review's suggested fix (distinct error copy per failure cause) \u2014 the response carries no field that distinguishes those causes, so that copy would have to be guessed and would mislead the user.",
       "decision": "The server-side lockout threshold is the only cap; the client never defines its own, and the user is told how many attempts remain rather than why the last one failed.",
-      "rationale": "Root cause R-5 — the FAIL is real (an unbounded loop with no exit), but the suggested fix is keyed to a signal the wire contract does not carry, and a second client-side cap would create two sources of truth. Repeated verification failures also trigger issuer-side fraud locks, so bounding the loop is the user-protective answer.",
+      "rationale": "Root cause R-5 \u2014 the FAIL is real (an unbounded loop with no exit), but the suggested fix is keyed to a signal the wire contract does not carry, and a second client-side cap would create two sources of truth. Repeated verification failures also trigger issuer-side fraud locks, so bounding the loop is the user-protective answer.",
       "evidence": "API docs: verify response exposes a remaining-attempts field and no failure-cause discriminator; research doc: lockout threshold owned by the verification service"
     }
   ],
@@ -44,15 +44,21 @@
     {
       "id": "E-1",
       "question": "Should an applied filter set be retained across sessions, or reset on sign-out?",
-      "recommendation": "Reset on sign-out — nothing in the evidence requires persistence, and retaining it implies storage this initiative does not scope.",
-      "whyUngroundable": "Root cause R-4 — no sibling initiative, catalog row, shared requirement, or research finding addresses retention, and the Q&A log never raised it. The answer depends on product intent."
+      "recommendation": "Reset on sign-out \u2014 nothing in the evidence requires persistence, and retaining it implies storage this initiative does not scope.",
+      "whyUngroundable": "Root cause R-4 \u2014 no sibling initiative, catalog row, shared requirement, or research finding addresses retention, and the Q&A log never raised it. The answer depends on product intent."
     }
   ],
   "rejectedFails": [
     {
       "matrixRow": "H-3",
-      "reason": "overreach — root cause R-3: lesson L-003's `Applies when` condition (\"PRD introduces persistent local state\") does not hold for this PRD, so the lesson generates no obligation. Checked the Technical Contract and the state sections: no persistence is introduced."
+      "reason": "overreach \u2014 root cause R-3: lesson L-003's `Applies when` condition (\"PRD introduces persistent local state\") does not hold for this PRD, so the lesson generates no obligation. Checked the Technical Contract and the state sections: no persistence is introduced."
     }
   ],
-  "nextAgent": "prd-writer"
+  "nextAgent": "prd-writer",
+  "proposedSharedRequirements": [
+    {
+      "rule": "Screen-view analytics events fire only when a screen actually renders",
+      "whyUniversal": "Holds for any feature; decided in checkout-flow and profile-edit writer Q&A logs"
+    }
+  ]
 }

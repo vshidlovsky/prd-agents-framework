@@ -7,3 +7,4 @@ prdMetrics.frCount: expected integer, got non-numeric string "eighteen"
 prdMetrics.acCount: required field is missing
 prdMetrics.isFreshDraft: expected boolean, got string
 proposedVocabularyEntries[0].entries[0].previousName: required field is missing
+proposedSharedRequirements[0].rule: required field is missing
