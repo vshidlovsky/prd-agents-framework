@@ -342,7 +342,7 @@ For each checked section pack in project-context.md, add rows from its check def
 Section pack check definitions (add rows only for included packs):
 
 `design-prototype`: Visual References table exists with one row per screen | Every screen in ACs has a table row | Visual references point to DS components or Figma (not `__prototype__/` files) | Referenced DS component files exist on disk
-`user-journey`: Entry path specified | Trigger specified | Current behavior described | Exit specified
+`user-journey`: Entry path names at least one concrete preceding screen AND the interaction on it that brings the user here — "user navigates to the screen" with no named origin = FAIL | Non-UI entries (deep link, redirect, notification) each listed with their gates, or an explicit "None" | Trigger specified | Current behavior described | Exit specified
 `screen-flow`: Diagram exists (Mermaid or equivalent) | Shows happy + error + cancel paths | All AC screens appear in diagram | Transitions labeled with triggers
 `navigation`: Entry points specified | Back/dismiss behavior per screen | Deep link support (if applicable) | Consistent with screen flow diagram
 `analytics-events`: Every screen has a view event | Names follow convention | No duplicates vs codebase | Properties documented
