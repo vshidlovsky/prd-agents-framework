@@ -211,7 +211,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ### Feature Flags / Remote Config
 
-> **GUIDE**: Feature flags, remote config, rollout settings. If no flags, state "None" and explain why.
+> **GUIDE**: Feature flags, remote config, rollout settings. If the feature ships with no flag and no remote config, OMIT this section and add a clause to the Considered, N/A ledger in Boundaries instead — a table of "None" is dead prose.
 
 | Field | Value |
 |-------|-------|
@@ -332,8 +332,20 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ## Boundaries
 
-> **Sub-section order**: Always use this order: Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
+> **Sub-section order**: Always use this order: Considered, N/A → Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
 > Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
+
+### Considered, N/A
+
+> **GUIDE**
+> **What**: One line naming every conditional section that was considered and omitted because its trigger is absent — with the reason in a few words per clause.
+> **Why**: Conditional sections (Compliance, Feature Flags, capacity where trivial, form/input material, ...) are OMITTED when their trigger is absent — no defensive N/A prose blocks. But silent omission is worse than N/A prose: the reviewer must be able to distinguish "considered and not applicable" from "forgotten." This ledger is that distinction, and the reviewer FAILs a conditional section that is both missing and unledgered.
+> **How**: One clause per omitted section, ` · ` separated, reason in a few words (one sentence maximum). Each reason must hold against the PRD's own facts. If nothing was omitted, state "None — every conditional section applies."
+> **Both modes**: applies in `slim` and `full` mode alike.
+
+**Considered, N/A**: [Section] ([reason in a few words]) · [Section] ([reason])
+
+---
 
 ### Dependencies
 
@@ -393,7 +405,7 @@ None — all questions resolved.
 ## Tier 2 — Include When Applicable
 
 > Include these when conditions apply. Each has an **Insert into** tag.
-> **How to use**: When the condition applies, MOVE the section to its insertion point (specified by the `Insert into` tag) — do not leave it here at the bottom. When the condition does not apply, DELETE the section entirely.
+> **How to use**: When the condition applies, MOVE the section to its insertion point (specified by the `Insert into` tag) — do not leave it here at the bottom. When the condition does not apply, DELETE the section entirely and record it as a clause in the Considered, N/A ledger in Boundaries — never leave an N/A prose block in its place.
 
 ---
 
