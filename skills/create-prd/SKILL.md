@@ -181,6 +181,8 @@ The prd-writer will:
 3. Draft the PRD
 4. Write the handoff file
 
+**Relay answers verbatim.** When you pass the user's answers to the writer — or any gate answer to any subagent — pass the original wording through unchanged, quoted (typo fixes only; no paraphrase, no vocabulary substitution, no restructuring). The writer records its `userAnswer` fields from what you relay; a paraphrased relay launders the owner's voice out of the pipeline before any agent ever reads it. If a summary or reading of the answer is useful, add it alongside the quote, clearly labeled as the orchestrator's interpretation.
+
 If run logging is enabled:
 ```bash
 echo "writing_end=$(date +%s)" >> "$TIMING_FILE"
@@ -481,7 +483,7 @@ If no shared requirements were proposed, say "No new shared requirements propose
 
 **Then**, ask for action — one prompt covering the dispositions, lessons, glossary terms, vocabulary, and shared requirements. The user has three powers over the senior PM's work:
 
-- **(a) Answer the escalations** — each answer becomes an additional ticket for the writer, carrying the user's decision verbatim.
+- **(a) Answer the escalations** — each answer becomes an additional ticket for the writer, carrying the user's decision verbatim: quote the user's exact words in the ticket (typo fixes only; no paraphrase, no vocabulary substitution). Any interpretation of the answer is added separately and labeled as the agent's.
 - **(b) Veto or override any disposition** — turn a `reject` back into a ticket ("fix F-14 after all"), drop a ticket ("skip T-3"), or replace a `fix-product` decision with a different one. The senior PM's dispositions are proposals with authority, not commands. Record every override: it changes the ticket list you pass to the writer, and the writer applies the amended list.
 - **(c) Say "go"** — accept the dispositions as written and start the revision.
 
