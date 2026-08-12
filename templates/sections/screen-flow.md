@@ -7,7 +7,7 @@
 
 > **GUIDE**
 > **What**: A Mermaid flowchart showing every state the user can be in and every transition between states.
-> **Why**: Without a flow diagram, the reader must mentally reconstruct the state machine from scattered ACs. An AI coding agent uses this diagram to implement navigation and state management — missing nodes become missing code paths.
+> **Why**: Without a flow diagram, the reader has to rebuild the state machine in their head from scattered ACs. An AI coding agent uses this diagram to implement navigation and state management — a missing node becomes a missing code path.
 > **Derived view — the contract wins**: The diagram is a **derived view** of the FRs, ACs, and edge cases it cites — never a second source of truth. When diagram and contract disagree, the contract wins and the diagram is the defect. Regenerate the diagram from the contract after any change to states, transitions, or gates; never edit behavior into the diagram first.
 > **How**:
 > - Use Mermaid `flowchart TD` (top-down) syntax. Do not use ASCII art.
@@ -19,11 +19,11 @@
 > - **Empty states**: "No data" and "no search results" are different states with different exits. Model each as its own node.
 >
 > **Required edges** — every diagram must include:
-> - **Exit edges from every terminal state**: If the user can tap Back or Close from an error state or empty state, show that edge explicitly. Do not assume the reader infers navigation is available from non-happy-path states.
+> - **Exit edges from every terminal state**: If the user can tap Back or Close from an error state or empty state, show that edge explicitly. Do not assume the reader will guess that navigation is available from error and empty states.
 > - **Retry edges go to loading, not to data**: Error → Try again → Loading (skeleton) → Success/Failure. Never draw error → data directly.
 > - **Back/close/leave edges**: From every state where the user can navigate away.
 >
-> **Sub-state decomposition**: When a single screen has multiple internal states visible to the user (e.g., a form with in-flight validation, inline errors, conditional sections appearing/disappearing), decompose it into sub-state nodes rather than collapsing everything into one node with self-loops. The test: if two ACs describe different things on screen, they are different states.
+> **Sub-state decomposition**: When a single screen has multiple internal states visible to the user (e.g., a form with in-flight validation, inline errors, conditional sections appearing/disappearing), split it into sub-state nodes instead of collapsing everything into one node with self-loops. The test: if two ACs describe different things on screen, they are different states.
 >
 > **Completeness check**: After drawing the diagram, scan every AC that describes a state transition (loading → loaded, error → retry, empty → back). Each must have a corresponding edge in the diagram. If an AC's transition is not in the diagram, either add the edge or document why it's omitted (e.g., global behavior owned by a shared requirement).
 >

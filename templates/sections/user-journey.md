@@ -1,15 +1,15 @@
 # Section Pack: User Journey
 
 > **Insert into**: Context [position: 1]
-> **When**: Any feature with a user-facing flow — helps designers and developers understand spatial context.
+> **When**: Any feature with a user-facing flow — shows designers and developers where the feature sits in the app.
 
 ### User Journey
 
 > **GUIDE**
 > **What**: The full navigation path showing how the user reaches this feature and where they go after.
-> **Why**: Designers need spatial context — where this feature lives in the app, what surrounds it.
+> **Why**: Designers need to know where this feature lives in the app and what surrounds it.
 > **How**:
-> - **Entry path** (required content — all three): (1) the concrete screen(s) the user is on immediately before this feature — always answer "how do we end up here?" by naming the screen one step before; (2) the interaction on that screen that brings them here (tap, link, menu item); (3) any non-UI entries — deep link, redirect, notification — each subject to the same gates (auth, flags, eligibility) as in-app navigation, or an explicit "none". "User navigates to the screen" with no named origin is not an entry path.
+> - **Entry path** (required content — all three): (1) the concrete screen(s) the user is on immediately before this feature — always answer "how do we end up here?" by naming the screen one step before; (2) the interaction on that screen that brings them here (tap, link, menu item); (3) any non-UI entries — deep link, redirect, notification — each going through the same gates (auth, flags, eligibility) as in-app navigation, or an explicit "none". "User navigates to the screen" with no named origin is not an entry path.
 > - **Trigger**: What prompted the user to enter this flow
 > - **Current behavior**: One sentence on what exists today
 > - **Exit**: Where the user lands after completing or cancelling

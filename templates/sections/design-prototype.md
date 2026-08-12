@@ -7,7 +7,7 @@
 
 > **GUIDE**
 > **What**: A table mapping every screen or flow step to its visual design source — a Figma URL, a DS component path, or a `BLOCKED` flag.
-> **Why**: Without an explicit visual reference, implementations diverge from the approved design. Naming the source here makes the authority explicit and reviewable.
+> **Why**: Without an explicit visual reference, what gets built drifts from the approved design. Naming the source here makes it clear which design wins, and lets reviewers check it.
 > **How**:
 > 1. One row per screen or flow step, in flow order.
 > 2. **Visual Reference** column — fill exactly one of:
