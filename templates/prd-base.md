@@ -8,9 +8,13 @@
 > **How to use**: Copy this template, fill in every Tier 1 section, include section packs listed in project-context.md.
 > Delete the `> **GUIDE**` blocks after filling each section.
 >
-> **Section order**: Context (what, who) → Behavioral Contract (requirements, verification, edge cases) → Technical Contract (APIs, mappings, config, dependencies) → Boundaries (scope, questions). Within each area, follow the numbered insertion-point markers for section pack placement.
+> **Section order**: Context (what, who) → Behavioral Contract (requirements, constants, vocabulary, display rules, verification, edge cases) → Technical Contract (section packs, dependencies, and — in `full` mode only — APIs, mappings, config) → Boundaries (scope, questions). Within each area, follow the numbered insertion-point markers for section pack placement.
 >
 > **Separation principle**: The Behavioral Contract describes *what* the system does (observable by users and testers). The Technical Contract describes *how* it's built (readable by engineers). A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `.claude/rules/behavioral-separation.md` for the full rules.
+>
+> **Placement rule (governs both contracts)**: *Every number, rule, and policy a user can perceive lives in the behavioral layer. A constant, format, ordering, or policy may never live only in a technical table, a discrepancy row, or a section the reader has to reconstruct it from.* The Technical Contract may repeat a user-perceivable value; it must never be its only home.
+>
+> **Technical Contract mode**: `project-context.md` → PRD Configuration → **Technical Contract → Mode** selects `slim` (default) or `full`; a `/create-prd <initiative> --tc full|slim` run override wins over the project setting. In `slim` mode the PRD-owned technical tables below are omitted and the team's technical design owns that content — the PRD still carries Product Constants, Semantic Vocabulary and Display Rules in the behavioral layer. In `full` mode the PRD also carries the Technical Contract tables (legacy behavior).
 >
 > **Section packs**: The prd-writer inserts additional sections from `templates/sections/` based on what's listed in `project-context.md`. Each section pack has an `Insert into` tag with a numbered position (e.g., `Insert into: Technical Contract [position: 1]`). Insert packs in ascending position order. Packs sharing the same position number should be inserted in alphabetical order by section name.
 
@@ -46,7 +50,7 @@ As a [role], I want [goal] so that [benefit].
 
 ## Behavioral Contract
 
-> **Notation**: This section uses semantic concept names for data attributes. Each semantic name that maps to an API field is linked via a `[V#]` marker on first use, pointing to a row in the per-endpoint vocabulary tables in the [Technical Contract](#technical-contract). Non-API concepts (routing destinations, configuration URLs, client-side state) use consistent semantic names without V-markers and reference their TC section on first use (e.g., "post-sign-in destination (see Route Mapping)").
+> **Notation**: This section uses semantic concept names for data attributes. Each semantic name that maps to an API field is linked via a `[V#]` marker on first use, pointing to a row in the [Semantic Vocabulary](#semantic-vocabulary) table below. Non-API concepts (routing destinations, configuration URLs, client-side state) use consistent semantic names without V-markers; name the destination or setting semantically on first use (e.g., "post-sign-in destination"), and in `full` mode reference the Technical Contract section that maps it.
 >
 > **Vocabulary files**: If `semantic-vocabulary/` files exist for the endpoints in this initiative, semantic names MUST match the vocabulary entries. For new fields not yet in vocabulary, the writer proposes entries in the handoff file.
 >
@@ -92,7 +96,56 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **How**: One bullet per entity. Include: what it is, format/constraints, how it's used. Reference the vocabulary table for field-level details.
 > **Business-level only**: NO language-specific types, NO file paths, NO enum names, NO API field names. Use semantic concept names.
 
-- **[Entity Name]**: [What it is, format, how it's used in this initiative. See the vocabulary table for the endpoint's field mapping.]
+- **[Entity Name]**: [What it is, format, how it's used in this initiative. See the Semantic Vocabulary table for the concept's definition.]
+
+---
+
+### Product Constants
+
+> **GUIDE**
+> **What**: Every user-perceivable number the requirements depend on — deadlines, freshness windows, timeouts the user waits through, retry limits, cooldowns, list ceilings, behavior thresholds. One row each.
+> **Why**: This is the placement rule made structural. A constant that lives only in a technical table disappears when the technical contract does, and the requirement that depends on it becomes unbuildable. The value lives here, in the behavioral layer, once.
+> **How**:
+> - Give every constant a stable ID (PC-001, PC-002, ...) and a semantic name.
+> - **Every FR/AC that depends on a bound cites the constant by ID** — `PC-001` — instead of restating the bare number inline. The value appears in this table and nowhere else.
+> - Every row must be referenced by at least one FR, AC, or Edge Case. An unreferenced constant is dead spec — delete it (Quality Standard #9).
+> - Values that are *not* user-perceivable (connection pool sizes, buffer lengths, internal batch sizes) do NOT belong here — they are dev-owned.
+> **Both modes**: this section is Tier 1 in `slim` and `full` alike. In `full` mode the Technical Contract may repeat a value; it must never be its only home.
+
+| ID | Constant | Value | What it bounds | Referenced by |
+|----|----------|-------|----------------|---------------|
+| PC-001 | [semantic name of the bound] | [value with unit] | [which behavior this bounds, and what happens at the limit] | [FR/AC IDs] |
+
+---
+
+### Semantic Vocabulary
+
+> **GUIDE**
+> **What**: The concept dictionary for this PRD. One row per semantic concept name used in the behavioral layer with a `[V#]` marker.
+> **Why**: This is the vocabulary bridge — the PRD names the concepts, the team binds them to fields using the canonical API reference. Naming the concept is the PM's job; binding it to a wire field is the team's.
+> **How**:
+> - V-numbers are sequential across the whole PRD and are assigned to API-backed concepts only. Never assign a V-number to a routing destination, a configuration URL, or client-side state.
+> - Copy semantic names from `semantic-vocabulary/` files when they exist; propose new entries in the handoff rather than inventing a competing name.
+> - Every `[V#]` marker in the behavioral layer resolves to a row here; every row is used by at least one FR/AC/Edge Case.
+> - **`API Field` is an optional, dev-owned column.** Omit it in `slim` mode. Add it only when the project keeps a PRD-owned technical contract (`Mode: full`) and wants the binding in one place — in that case do not also duplicate the V-numbers in a per-endpoint table.
+
+| V# | Semantic Name | Type | Required | Notes |
+|----|---------------|------|----------|-------|
+| V1 | [concept name] | [type] | [yes/no] | [what the value means; which distinction the behavior branches on] |
+
+---
+
+### Display Rules
+
+> **GUIDE**
+> **What**: One row per rendered value, stating what determines its presentation and showing a worked example.
+> **Why**: A format the user reads is a product decision, not a rendering detail. Timezone, currency and minor-unit handling, symbol-vs-code, ordering, and truncation change what the user believes — they must not live only in a technical table or be left to the implementer.
+> **How**: For every value the user sees, state the determinant — which clock/timezone a time is rendered in, which currency and how minor units are handled, whether the symbol or the ISO code is shown, what the sort key and direction are, where and how text truncates — then give one concrete worked example (input → rendered output).
+> **Coverage**: every value named in an FR or AC that is displayed to a user needs a row. Mark `N/A — no rendered values` for services with no user-facing output.
+
+| ID | Rendered Value | Presentation Determinant | Worked Example |
+|----|----------------|--------------------------|----------------|
+| DR-001 | [value as the user sees it] | [timezone / currency + minor units / symbol vs code / sort key + direction / truncation rule] | [input → rendered output] |
 
 ---
 
@@ -171,12 +224,20 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ## Technical Contract
 
-> This section maps the behavioral concepts used in the [Behavioral Contract](#behavioral-contract) to their API implementations. If the API changes, update this section — the behavioral requirements above should not need modification unless the change alters observable behavior.
+> **Tier 2 — condition**: the project keeps a PRD-owned technical contract (`Technical Contract → Mode: full` in `project-context.md`, or a `--tc full` run override). Everything under "PRD-owned technical content" below is included **only** in `full` mode; in `slim` mode DELETE those sub-sections.
 >
-> **Organization**:
+> In `slim` mode the section itself remains as the home for the section packs that insert here and for Dependencies — nothing else. The content that is *purely* implementation reference is **dev-owned by default**: component paths, configuration attributes, mock data, error-code-to-class mappings, query/cache configuration, route constants, and API request/response shapes live in the team's technical design, not in the PRD. A PRD is not incomplete for omitting them.
+>
+> The behavioral anchors stay in the Behavioral Contract in both modes: **Product Constants**, **Semantic Vocabulary**, **Display Rules**. Never move a user-perceivable number, format, ordering, or policy down here — this section may repeat one, but it may never be its only home.
+>
+> **Organization (`full` mode)**:
 > 1. Cross-cutting tables — Data Sources, Query Configuration, Error Classification, Route Mapping
-> 2. Per-endpoint blocks — Vocabulary table (V-numbered rows mapping semantic names to API fields) + Error Handling
+> 2. Per-endpoint blocks — Vocabulary table (V-numbered rows binding semantic names to API fields) + Error Handling
 > 3. UI/config sections — Component Mapping, Visual References, etc. (copy, localization keys, and translations are design-owned — not a PRD section)
+>
+> In `full` mode the per-endpoint Vocabulary tables carry the API-field binding for the same V-numbers defined in the Semantic Vocabulary table. Repeating a V-number across the two layers is expected; splitting the set across them is not — every marker must resolve in both places or in the Semantic Vocabulary table alone.
+
+<!-- PRD-owned technical content — `full` mode only. In `slim` mode delete every sub-section from here through Configuration Attributes, keeping the section packs and Dependencies. -->
 
 ### Data Sources
 
@@ -237,7 +298,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 #### Vocabulary
 
-> **GUIDE**: Maps semantic concept names (used in behavioral layer with `[V#]` markers) to actual API fields. V-numbers are sequential across all endpoints in the PRD. Copy entries from vocabulary files (`semantic-vocabulary/`) when they exist; add new rows for fields not yet mapped.
+> **GUIDE**: `full` mode only. Binds the semantic concept names defined in the [Semantic Vocabulary](#semantic-vocabulary) table to actual API fields, per endpoint. Reuse the same V-numbers — this table repeats them with their field binding, it does not define a second set. Copy entries from vocabulary files (`semantic-vocabulary/`) when they exist; add new rows for fields not yet mapped.
 
 | V# | Semantic Name | API Field | Type | Required | Notes |
 |----|---------------|-----------|------|----------|-------|
@@ -273,6 +334,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 > **GUIDE**
 > **What**: Other initiatives, components, or infrastructure that must exist before this can be built.
+> **Both modes**: Dependencies is included regardless of Technical Contract mode — a blocked initiative is a product fact, not implementation reference.
 
 | Dependency | Source | Status |
 |-----------|--------|--------|
