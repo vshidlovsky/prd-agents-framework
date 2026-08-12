@@ -1,14 +1,31 @@
 ---
 name: create-prd
 description: Full PRD creation pipeline — research, draft, review, and senior-PM judgment with human gates between phases. Chains researcher → prd-writer → prd-reviewer → prd-senior-pm agents.
-argument-hint: <initiative-name>
+argument-hint: <initiative-name> [--tc slim|full]
 ---
 
 # PRD Creation Pipeline
 
 Run the full PRD workflow for `{argument}`.
 
+## Arguments
+
+`{argument}` is the initiative name, optionally followed by flags. Strip every flag before using `{argument}` as the initiative name — the initiative name is what remains, and it is what every file path, handoff name, and agent prompt uses.
+
+| Flag | Values | Effect |
+|---|---|---|
+| `--tc` | `slim` \| `full` | Technical Contract mode for **this run only**. Overrides the project-context setting. |
+
+Anything else after the initiative name is initiative brief text, not a flag — pass it through to Phase 0.
+
 ## Pre-flight
+
+0. **Resolve the Technical Contract mode** and store it as `TC_MODE`, with `TC_MODE_SOURCE` recording where it came from. Precedence, highest first:
+   1. `--tc slim` / `--tc full` on this invocation → `TC_MODE_SOURCE = run-override`
+   2. `.claude/project-context.md` → PRD Configuration → Technical Contract → **Mode** → `TC_MODE_SOURCE = project-context`
+   3. `slim` → `TC_MODE_SOURCE = default` (also the answer for an older project-context.md that predates the setting)
+
+   Reject any `--tc` value other than `slim` or `full`: STOP and tell the user the two valid values. Announce the resolution once, before Phase 0 — e.g. "Technical Contract mode: **full** (run override; project-context says slim)" — so the user can correct it before research burns tokens. Then pass `TC_MODE` explicitly to the writer, the reviewer, and the senior PM: the mode a document was written in is not re-derivable from the document, and an agent that re-resolves it from project-context.md silently loses the override.
 
 1. Read `.claude/project-context.md` — confirm it exists and is filled in. If it doesn't exist, STOP and tell the user: "You need to set up `.claude/project-context.md` first. Copy the template from the framework and fill it in for your project."
 2. Confirm the initiative directory exists or create it at the output path specified in project-context.md. Also create the `_artifacts/` subdirectory:
@@ -48,7 +65,7 @@ Run the full PRD workflow for `{argument}`.
 
 6. **Create state file** for the current run:
    ```bash
-   echo '{"runId":"'"$RUN_ID"'","initiative":"{argument}","status":"in_progress","currentPhase":"preflight","cycle":1,"startedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","profile":"<profile>","modelMap":<MODEL_MAP as JSON>,"completedPhases":[]}' > "$STATE_FILE"
+   echo '{"runId":"'"$RUN_ID"'","initiative":"{argument}","status":"in_progress","currentPhase":"preflight","cycle":1,"startedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","profile":"<profile>","technicalContractMode":"<TC_MODE>","technicalContractModeSource":"<TC_MODE_SOURCE>","modelMap":<MODEL_MAP as JSON>,"completedPhases":[]}' > "$STATE_FILE"
    ```
 
 ### Handoff file naming convention
@@ -156,6 +173,7 @@ If run logging is enabled: `echo "writing_start=$(date +%s)" >> "$TIMING_FILE"`
 Spawn an Agent using the prompt from `.claude/agents/prd-writer.md`, with `model: MODEL_MAP[prd-writer]`:
 - Pass `{argument}` as the initiative name
 - Pass the research document path as context
+- Pass the resolved mode explicitly: "Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — this is a run-level instruction; record it in your handoff as `technicalContractMode` and do not re-resolve it from project-context.md."
 
 The prd-writer will:
 1. Read the research
@@ -231,7 +249,7 @@ If run logging is enabled: `echo "review_scaffold_start=$(date +%s)" >> "$TIMING
 
 Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
-> "Run Phase 1 only for initiative '{argument}'. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-12). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
+> "Run Phase 1 only for initiative '{argument}'. Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — prefer the writer handoff's `technicalContractMode` if it disagrees, and record the resolved mode in the scaffold, the dispatch JSON, and every sub-agent prompt. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-12). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
 
 If run logging is enabled: `echo "review_scaffold_end=$(date +%s)" >> "$TIMING_FILE"`
 
@@ -296,7 +314,7 @@ If run logging is enabled: `echo "review_assembly_start=$(date +%s)" >> "$TIMING
 
 Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
-> "Run Phase 3 only for initiative '{argument}'. Sub-agents have completed. The dispatch file is at {absolute_path_to_dispatch_json}. Re-read project context, lessons, PRD, and scaffold. Assemble sub-agent outputs, fill Matrix H, run completeness verification, spot-check, dynamic findings, defect taxonomy, verdict, and commit."
+> "Run Phase 3 only for initiative '{argument}'. Sub-agents have completed. The dispatch file is at {absolute_path_to_dispatch_json}; take the Technical Contract mode from its `technicalContractMode` field rather than re-resolving it. Re-read project context, lessons, PRD, and scaffold. Assemble sub-agent outputs, fill Matrix H, run completeness verification, spot-check, dynamic findings, defect taxonomy, verdict, and commit."
 
 If run logging is enabled:
 ```bash
@@ -368,7 +386,7 @@ Decide once, then enforce — re-running a full judgment every cycle produces ne
 
 Spawn an Agent using `.claude/agents/prd-senior-pm.md`, with `model: MODEL_MAP[prd-senior-pm]` (default `fable`), and the prompt:
 
-> "Judge the review for initiative '{argument}'. Run mode: **{full|delta}** (this is review pass {N}). The PRD is at {prd_path}. The technical review is at {review_path} and its handoff at {review_handoff_path}; the verdict was {READY|NEEDS_REVISION}. The research doc is at {research_path} and the writer's Q&A log at {qa_path} if it exists. {In delta mode: 'Your previous decision sheet is at {senior_pm_review_path} and your previous handoff at {senior_pm_handoff_path} — verify each prior ticket was applied, judge only NEW FAILs, and do not revisit earlier dispositions.'} Write the decision sheet and the handoff JSON, then commit them. Do not edit the PRD or the review."
+> "Judge the review for initiative '{argument}'. Run mode: **{full|delta}** (this is review pass {N}). Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — in `slim` mode a FAIL demanding Technical-Contract content is overreach; reject it citing the configured mode. The PRD is at {prd_path}. The technical review is at {review_path} and its handoff at {review_handoff_path}; the verdict was {READY|NEEDS_REVISION}. The research doc is at {research_path} and the writer's Q&A log at {qa_path} if it exists. {In delta mode: 'Your previous decision sheet is at {senior_pm_review_path} and your previous handoff at {senior_pm_handoff_path} — verify each prior ticket was applied, judge only NEW FAILs, and do not revisit earlier dispositions.'} Write the decision sheet and the handoff JSON, then commit them. Do not edit the PRD or the review."
 
 If run logging is enabled: `echo "senior_pm_end=$(date +%s)" >> "$TIMING_FILE"`
 
@@ -515,7 +533,7 @@ If run logging is enabled in project-context.md, finalize the log before summari
      --field "outputSummary=<totalCycles> cycles: <summary of each cycle verdict>" \
      --field "artifactPath=<final prd path>" \
      --field "handoffPath=null" \
-     --field 'metrics={"totalCycles":<count>,"finalVerdict":"<READY|NEEDS_REVISION|OVERRIDE>","humanWaitSeconds":<sum>,"agentDurationSeconds":<total minus human>,"gateDurations":{"gate1":<delta|null>,"gate2":<delta|null>,"gate3":<delta|null>},"lessonsApproved":<count>,"glossaryTermsApproved":<count>}'
+     --field 'metrics={"totalCycles":<count>,"finalVerdict":"<READY|NEEDS_REVISION|OVERRIDE>","technicalContractMode":"<TC_MODE>","technicalContractModeSource":"<TC_MODE_SOURCE>","humanWaitSeconds":<sum>,"agentDurationSeconds":<total minus human>,"gateDurations":{"gate1":<delta|null>,"gate2":<delta|null>,"gate3":<delta|null>},"lessonsApproved":<count>,"glossaryTermsApproved":<count>}'
    ```
    Gate deltas come from the helper too — `--delta gate1_prompt gate1_resume` per gate; skip a gate whose pair is missing. If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
 
@@ -542,13 +560,13 @@ Each line in `.claude/prd-run-log.jsonl` is one of these entry types:
 
 **`"researcher"`** metrics: `endpointsFound`, `filesRead`, `ambiguitiesFlagged`
 
-**`"writer"`** metrics: `frCount`, `acCount`, `edgeCaseCount`, `keyEntityCount`, `version`, `sectionPacksUsed`, `isFreshDraft`, `failsAddressed`
+**`"writer"`** metrics: `frCount`, `acCount`, `edgeCaseCount`, `keyEntityCount`, `version`, `sectionPacksUsed`, `productConstantCount`, `displayRuleCount`, `isFreshDraft`, `failsAddressed`
 
 **`"reviewer"`** metrics: `totalCells`, `filledCells`, `subAgentCells`, `orchestratorCells`, `failCount`, `failsByMatrix` (A/B/C/S/D1/D2/E/F/G/H/I/P), `smellDetection` (totalChecked/linguisticSmellsFound/separationSmellsFound), `spotCheckOverrides`, `verdict`, `reviewMode`, `isReReview`, `previousFailsVerified`, `defectTaxonomy` (omission/ambiguity/inconsistency/incorrectFact/extraneousInfo/misplacedRequirement), `proposedLessons`, `proposedGlossaryTerms`. Plus `subAgentDurations` (scaffold/api/structure/flow/requirements/smells/assembly — null in single mode).
 
 **`"senior-pm"`** metrics: `mode` ("full" | "delta"), `failsJudged` (FAIL cells read — NEW cells only in delta mode), `rootCauses` (findings after collapse), `dispositionCounts` (fixTechnical/fixProduct/reject/escalate), `ticketCount`, `escalations`, and — delta mode only — `ticketsVerified` (applied/partial/notApplied)
 
-**`"pipeline"`** metrics: `totalCycles`, `finalVerdict`, `humanWaitSeconds`, `agentDurationSeconds`, `gateDurations` (gate1/gate2/gate3), `lessonsApproved`, `glossaryTermsApproved`
+**`"pipeline"`** metrics: `totalCycles`, `finalVerdict`, `technicalContractMode` ("slim" | "full"), `technicalContractModeSource` ("run-override" | "project-context" | "default"), `humanWaitSeconds`, `agentDurationSeconds`, `gateDurations` (gate1/gate2/gate3), `lessonsApproved`, `glossaryTermsApproved`
 
 **`"terminated"`** (abandoned runs): `diedInPhase`, `completedPhases` (array of phase summaries), `reason` ("abandoned")
 
@@ -560,6 +578,7 @@ Each line in `.claude/prd-run-log.jsonl` is one of these entry types:
 
 Summarize what was produced:
 - Research document path
+- Technical Contract mode used, and where it came from (run override / project-context / default)
 - PRD path (with version)
 - Review path
 - Senior-PM decision sheet path, with the final disposition counts

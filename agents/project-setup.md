@@ -291,6 +291,21 @@ If the user identifies custom research steps:
 
 If the user says no custom research steps are needed, leave "Custom Research Steps" as `- none` and move on.
 
+## Step 8.5: Choose the Technical Contract Mode (MANDATORY — ask the user)
+
+Ask the user:
+
+**"Who owns the technical design for this project?**
+
+- **The team builds from your specs** → `slim` (default). The PRD carries the requirements plus the three behavioral anchors — Product Constants (every bound the requirements depend on), Semantic Vocabulary (the concept dictionary) and Display Rules (how each rendered value is presented). API tables, error-code mappings, component paths, route constants and config attributes stay with the team's technical design.
+- **You build it yourself, end to end** → `full`. The PRD also carries the Technical Contract sections, because the technical contract is your own build plan and one document beats two."
+
+Write the answer to **PRD Configuration → Technical Contract → Mode** in project-context.md. If the user has no preference, write `slim` — a PM-authored API table is a guess the team has to re-verify, and an agent asked to fill a required error table with no documentation to read will invent an HTTP semantic to satisfy the structure.
+
+Then tell them: **"You can override this for a single initiative with `/create-prd <initiative> --tc full` (or `--tc slim`) — a solo spike inside a team project, or one initiative handed to devs inside a personal project. Precedence: run override > this setting > slim."**
+
+Remove the `> GUIDE` block from the Technical Contract section after filling it in.
+
 ## Step 9: Choose Model Profile (MANDATORY — ask the user)
 
 Ask the user:
