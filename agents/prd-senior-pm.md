@@ -120,6 +120,8 @@ For each root cause, trace the claim to evidence and assign one verdict:
 
 **Never** decide the evidence axis from the review's own summary. Open the PRD, the API documentation, the code, or the catalog and look.
 
+When a finding concerns a claim about existing code's behavior — what a cited module returns, throws, reads, retries, caches, or clears — verify it by reading the code path yourself; do not resolve it from the review's summary or the PRD's own citation. This class of defect is invisible to summaries: the claim reads as decided in both.
+
 ### 1.3 Impact axis — does it matter, and would the fix help?
 
 Every finding that survived the evidence axis gets an impact judgment. This is product logic and common sense, **not** a UX checklist.
