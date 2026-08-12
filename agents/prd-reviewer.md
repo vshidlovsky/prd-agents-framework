@@ -349,7 +349,7 @@ Section pack check definitions (add rows only for included packs):
 `component-mapping`: Every UI element maps to a design system component | Referenced component source paths exist on disk — FAIL if a cited file is missing or its name differs from the citation | Every cited prop exists in the component's prop definitions — grep the component source for each prop name; FAIL on non-existent props | If an existing composed page/template component is referenced, every mapped component appears in it or a gap/divergence note exists
 `feature-flags`: Flag name and convention documented | Fallback behavior specified | Reuse check performed
 `accessibility`: Focus management for modals/dialogs | Screen reader labels for non-text | Keyboard navigation for forms
-`responsive-layout`: Viewport-specific behaviors specified | Layout uses design system components
+`responsive-layout`: Row set matches the project's responsive shared requirement — open the SR named in project-context.md (`docs/shared-requirements.md`), enumerate its breakpoints, and compare: one row per SR breakpoint using the SR's pixel values; a mismatch (missing breakpoint, or a viewport the SR does not define) without an explicit override in Shared Requirements → Feature-specific overrides = FAIL | Breakpoint-specific behaviors specified (what is present, what is reachable) | Layout uses design system components
 `database-changes`: Schema changes specified | Migration strategy documented | Rollback approach specified
 `service-integration`: All upstream/downstream services listed | Contract per integration point | Circuit breaker/retry documented
 `monitoring`: Key metrics and SLA targets | Alerting thresholds | Dashboard/logging requirements
