@@ -1,6 +1,6 @@
 # Section Pack: Screen Flow
 
-> **Insert into**: Technical Contract [position: 3]
+> **Insert into**: Technical Contract [position: 3] (`full` mode) / Behavioral Contract — after Edge Cases [position: 4] (`slim` mode)
 > **When**: Any feature with multiple screens, pages, or steps.
 
 ### Screen Flow

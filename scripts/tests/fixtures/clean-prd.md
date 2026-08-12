@@ -252,6 +252,9 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
+
+## Boundaries
+
 ### Dependencies
 
 | Dependency | Source | Status |
@@ -260,8 +263,6 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 | Session bearer token in the storefront request layer | Storefront web | Merged |
 
 ---
-
-## Boundaries
 
 ### Out of Scope
 

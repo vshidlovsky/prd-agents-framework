@@ -2,7 +2,7 @@
 
 > **Insert into**: Technical Contract [position: 4]
 > **When**: Any feature that requires database schema changes, new tables, or data migrations.
-> **Slim mode**: In slim Technical Contract mode this pack is optional; enable it only if the PRD is the agreed home for this content.
+> **Slim mode**: not included — this content is dev-owned; the pack is available only in `full` Technical Contract mode.
 
 ### Database Changes
 

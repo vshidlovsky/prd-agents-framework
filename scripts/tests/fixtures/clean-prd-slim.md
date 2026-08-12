@@ -178,9 +178,8 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-## Technical Contract
 
-> Slim mode: the PRD-owned technical tables are omitted. Data sources, query and cache configuration, error-code mappings, route constants, component paths and configuration attributes live in the team's technical design. What remains here is the section packs that insert into this area and the dependencies that gate delivery.
+## Boundaries
 
 ### Dependencies
 
@@ -191,7 +190,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-## Boundaries
+---
 
 ### Out of Scope
 

@@ -220,13 +220,13 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-<!-- Section packs: Behavioral Contract — after Edge Cases [position: 1] (e.g., accessibility, compliance, platform-considerations) -->
+<!-- Section packs: Behavioral Contract — after Edge Cases [position: 1] (e.g., accessibility, compliance, platform-considerations); in `slim` mode also [position: 2] responsive-layout, [position: 3] design-prototype, [position: 4] screen-flow + navigation -->
 
 ## Technical Contract
 
-> **Tier 2 — condition**: the project keeps a PRD-owned technical contract (`Technical Contract → Mode: full` in `project-context.md`, or a `--tc full` run override). Everything under "PRD-owned technical content" below is included **only** in `full` mode; in `slim` mode DELETE those sub-sections.
+> **Tier 2 — condition**: the project keeps a PRD-owned technical contract (`Technical Contract → Mode: full` in `project-context.md`, or a `--tc full` run override). This ENTIRE section — heading included — exists **only** in `full` mode; in `slim` mode DELETE it completely.
 >
-> In `slim` mode the section itself remains as the home for the section packs that insert here and for Dependencies — nothing else. The content that is *purely* implementation reference is **dev-owned by default**: component paths, configuration attributes, mock data, error-code-to-class mappings, query/cache configuration, route constants, and API request/response shapes live in the team's technical design, not in the PRD. A PRD is not incomplete for omitting them.
+> In `slim` mode nothing is homeless: Dependencies lives in Boundaries (both modes), the user-facing section packs (screen-flow, navigation, design-prototype, responsive-layout) insert into the Behavioral Contract per their `slim` insertion tags, and the implementation packs (component-mapping, database-changes, service-integration, monitoring) are `full`-mode only. The content that is *purely* implementation reference is **dev-owned by default**: component paths, configuration attributes, mock data, error-code-to-class mappings, query/cache configuration, route constants, and API request/response shapes live in the team's technical design, not in the PRD. A PRD is not incomplete for omitting them.
 >
 > The behavioral anchors stay in the Behavioral Contract in both modes: **Product Constants**, **Semantic Vocabulary**, **Display Rules**. Never move a user-perceivable number, format, ordering, or policy down here — this section may repeat one, but it may never be its only home.
 >
@@ -325,27 +325,27 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-<!-- Section packs: Technical Contract [position: 1] — UI structure (component-mapping, responsive-layout) -->
-<!-- Section packs: Technical Contract [position: 2] — content & visuals (design-prototype) -->
-<!-- Section packs: Technical Contract [position: 3] — navigation & flow (screen-flow, navigation) -->
-<!-- Section packs: Technical Contract [position: 4] — infrastructure (database-changes, service-integration, monitoring) -->
+<!-- Section packs (`full` mode): Technical Contract [position: 1] — UI structure (component-mapping, responsive-layout) -->
+<!-- Section packs (`full` mode): Technical Contract [position: 2] — content & visuals (design-prototype) -->
+<!-- Section packs (`full` mode): Technical Contract [position: 3] — navigation & flow (screen-flow, navigation) -->
+<!-- Section packs (`full` mode): Technical Contract [position: 4] — infrastructure (database-changes, service-integration, monitoring) -->
+
+## Boundaries
+
+> **Sub-section order**: Always use this order: Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
+> Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
 
 ### Dependencies
 
 > **GUIDE**
 > **What**: Other initiatives, components, or infrastructure that must exist before this can be built.
-> **Both modes**: Dependencies is included regardless of Technical Contract mode — a blocked initiative is a product fact, not implementation reference.
+> **Both modes**: Dependencies is a product fact (a blocked initiative), not implementation reference — it lives here in `slim` and `full` mode alike.
 
 | Dependency | Source | Status |
 |-----------|--------|--------|
 | [what] | [where it comes from] | [Merged / In Progress / Blocked] |
 
 ---
-
-## Boundaries
-
-> **Sub-section order**: Always use this order: Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
-> Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
 
 ### Out of Scope
 

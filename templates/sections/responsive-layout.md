@@ -1,6 +1,6 @@
 # Section Pack: Responsive Layout
 
-> **Insert into**: Technical Contract [position: 1]
+> **Insert into**: Technical Contract [position: 1] (`full` mode) / Behavioral Contract — after Edge Cases [position: 2] (`slim` mode)
 > **When**: Web applications that must work across viewport sizes.
 
 #### Responsive Layout

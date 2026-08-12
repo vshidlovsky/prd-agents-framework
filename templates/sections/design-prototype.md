@@ -1,6 +1,6 @@
 # Section Pack: Visual Design References
 
-> **Insert into**: Technical Contract [position: 2]
+> **Insert into**: Technical Contract [position: 2] (`full` mode) / Behavioral Contract — after Edge Cases [position: 3] (`slim` mode)
 > **When**: Projects with a design system (`src/components/ui/` or equivalent) and/or Figma mockups.
 
 ### Visual References

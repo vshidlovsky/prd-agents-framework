@@ -38,7 +38,9 @@ State the resolved mode and where it came from in your Step 5 summary, and recor
 | Data Sources, Query Configuration, Error Classification, Route Mapping | **Do not produce** | Produce |
 | Per-endpoint blocks (Vocabulary + Error Handling) | **Do not produce** | Produce |
 | Component Mapping, Configuration Attributes, mock-data sections | **Do not produce** | Produce |
-| Dependencies, section packs inserted into the Technical Contract | Produce | Produce |
+| Dependencies (lives in Boundaries) | Produce | Produce |
+| User-facing packs (screen-flow, navigation, design-prototype, responsive-layout) | Produce — inserted into the Behavioral Contract per their `slim` insertion tags | Produce — inserted into the Technical Contract |
+| Implementation packs (component-mapping, database-changes, service-integration, monitoring) | Omit — dev-owned | Produce |
 | Endpoint research and verification (Step 2) | Unchanged | Unchanged |
 
 In `slim` mode you still verify that every endpoint exists and every field is real — you simply do not transcribe the contract into the PRD. The team owns the technical design; a PM-authored API table is a guess they have to re-verify, and inventing an HTTP semantic to fill a required row is how a false implementation claim enters a spec.
@@ -211,7 +213,7 @@ In the behavioral layer, add `[V#]` markers on the first use of each semantic na
 
 Build the PRD in this order:
 1. **Title**: Use the format `# {Initiative Name} — PRD`. Do not vary this format.
-2. Start with the base template sections (Context, Behavioral Contract, Technical Contract, Boundaries). Use the exact section names from the template: `## Behavioral Contract`, `## Technical Contract`, `## Boundaries`. Do not abbreviate (e.g., never use `## Contract` or `## Technical`). In `slim` mode the `## Technical Contract` heading stays — it is the home for the section packs that insert there and for Dependencies — but its PRD-owned technical sub-sections are omitted (see the mode table in Step 0).
+2. Start with the base template sections. In `full` mode: Context, Behavioral Contract, Technical Contract, Boundaries. In `slim` mode: Context, Behavioral Contract, Boundaries — the `## Technical Contract` section, heading included, is omitted entirely; Dependencies lives in Boundaries in both modes, and user-facing packs insert into the Behavioral Contract per their `slim` insertion tags. Use the exact section names from the template (`## Behavioral Contract`, `## Boundaries`; `## Technical Contract` in full mode). Do not abbreviate (e.g., never use `## Contract` or `## Technical`).
 3. For each section pack listed in project-context.md, read the section pack file. Find its `Insert into` tag with a `[position: N]` number. Insert packs at the matching HTML comment marker in the template. **Ordering rule**: within each insertion point, insert packs in ascending position number. Packs sharing the same position number go in alphabetical order by section name. Remove the HTML comment after insertion.
 4. For Tier 2 sections (Success Criteria, Security Constraints, Cross-Initiative Alignment): check if their condition applies. If yes, move the section from the Tier 2 block at the bottom of the template to the insertion point specified in its `Insert into` tag, respecting position order. If no, delete the section entirely.
 5. For backend/API projects with no UI: mark AC sub-sections (Loading States, Error States, Empty States) as `N/A — backend service` if they don't apply. Loading States may still apply (e.g., async processing indicators). Only include sub-sections that are meaningful for the project type.

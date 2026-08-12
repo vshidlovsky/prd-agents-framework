@@ -2,7 +2,7 @@
 
 > **Insert into**: Technical Contract [position: 1]
 > **When**: Any frontend/mobile feature using a design system or component library.
-> **Slim mode**: In slim Technical Contract mode this pack is optional; enable it only if the PRD is the agreed home for this content.
+> **Slim mode**: not included — this content is dev-owned; the pack is available only in `full` Technical Contract mode.
 
 ### Component Mapping
 

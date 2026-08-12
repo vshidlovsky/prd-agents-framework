@@ -1,6 +1,7 @@
 # Section Pack: Monitoring
 
 > **Insert into**: Technical Contract [position: 4]
+> **Slim mode**: not included — this content is dev-owned; the pack is available only in `full` Technical Contract mode.
 > **When**: Backend services or critical features that need observability, alerting, or SLA targets.
 
 ### Monitoring & Alerting

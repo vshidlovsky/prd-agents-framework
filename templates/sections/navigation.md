@@ -1,6 +1,6 @@
 # Section Pack: Navigation
 
-> **Insert into**: Technical Contract [position: 3]
+> **Insert into**: Technical Contract [position: 3] (`full` mode) / Behavioral Contract — after Edge Cases [position: 4] (`slim` mode)
 > **When**: Any feature with user-facing navigation — screens, pages, routes.
 
 ### Navigation
