@@ -6,7 +6,7 @@ It exists because prompt-level discipline ("the agent MUST grep...") is
 probabilistic, while a script cannot forget.
 
 Usage:
-    python3 scripts/prd-lint.py <file.md> [--mode prd|review] [--format text|json]
+    python3 scripts/prd-lint.py <file.md> [--mode prd|review|shared-requirements] [--format text|json]
 
 Exit codes:
     0 — clean
@@ -73,6 +73,28 @@ Checks, mode `review`:
     LINT-102  verdict cells carry only PASS / FAIL: ... / N/A (no WARN, INFO)
     LINT-103  TOTAL_CELLS / SUB_AGENT_CELLS / ORCHESTRATOR_CELLS present,
               integers, and TOTAL == SUB + ORCH
+
+Checks, mode `shared-requirements` (migration scan for a consuming project's
+docs/shared-requirements.md — run at framework install/upgrade; findings are
+migration items for the SR owner, never PRD defects):
+    LINT-201  Localization-section mandate — an SR still demands a
+              Localization section, localization-key tables, or listed
+              translations in the PRD. Copy, localization keys, and
+              translations are design-owned; the PRD no longer contains a
+              Localization section
+    LINT-202  Technical-Contract-mandatory language — an SR mandates the
+              Technical Contract or one of its tables (Data Sources, Error
+              Classification, Route Mapping, per-endpoint blocks). Slim mode
+              omits the Technical Contract entirely, so the mandate is
+              unsatisfiable there; the SR must defer to the project's mode or
+              carry an explicit override
+    LINT-203  literal-copy mandate — an SR requires exact / literal / final /
+              verbatim copy or strings in the PRD. Requirements state copy
+              intent; literal copy is design-owned (the sole exception is
+              legally mandated wording, quoted with its source)
+    Lines that state the current rule ("design-owned", "must not", "no
+    longer") are exempt — the scan targets stale obligations, not the
+    sentences that correct them.
 
 Stdlib only, Python 3.9+. Consumers copy this single file into their project.
 Fenced code-block interiors are excluded from every scan so that documentation
@@ -1036,6 +1058,96 @@ def check_103_cell_counts(doc: Document, out: List[Violation]) -> None:
             )
 
 
+# --------------------------------------------------------------------------
+# Mode `shared-requirements` — stale-pattern migration scan
+# --------------------------------------------------------------------------
+#
+# Shared requirements are authored per project and outlive framework upgrades,
+# so an SR can keep mandating an artifact the framework has since removed or
+# forbidden. Each check below targets one known-stale pattern from a previous
+# framework generation. Findings are migration items for the SR owner (fix the
+# SR or record an explicit override) — never defects in any PRD.
+
+# A line that states the *current* rule ("translations are design-owned",
+# "the PRD must not contain literal copy") is a correction, not a stale
+# obligation — exempt it.
+SR_NEGATION_RE = re.compile(
+    r"design-owned|must\s+not|do(?:es)?\s+not|don'?t\b|never\b|no\s+longer",
+    re.IGNORECASE,
+)
+SR_MANDATE_RE = re.compile(
+    r"\bmust\b|\brequired?\b|\bshall\b|\bmandat|\balways\s+include", re.IGNORECASE
+)
+SR_LOCALIZATION_RE = re.compile(
+    r"localization\s+(?:keys?\s+)?section|localization\s+keys?\s+table"
+    r"|keys?\s+and\s+translations?|translations?\s+for\s+(?:all|each|every)\b"
+    r"|all\s+user-facing\s+strings",
+    re.IGNORECASE,
+)
+SR_TECHNICAL_RE = re.compile(
+    r"technical\s+contract"
+    r"|data\s+sources\s+table|error\s+classification\s+table"
+    r"|route\s+mapping\s+table|per-endpoint\s+(?:vocabulary|error|table|block)",
+    re.IGNORECASE,
+)
+SR_LITERAL_COPY_RE = re.compile(
+    r"(?:exact|literal|final|verbatim)\s+(?:copy|wording|strings?)",
+    re.IGNORECASE,
+)
+
+
+def check_201_localization_mandate(doc: Document, out: List[Violation]) -> None:
+    for idx, line in doc.live_lines():
+        if SR_LOCALIZATION_RE.search(line) and not SR_NEGATION_RE.search(line):
+            add(
+                out,
+                "LINT-201",
+                idx,
+                "stale Localization mandate — copy, localization keys, and "
+                "translations are design-owned and the PRD no longer contains "
+                "a Localization section; fix the SR (keep any language "
+                "enumeration, drop the section mandate) or record an explicit "
+                "override",
+            )
+
+
+def check_202_technical_contract_mandate(doc: Document, out: List[Violation]) -> None:
+    for idx, line in doc.live_lines():
+        if (
+            SR_TECHNICAL_RE.search(line)
+            and SR_MANDATE_RE.search(line)
+            and not SR_NEGATION_RE.search(line)
+        ):
+            add(
+                out,
+                "LINT-202",
+                idx,
+                "stale Technical-Contract mandate — slim mode omits the "
+                "Technical Contract and its tables entirely, so this SR is "
+                "unsatisfiable for slim PRDs; make the SR defer to the "
+                "project's Technical Contract mode or record an explicit "
+                "override",
+            )
+
+
+def check_203_literal_copy_mandate(doc: Document, out: List[Violation]) -> None:
+    for idx, line in doc.live_lines():
+        if (
+            SR_LITERAL_COPY_RE.search(line)
+            and SR_MANDATE_RE.search(line)
+            and not SR_NEGATION_RE.search(line)
+        ):
+            add(
+                out,
+                "LINT-203",
+                idx,
+                "stale literal-copy mandate — requirements state copy intent; "
+                "literal copy, keys, and translations are design-owned (sole "
+                "exception: legally mandated wording, quoted with its "
+                "source); fix the SR or record an explicit override",
+            )
+
+
 PRD_CHECKS = (
     check_001_vocabulary_markers,
     check_002_unchecked_confirmations,
@@ -1059,12 +1171,23 @@ REVIEW_CHECKS = (
     check_103_cell_counts,
 )
 
+SHARED_REQUIREMENTS_CHECKS = (
+    check_201_localization_mandate,
+    check_202_technical_contract_mandate,
+    check_203_literal_copy_mandate,
+)
+
+MODE_CHECKS = {
+    "prd": PRD_CHECKS,
+    "review": REVIEW_CHECKS,
+    "shared-requirements": SHARED_REQUIREMENTS_CHECKS,
+}
+
 
 def lint(text: str, mode: str) -> List[Violation]:
     doc = Document(text)
     out: List[Violation] = []
-    checks = PRD_CHECKS if mode == "prd" else REVIEW_CHECKS
-    for check in checks:
+    for check in MODE_CHECKS[mode]:
         check(doc, out)
     out.sort(key=lambda v: (v.line, v.id, v.message))
     return out
@@ -1101,7 +1224,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("file", help="markdown file to lint")
     parser.add_argument(
         "--mode",
-        choices=("prd", "review"),
+        choices=("prd", "review", "shared-requirements"),
         default="prd",
         help="rule set to apply (default: prd)",
     )

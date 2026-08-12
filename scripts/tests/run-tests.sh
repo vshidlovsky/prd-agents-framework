@@ -41,6 +41,14 @@
 #                          evidence link whose text is a source filename)
 #   4. violations-review.md — same annotation contract in --mode review, and at
 #                          least one violation for each of LINT-101..LINT-103
+#   4b. clean-shared-requirements.md / violations-shared-requirements.md —
+#                          the --mode shared-requirements migration scan: a
+#                          current SR file (including corrected "design-owned"
+#                          sentences that must NOT fire) lints clean, while the
+#                          stale patterns from previous framework generations
+#                          each fire — a Localization-section mandate
+#                          (LINT-201), Technical-Contract-mandatory language
+#                          (LINT-202), and a literal-copy mandate (LINT-203)
 #   5. a missing input file exits 2
 #
 # validate-handoff.py asserts (fixtures in handoff-fixtures/):
@@ -100,11 +108,11 @@ fi
 # 1. Clean fixtures: exit 0, zero violations — one per Technical Contract mode
 # --------------------------------------------------------------------------
 assert_clean() {
-  local fixture="$1" name out status total
+  local fixture="$1" mode="${2:-prd}" name out status total
   name="$(basename "$fixture")"
   out="$TMP_DIR/$name.clean.json"
 
-  "$PY" "$LINT" "$fixture" --format json >"$out" 2>&1
+  "$PY" "$LINT" "$fixture" --mode "$mode" --format json >"$out" 2>&1
   status=$?
   if [ "$status" -ne 0 ]; then
     fail "$name exited $status (expected 0)"
@@ -132,6 +140,7 @@ PYEOF
 
 assert_clean "$FIXTURES/clean-prd.md"
 assert_clean "$FIXTURES/clean-prd-slim.md"
+assert_clean "$FIXTURES/clean-shared-requirements.md" shared-requirements
 
 # --------------------------------------------------------------------------
 # Annotation assertion helper
@@ -215,6 +224,9 @@ assert_annotated "$FIXTURES/violations-prd-slim.md" prd \
 
 assert_annotated "$FIXTURES/violations-review.md" review \
   LINT-101 LINT-102 LINT-103
+
+assert_annotated "$FIXTURES/violations-shared-requirements.md" shared-requirements \
+  LINT-201 LINT-202 LINT-203
 
 # --------------------------------------------------------------------------
 # 5. Usage errors exit 2

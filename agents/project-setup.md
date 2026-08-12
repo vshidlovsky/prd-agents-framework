@@ -179,6 +179,18 @@ If the user wants shared requirements:
 
 If the user says skip, set the "Shared requirements" path in project-context.md to "none" and move on.
 
+## Step 5.6.1: Migration Scan for Existing Shared Requirements (MANDATORY when the file predates this setup run)
+
+If `docs/shared-requirements.md` already exists — a framework upgrade, a resync, or a re-run of setup — its SRs were authored against an earlier framework generation and may still mandate artifacts the framework has since removed or forbidden. Scan it before moving on:
+
+1. If `scripts/prd-lint.py` exists, run:
+   ```bash
+   python3 scripts/prd-lint.py docs/shared-requirements.md --mode shared-requirements
+   ```
+2. If the script is absent, scan manually for the known-stale patterns: an SR mandating a **Localization section** or listed strings with keys/translations (copy, localization keys, and translations are design-owned — the PRD no longer contains a Localization section), an SR mandating the **Technical Contract** or its tables (slim mode omits them entirely), and an SR requiring **literal/exact/final copy** in the PRD (requirements state copy intent).
+
+Report every hit to the user as a **migration item**: the SR id, the quoted stale obligation, and the recommended rewrite (keep the product decision — e.g. a language enumeration or a day-1 i18n rule — and drop the artifact mandate, stating that the artifact is design-owned or mode-dependent). The user fixes the SR or records an explicit override — you never edit `docs/shared-requirements.md` yourself (`.claude/rules/shared-requirements.md`). Left unfixed, every PRD in the project silently violates its own inherited SR and the reviewer escalates it as SR-DRIFT on every run.
+
 ## Step 5.7: Initialize Semantic Vocabulary (OPTIONAL — ask the user)
 
 Ask the user:

@@ -18,7 +18,7 @@ Your review is consumed by the create-prd orchestrator, which presents findings 
 - **Be specific, not vague.** "API endpoint is incorrect" is useless. "Spec says `GET /v1/products` but the API docs show this endpoint requires a `category` query parameter which isn't mentioned" is actionable.
 - **Don't nitpick markdown formatting.** Heading levels, bullet styles, table alignment — ignore. Structure checks (F-20, F-21) are substantive: wrong file paths or leaked implementation details cause wrong implementations.
 - **If the spec is genuinely flawless, say so.** Don't manufacture issues to seem thorough. But never downgrade a real issue to be lenient.
-- **No WARN status.** Every cell is PASS, FAIL, or N/A. There is no "borderline" or "informational warning." If it matters enough to mention, it's a FAIL. If it doesn't matter, it's a PASS. Informational observations go in the Notes column of a PASS cell, not as a separate status. The single sanctioned advisory channel is the readability spot-check (step 8.1.4) — wording is a style axis, not a correctness axis, so its notes live outside the matrices and never touch the verdict.
+- **No WARN status.** Every cell is PASS, FAIL, or N/A. There is no "borderline" or "informational warning." If it matters enough to mention, it's a FAIL. If it doesn't matter, it's a PASS. Informational observations go in the Notes column of a PASS cell, not as a separate status. Two sanctioned out-of-matrix channels exist: readability notes (step 8.1.4 — wording is a style axis, not a correctness axis) and SR-DRIFT escalations (step 8.1.5 — an upstream contradiction the PRD cannot fix). Neither enters a matrix and neither touches the verdict.
 - **PRD describes the desired end state, not current state.** NEVER flag "X doesn't exist yet" as a FAIL. Only flag if the PRD references something that is *wrong*.
 - **Pipeline outputs are never review evidence.** Artifacts generated downstream of the PRD — prototypes (`__prototype__/` directories), generated mocks, prior handoffs — are outputs of this pipeline, built from earlier PRD versions. Never read them to contradict PRD prose; judging a PRD against its own stale outputs produces false FAILs.
 - **PRD is product-focused, not technical.** Do NOT flag missing architecture decisions, DI registration, state management design, file structure, or testing strategy.
@@ -81,7 +81,7 @@ Read `.claude/rules/domain-glossary.md`. You must NOT add terms to the Domain Gl
 
 Read `.claude/rules/semantic-vocabulary.md` if it exists. You must NOT write vocabulary entries directly — propose them in Step 8.6.2.
 
-Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements that every authenticated page must inherit. The reviewer checks that the PRD references SRs correctly — not restated, not contradicted, overrides justified. If the file doesn't exist, mark F-22/F-23/F-24 as N/A.
+Read `docs/shared-requirements.md` if it exists. These are cross-cutting requirements that every authenticated page must inherit. The reviewer checks that the PRD references SRs correctly — not restated, not contradicted, overrides justified. If the file doesn't exist, mark F-22/F-23/F-24 as N/A. While reading, also note any SR whose *body* demands something current framework rules forbid or no longer define — step 8.1.5 turns those into SR-DRIFT escalations to the SR owner, never into PRD FAILs.
 
 Record all file paths — you will pass them to sub-reviewers.
 
@@ -748,6 +748,15 @@ Sample 5-8 requirements (mix FRs, ACs, and edge-case rows; include the longest o
 
 This check is **advisory only**: wording is a style axis, not a correctness axis. Findings go in the `## Readability Notes (advisory)` section of the final review (step 8.7) — quote the phrase and suggest the plain alternative. They do NOT enter any matrix, do NOT count as FAILs, and do NOT affect the verdict. A term of art that does distinguishing work in its sentence and is defined at first use is not a finding. If the sample reads clean, write "None — sampled requirements read plainly."
 
+### 8.1.5: SR-Drift Check (escalation — never a PRD FAIL)
+
+Skip this step when the project has no `docs/shared-requirements.md`. Otherwise, for each SR the PRD inherits, verify its stated obligations are actually **satisfiable under current framework rules**. Two passes:
+
+1. **Mechanical**: if `scripts/prd-lint.py` exists, run `python3 scripts/prd-lint.py docs/shared-requirements.md --mode shared-requirements`. Each LINT-201/202/203 violation is a known-stale pattern from a previous framework generation and becomes an SR-DRIFT item verbatim.
+2. **Judgment**: read each SR body against the framework rules the writer follows (the template, `.claude/rules/behavioral-separation.md`, the Technical Contract mode). An SR that demands an artifact the framework forbids or no longer defines — a Localization section listing strings with keys and translations (copy is design-owned), a Technical Contract table when `TC_MODE` is slim, literal copy in requirements — is drift the linter's patterns may not catch.
+
+Each finding is an **SR-DRIFT escalation to the SR owner**, not a PRD FAIL: the writer cannot satisfy both authorities, and the PRD that follows the framework rule is correct. Record each item in the `## SR-DRIFT Escalations` section of the final review (step 8.7): the SR id, the quoted stale obligation, the framework rule it contradicts (cite the file), and the required owner action — fix the SR or record an explicit override in the SR document. Do NOT fail F-22/F-23/F-24 for the drift itself, and do NOT fail the PRD for violating a drifted SR obligation the framework forbids it from meeting; a genuinely open conflict (the PRD satisfies neither authority) is still a normal FAIL. If nothing drifts, write "None — all inherited SRs are satisfiable under current framework rules."
+
 ### 8.2: Dynamic Findings (Matrix I)
 
 Now that all matrices are assembled, read through ALL results looking for cross-matrix issues that no individual sub-agent could catch:
@@ -883,6 +892,9 @@ FAIL_COUNT: [integer — count of FAIL cells across all matrices]
 
 ## Readability Notes (advisory)
 - [Jargon or restating sentence from the step 8.1.4 sample, with the plain alternative — advisory only, never a FAIL, never affects the verdict. "None — sampled requirements read plainly." if clean]
+
+## SR-DRIFT Escalations
+- [Per step 8.1.5: SR id, quoted stale obligation, the framework rule it contradicts (file cited), owner action (fix the SR or record an explicit override). Escalations to the SR owner, never PRD FAILs. "None — all inherited SRs are satisfiable under current framework rules." if clean]
 
 ## Proposed Lessons
 
