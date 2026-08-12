@@ -85,6 +85,37 @@ The complete ceremony. Only when the release is big enough to justify it:
 8. **Human pick** — the final metric and the tiebreaker: which document would you actually
    hand to a builder.
 
+## Judging slim-mode PRDs
+
+Since the Technical Contract became optional (`Mode: slim` is the default), **a slim-mode PRD is
+judged on buildability, not on technical-table conformance.** Use the Tech Lead lens from judge
+panel item 7 — "can my team build from this alone" — and score its guessCount. Do not score a
+slim PRD against a rubric that counts Data Sources, per-endpoint blocks, Error Classification,
+Route Mapping, Component Mapping, or Configuration Attributes as required content: those sections
+are dev-owned by configuration, so their absence is the design working, not a defect. A conformance
+lens applied to a slim PRD measures the mode, not the document.
+
+What still counts against a slim PRD, and hard:
+
+- **A bound that exists nowhere.** Every deadline, window, timeout, retry limit, cooldown and
+  ceiling the requirements depend on must be in Product Constants. This is where the removal
+  actually bites — in the source evaluation, most "product gaps" in the stripped arms were
+  removal artifacts whose answers had lived only in deleted technical sections.
+- **A rendered value with no determinant.** Timezone, currency and minor units, symbol vs code,
+  ordering, truncation — a Display Rules row each, with a worked example.
+- **A `[V#]` marker that resolves to nothing**, or a concept named two ways.
+
+The instrument for the first two is `scripts/prd-lint.py` (LINT-009's slim-anchor branch and
+LINT-010) plus reviewer rows F-33 and F-34 — mechanism checks in the Tier 2 sense, since they fire
+only where the machinery exists.
+
+**Comparing modes is not an A/B.** A slim arm and a full arm produce documents of different scope
+by construction, so a size, cell-count, or conformance delta between them is definitional, not
+evidence. The only honest cross-mode questions are buildability and guessCount from the Tech Lead
+lens, and whether either arm lost a user-perceivable value. Hold the mode constant in any two-arm
+release comparison, and record it in the pre-registration — the run log's pipeline entry carries
+`technicalContractMode` and `technicalContractModeSource` for exactly this.
+
 ## Standing assets (create once, reuse)
 
 - The pre-registration template and the metric trust-order.

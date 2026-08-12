@@ -112,12 +112,17 @@ For **greenfield projects** with no code yet: tell the setup agent your planned 
 /create-prd search-filters
 ```
 
+By default the PRD is **slim**: the requirements, the constants they depend on, the concept vocabulary and the display rules — with the API tables, component paths and config left to the team's technical design. Add `--tc full` for one run, or set the mode per project. See [Technical Contract modes](#technical-contract-modes).
+
 ## How It Works
 
 ### Pipeline
 
 ```
-/create-prd {initiative}
+/create-prd {initiative} [--tc slim|full]
+    │
+    ├── Pre-flight: resolve Technical Contract mode
+    │   (run override > project-context > slim)
     │
     ├── Phase 1: Researcher
     │   ├── Scans codebase (or docs for greenfield)
@@ -127,6 +132,7 @@ For **greenfield projects** with no code yet: tell the setup agent your planned 
     │
     ├── Phase 2: PRD Writer
     │   ├── Reads research + template + section packs
+    │   ├── Honors the resolved Technical Contract mode (slim / full)
     │   ├── Produces {initiative}-prd.md
     │   └── 🔵 Gate 2: You review draft
     │
@@ -207,6 +213,46 @@ Section packs are modular PRD sections. Enable them with checkboxes in `project-
 
 Create **custom section packs** for project-specific needs (e.g., mobile-app discrepancy tracking, mock data strategy). The project-setup agent helps you create these.
 
+### Technical Contract modes
+
+The Technical Contract is where PRDs accumulate work that is not the PM's. Asked for a per-endpoint error table, an agent will fill it — and if the API documentation is silent, it will invent an HTTP semantic to satisfy the structure. That is how a false implementation claim gets into a spec that a reviewer then approves.
+
+So the Technical Contract is **optional**, and the default is off:
+
+```markdown
+### Technical Contract
+- **Mode**: slim
+```
+
+| Mode | The PRD carries | The team owns |
+|---|---|---|
+| **`slim`** (default) | Product Constants, Semantic Vocabulary, Display Rules — in the behavioral layer. Plus Dependencies and any section packs you enabled. | Data sources and API request/response shapes, query/cache configuration, error-code-to-class mappings, route constants, component paths, configuration attributes, mock data. |
+| **`full`** | All of the above **plus** the Technical Contract tables and per-endpoint blocks (legacy behavior). | — |
+
+**The placement rule** governs both modes:
+
+> Every number, rule, and policy a user can perceive lives in the behavioral layer. A constant, format, ordering, or policy may never live only in a technical table, a discrepancy row, or a section the reader has to reconstruct it from.
+
+The technical contract may repeat a user-perceivable value; it may never be its only home. That is what the three behavioral anchors are for:
+
+- **Product Constants** — every bound the requirements depend on (deadlines, freshness windows, timeouts the user waits through, retry limits, cooldowns, list ceilings, thresholds), each with an ID the FRs and ACs cite instead of restating the number inline.
+- **Semantic Vocabulary** — the `[V#]` concept dictionary, now without the `API Field` column. The PRD names the concepts; the team binds them to fields using the canonical reference. `API Field` is optional and dev-owned.
+- **Display Rules** — one row per rendered value: what determines its presentation (timezone, currency and minor units, symbol vs code, ordering, truncation) plus a worked example.
+
+**Per-run override.** The mode resolves per initiative, not only per project:
+
+```
+/create-prd order-history --tc full
+```
+
+Precedence: run override > `project-context.md` setting > `slim`. The same person may work solo end-to-end on one project — where `full` is right, because the technical contract is their own build plan and one document beats two — and hand specs to developers on another, where `slim` is right. Either can also happen inside one repo: a solo spike in a team project, or one initiative handed to devs in a personal project.
+
+The writer records the resolved mode in its handoff (`technicalContractMode`), and the reviewer and senior PM read it from there rather than re-resolving it — otherwise a per-run override would be invisible to everyone downstream. In `slim` mode the reviewer marks F-7/F-26/F-27/F-32 `N/A — slim mode`, resolves `[V#]` markers against the Semantic Vocabulary section, verifies endpoints against the API docs and research doc rather than PRD tables, and **never FAILs a PRD for missing API, component, route, cache, or config detail** — that content is dev-owned by configuration, not an omission. Two new checks carry the weight instead: **F-33 Product Constants complete** and **F-34 Display Rules complete**. A FAIL demanding Technical-Contract content in a slim-mode project is overreach, and the senior PM rejects it citing the configured mode.
+
+The carve-out is narrow, and it is mechanism only. A missing *user-perceivable* value — a timeout, a money format, a sort order — is a real FAIL in either mode.
+
+Three section packs are pure implementation reference (`component-mapping`, `database-changes`, `service-integration`); each now says so: in slim mode enable them only if the PRD is the agreed home for that content.
+
 ### PRD lint
 
 `scripts/prd-lint.py` is the framework's deterministic enforcement layer: the subset of PRD rules that are mechanically checkable, enforced by a script instead of a prompt. Prompt-level discipline ("the agent MUST grep…") is probabilistic — a script can't forget.
@@ -221,12 +267,14 @@ Stdlib-only Python 3.9+, single file, no dependencies. Exit `0` clean, `1` viola
 
 | Mode | Checks |
 |------|--------|
-| `prd` (default) | dangling/duplicate `[V#]` markers (LINT-001), unchecked writer-confirmation checkboxes (LINT-002), branch-name citation URLs that aren't commit-pinned (LINT-003), changelog version ordering (LINT-004), leftover `OQ-` items (LINT-005), leftover `> **GUIDE**` blocks (LINT-006), raw analytics event names in ACs and `AE-<n>` rows bound by zero ACs (LINT-007), wire-value leaks into FRs/ACs/Edge Cases (LINT-008), renamed top-level sections (LINT-009) |
+| `prd` (default) | dangling `[V#]` markers and V-numbers duplicated inside one layer (LINT-001), unchecked writer-confirmation checkboxes (LINT-002), branch-name citation URLs that aren't commit-pinned (LINT-003), changelog version ordering (LINT-004), leftover `OQ-` items (LINT-005), leftover `> **GUIDE**` blocks (LINT-006), raw analytics event names in ACs and `AE-<n>` rows bound by zero ACs (LINT-007), wire-value leaks into FRs/ACs/Edge Cases (LINT-008), renamed top-level sections and slim PRDs missing their behavioral anchors (LINT-009), unused Product Constants and bare inline bounds in requirements (LINT-010) |
 | `review` | leftover `[PENDING]` cells (LINT-101), invalid verdict tokens such as `WARN`/`INFO` (LINT-102), `TOTAL_CELLS`/`SUB_AGENT_CELLS`/`ORCHESTRATOR_CELLS` present, integer, and summing correctly (LINT-103) |
 
 The agents call it automatically when the file is present: the writer at Step 4.5 (before saving), the reviewer at step 8.1.2 (PRD violations become Matrix I FAIL rows; review-file violations are fixed in place), and `/create-prd` before Gate 2 (violations surface with the draft notice). If the file is absent, every caller falls back to its manual scans — copying it in is opt-in.
 
-Regression tests live in `scripts/tests/`: `bash scripts/tests/run-tests.sh` lints the fixtures and asserts that a clean PRD reports zero violations and that each annotated violation fires with the expected check ID on the expected line. The same run covers the handoff validator and the run-log writer.
+All ten `prd` checks run in both Technical Contract modes — the mode changes which sections exist, not which rules apply. LINT-001 resolves a `[V#]` marker against the Semantic Vocabulary table, a per-endpoint Vocabulary table, or both (a full-mode PRD repeats each V-number to attach the field binding, so a number present in both layers is expected — two rows for it *inside* one layer is still a defect). LINT-008's source is the optional `API Field` column, so a slim PRD gives it nothing to scan and it skips cleanly. LINT-010 runs only when a PRD has a Product Constants section.
+
+Regression tests live in `scripts/tests/`: `bash scripts/tests/run-tests.sh` lints the fixtures and asserts that a clean PRD reports zero violations and that each annotated violation fires with the expected check ID on the expected line. There are two clean fixtures — `scripts/tests/fixtures/clean-prd.md` (full mode) and `scripts/tests/fixtures/clean-prd-slim.md` (slim mode) — and two annotated ones, so both shapes are covered by one rule set. The same run covers the handoff validator and the run-log writer.
 
 ### Handoff validation and run logging
 
@@ -241,7 +289,7 @@ python3 scripts/validate-handoff.py --type dispatch  docs/.../_artifacts/search-
 python3 scripts/validate-handoff.py --type senior-pm docs/.../_artifacts/search-filters-senior-pm-handoff.json
 ```
 
-Exit `0` valid, `1` invalid, `2` usage error. Output is one line per problem: `<field-path>: <problem>`. Beyond per-field types it enforces the invariants the agent docs state in prose — `totalCells == subAgentCells + orchestratorCells`, no midnight timestamp, all twelve `failsByMatrix` keys, `nextAgent` agreeing with `status`, exactly the five sub-reviewer keys in the dispatch file's `models`/`promptFiles`/`outputFiles` (a dropped key there silently loses a whole sub-reviewer), and — for `senior-pm` — `dispositionCounts` agreeing with the `tickets`/`rejectedFails`/`escalations` arrays, every ticket typed `technical` or `product`, `fix-product` tickets carrying a decision, `ticketsVerified` present exactly in `delta` mode, and `nextAgent` agreeing with the ticket count. It is called at five points: the writer after Step 6, the reviewer after Step 9, the reviewer at Step 3 before consuming the writer's handoff, the senior PM after Step 7, and `/create-prd` at steps 3.2 and 3.5.3.
+Exit `0` valid, `1` invalid, `2` usage error. Output is one line per problem: `<field-path>: <problem>`. Beyond per-field types it enforces the invariants the agent docs state in prose — `totalCells == subAgentCells + orchestratorCells`, no midnight timestamp, all twelve `failsByMatrix` keys, `nextAgent` agreeing with `status`, exactly the five sub-reviewer keys in the dispatch file's `models`/`promptFiles`/`outputFiles` (a dropped key there silently loses a whole sub-reviewer), a `technicalContractMode` of `slim` or `full` on the writer, reviewer and dispatch handoffs (the mode a PRD was written in is not re-derivable from the document, so it has to travel), and — for `senior-pm` — `dispositionCounts` agreeing with the `tickets`/`rejectedFails`/`escalations` arrays, every ticket typed `technical` or `product`, `fix-product` tickets carrying a decision, `ticketsVerified` present exactly in `delta` mode, and `nextAgent` agreeing with the ticket count. It is called at five points: the writer after Step 6, the reviewer after Step 9, the reviewer at Step 3 before consuming the writer's handoff, the senior PM after Step 7, and `/create-prd` at steps 3.2 and 3.5.3.
 
 **`scripts/run-log.py`** builds run-log lines with `json.dumps` instead of shell string concatenation, and reads the pipeline timing file so the skill doesn't parse it with shell loops:
 
