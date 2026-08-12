@@ -55,6 +55,12 @@ Checks, mode `prd`:
               `ISO-` bases, and no parenthesized encoding after a base type
               ("number (minor units)"). Full mode may keep encoded types in
               its per-endpoint tables, so the check never fires there
+    LINT-013  slim shape only: no code wiring outside the Dependencies
+              section — repo path fragments (`src/…`, `packages/…`),
+              source-file references (`.ts` / `.tsx` / `.dart`), and
+              backticked `paths.*` route constants. Occurrences inside
+              http(s) URLs are exempt (commit-pinned evidence links are
+              citations, not wiring); full mode is exempt entirely
 
 Checks, mode `review`:
     LINT-101  zero [PENDING] cells
@@ -868,6 +874,43 @@ def check_012_vocabulary_type_encoding(doc: Document, out: List[Violation]) -> N
                 )
 
 
+# Code wiring a slim PRD must not carry outside Dependencies: repo path
+# fragments, source-file references, and route path constants. URLs are
+# stripped before matching — a commit-pinned evidence permalink that happens
+# to contain `src/` is a citation, not wiring.
+URL_RE = re.compile(r"https?://\S+")
+CODE_WIRING_RE = re.compile(
+    r"(?<![\w./-])(?:src|packages)/[\w./-]+"
+    r"|(?<![\w./-])[\w./-]+\.(?:tsx|ts|dart)\b"
+    r"|`paths\.\w+"
+)
+
+
+def check_013_code_wiring(doc: Document, out: List[Violation]) -> None:
+    if not is_slim(doc):
+        return
+    exempt: set = set()
+    for heading in doc.headings_containing("Dependencies"):
+        start, end = doc.body(heading)
+        exempt.update(range(start, end))
+    for idx, line in doc.live_lines():
+        if idx in exempt:
+            continue
+        m = CODE_WIRING_RE.search(URL_RE.sub("", line))
+        if m:
+            add(
+                out,
+                "LINT-013",
+                idx,
+                "code wiring `%s` outside the Dependencies table — in slim "
+                "mode repo paths, source files and route-path constants are "
+                "dev-owned: name the concept and let the implementation "
+                "ticket carry the wiring (evidence permalinks and "
+                "ds-gap/api-canonical-gap issue references are the allowed "
+                "homes)" % m.group(0).strip("`"),
+            )
+
+
 # --------------------------------------------------------------------------
 # Mode `review` checks
 # --------------------------------------------------------------------------
@@ -965,6 +1008,7 @@ PRD_CHECKS = (
     check_010_product_constants,
     check_011_analytics_wire_taxonomy,
     check_012_vocabulary_type_encoding,
+    check_013_code_wiring,
 )
 
 REVIEW_CHECKS = (

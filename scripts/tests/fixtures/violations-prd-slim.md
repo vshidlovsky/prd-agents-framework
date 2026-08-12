@@ -10,7 +10,8 @@
 > and a duplicate V-number inside the behavioral layer (LINT-001), an unused
 > Product Constant and a bare inline bound in an AC (LINT-010), transport
 > taxonomy in an Analytics Events property cell (LINT-011), a wire encoding in
-> a Semantic Vocabulary Type cell (LINT-012).
+> a Semantic Vocabulary Type cell (LINT-012), a route constant and repo path in
+> a Navigation entry point (LINT-013).
 
 ---
 
@@ -91,6 +92,14 @@ As a returning shopper, I want to see my past orders so that I do not have to co
 |---|-----------|-------------------|
 | 1 | The shopper has exactly one order | The list renders that single order. |
 | 2 | The order list request exceeds the order list request deadline (PC-001) | The page shows the retry-able error state. |
+
+---
+
+### Navigation
+
+#### Entry Points
+
+- The account menu's order history item, routed via `paths.orderHistory` in `apps/web/src/config/paths.ts`. <!-- expect: LINT-013 -->
 
 ---
 

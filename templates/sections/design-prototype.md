@@ -12,7 +12,7 @@
 > 1. One row per screen or flow step, in flow order.
 > 2. **Visual Reference** column — fill exactly one of:
 >    - **Figma** — URL to the specific frame or screen. Preferred when mockups exist.
->    - **DS component** — path to a shipped component in `src/components/ui/` that defines the layout (e.g., a shell, a card, a form pattern). This is a real, shipped design system primitive — not a prototype.
+>    - **DS component** — a shipped component that defines the layout (e.g., a shell, a card, a form pattern). This is a real, shipped design system primitive — not a prototype. In `slim` mode cite it by **component name** (optionally the DS package) — e.g., "DS component: **Empty State**" — never by repo file path and never by internal props; the file path and prop wiring are dev-owned. In `full` mode the repo path (`src/components/ui/...`) may be cited.
 >    - **BLOCKED — no visual reference** — must have a corresponding `ds-gap` GitHub issue cited (`#<issue>`). A prototype must be built from this PRD before implementation begins.
 > 3. **Notes** column — either:
 >    - "Matches Figma" or "Uses DS component as-is" when implementation should follow the reference exactly
@@ -28,7 +28,7 @@
 | Screen / Step | Visual Reference | Notes |
 |---|---|---|
 | [Screen name] | [Figma URL](https://...) | [Matches Figma, or itemised deviations] |
-| [Screen name] | DS component: `src/components/ui/<component>` | [Uses component as-is, or deviations] |
+| [Screen name] | DS component: **[Component Name]** (`slim` mode) or `src/components/ui/<component>` (`full` mode) | [Uses component as-is, or deviations] |
 | [Screen name] | **BLOCKED — no visual reference** (issue #<N>) | Prototype must be built from this PRD before implementation |
 
 **Visual reference confirmation**:

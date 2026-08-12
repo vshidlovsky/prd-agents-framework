@@ -8,6 +8,7 @@
 > **GUIDE**
 > **What**: How users reach this feature and how they leave it.
 > **Why**: Without explicit navigation specs, devs guess at entry points, back behavior, and deep link support.
+> **Slim mode — product facts only**: state that the screen has a stable, purpose-named authenticated route and that direct navigation (bookmark, pasted address, browser history) behaves per the gate FRs. The concrete path, the path constant, the routing file, and any route-file cleanup (dead constants to delete) are dev-owned — cleanup items go to implementation tickets, not PRD prose. In `full` mode the concrete path maps in Route Mapping.
 
 #### Entry Points
 

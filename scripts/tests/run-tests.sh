@@ -25,11 +25,16 @@
 #                          layer, both LINT-010 shapes, transport taxonomy in
 #                          an Analytics Events property cell (LINT-011), and a
 #                          wire encoding in a Semantic Vocabulary Type cell
-#                          (LINT-012). The slim-only checks are locked in the
-#                          other direction too: clean-prd.md (full mode)
-#                          carries `error_status_code` in its Error
-#                          Classification table and `string (decimal)` in a
-#                          per-endpoint Type cell, and still lints clean
+#                          (LINT-012), and a route constant + repo path in a
+#                          Navigation entry point (LINT-013). The slim-only
+#                          checks are locked in the other direction too:
+#                          clean-prd.md (full mode) carries
+#                          `error_status_code` in its Error Classification
+#                          table, `string (decimal)` in a per-endpoint Type
+#                          cell, and `src/components/ui/` component paths, and
+#                          still lints clean; clean-prd-slim.md locks the
+#                          LINT-013 exemptions (a code-artifact Dependencies
+#                          row, a commit-pinned evidence URL)
 #   4. violations-review.md — same annotation contract in --mode review, and at
 #                          least one violation for each of LINT-101..LINT-103
 #   5. a missing input file exits 2
@@ -202,7 +207,7 @@ assert_annotated "$FIXTURES/violations-prd.md" prd \
   LINT-001 LINT-002 LINT-003 LINT-004 LINT-005 LINT-006 LINT-007 LINT-008 LINT-009
 
 assert_annotated "$FIXTURES/violations-prd-slim.md" prd \
-  LINT-001 LINT-009 LINT-010 LINT-011 LINT-012
+  LINT-001 LINT-009 LINT-010 LINT-011 LINT-012 LINT-013
 
 assert_annotated "$FIXTURES/violations-review.md" review \
   LINT-101 LINT-102 LINT-103

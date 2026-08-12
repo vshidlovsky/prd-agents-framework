@@ -188,7 +188,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 | Dependency | Source | Status |
 |-----------|--------|--------|
 | Cancellation endpoint on the orders service | Orders platform team | Merged |
-| Session bearer token in the storefront request layer | Storefront web | Merged |
+| Session bearer token in the storefront request layer (`src/lib/http/session.ts`) | Storefront web | Merged |
 
 ---
 
@@ -206,7 +206,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 | ID | Assumption | Source | Impact if Wrong |
 |----|-----------|--------|-----------------|
-| ASM-001 | The orders service returns monetary totals as decimal strings, never floats. | API reference | Totals compared as floats would drift and mis-render. |
+| ASM-001 | The orders service returns monetary totals as decimal strings, never floats. | API reference ([orders-service router](https://github.com/example-org/orders-service/blob/9f2c1ab/src/orders/router.py)) | Totals compared as floats would drift and mis-render. |
 | ASM-002 | Almost every shopper stays under the unpaginated order ceiling. | Analytics query on order counts | The truncation notice would become the common case rather than the exception. |
 | ASM-003 | The cancellation endpoint is idempotent for an already-cancelled order. | Verbal confirmation from the orders platform team | A double submit could produce two cancellation records. |
 
