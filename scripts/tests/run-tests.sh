@@ -4,11 +4,25 @@
 # and run-log.py.
 #
 # prd-lint.py asserts:
-#   1. clean-prd.md      — exit 0, zero violations (no unexpected IDs)
+#   1. clean-prd.md and clean-prd-slim.md — exit 0, zero violations (no
+#                          unexpected IDs). Same PRD, the two Technical Contract
+#                          modes. clean-prd.md is full mode AND the backward-
+#                          compatibility fixture: it is deliberately left in the
+#                          pre-slim shape (per-endpoint vocabulary + API tables,
+#                          no behavioral anchors), so it proves a document
+#                          written under the old template still lints clean.
+#                          clean-prd-slim.md is the slim shape — Product
+#                          Constants, Semantic Vocabulary and Display Rules in
+#                          the behavioral layer, no PRD-owned API tables. One
+#                          rule set has to keep both clean.
 #   2. violations-prd.md — exit 1, every `<!-- expect: LINT-00N -->` annotation
 #                          is matched by a reported violation with the same ID
 #                          on that line (+/- 1 line tolerance)
 #   3. violations-prd.md — at least one violation for each of LINT-001..LINT-009
+#   3b. violations-prd-slim.md — the slim-mode shape: the LINT-009 slim-anchor
+#                          branch, a `[V#]` that resolves against no Semantic
+#                          Vocabulary row, a duplicate V-number inside one
+#                          layer, and both LINT-010 shapes
 #   4. violations-review.md — same annotation contract in --mode review, and at
 #                          least one violation for each of LINT-101..LINT-103
 #   5. a missing input file exits 2
@@ -67,19 +81,23 @@ if [ ! -f "$RUNLOG" ]; then
 fi
 
 # --------------------------------------------------------------------------
-# 1. Clean fixture: exit 0, zero violations
+# 1. Clean fixtures: exit 0, zero violations — one per Technical Contract mode
 # --------------------------------------------------------------------------
-clean_out="$TMP_DIR/clean.json"
-"$PY" "$LINT" "$FIXTURES/clean-prd.md" --format json >"$clean_out" 2>&1
-clean_status=$?
-if [ "$clean_status" -ne 0 ]; then
-  fail "clean-prd.md exited $clean_status (expected 0)"
-  cat "$clean_out"
-else
-  pass "clean-prd.md exits 0"
-fi
+assert_clean() {
+  local fixture="$1" name out status total
+  name="$(basename "$fixture")"
+  out="$TMP_DIR/$name.clean.json"
 
-clean_total="$("$PY" - "$clean_out" <<'PYEOF'
+  "$PY" "$LINT" "$fixture" --format json >"$out" 2>&1
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    fail "$name exited $status (expected 0)"
+    cat "$out"
+  else
+    pass "$name exits 0"
+  fi
+
+  total="$("$PY" - "$out" <<'PYEOF'
 import json, sys
 try:
     with open(sys.argv[1], encoding="utf-8") as fh:
@@ -88,12 +106,16 @@ except Exception:
     print(-1)
 PYEOF
 )"
-if [ "$clean_total" = "0" ]; then
-  pass "clean-prd.md reports zero violations (no unexpected IDs)"
-else
-  fail "clean-prd.md reported $clean_total violation(s) (expected 0)"
-  cat "$clean_out"
-fi
+  if [ "$total" = "0" ]; then
+    pass "$name reports zero violations (no unexpected IDs)"
+  else
+    fail "$name reported $total violation(s) (expected 0)"
+    cat "$out"
+  fi
+}
+
+assert_clean "$FIXTURES/clean-prd.md"
+assert_clean "$FIXTURES/clean-prd-slim.md"
 
 # --------------------------------------------------------------------------
 # Annotation assertion helper
@@ -171,6 +193,9 @@ PYEOF
 
 assert_annotated "$FIXTURES/violations-prd.md" prd \
   LINT-001 LINT-002 LINT-003 LINT-004 LINT-005 LINT-006 LINT-007 LINT-008 LINT-009
+
+assert_annotated "$FIXTURES/violations-prd-slim.md" prd \
+  LINT-001 LINT-009 LINT-010
 
 assert_annotated "$FIXTURES/violations-review.md" review \
   LINT-101 LINT-102 LINT-103

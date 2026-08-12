@@ -5,6 +5,7 @@
   "status": "NEEDS_REVISION",
   "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
   "reviewPath": "docs/initiatives/search-filters/search-filters-prd-review.md",
+  "technicalContractMode": "slim",
   "subAgentCells": 231,
   "orchestratorCells": 16,
   "totalCells": 247,

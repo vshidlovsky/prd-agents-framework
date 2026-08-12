@@ -4,6 +4,8 @@
   "timestamp": "2026-08-10T14:22:05Z",
   "status": "draft_complete",
   "prdPath": "docs/initiatives/search-filters/search-filters-prd.md",
+  "technicalContractMode": "slim",
+  "technicalContractModeSource": "project-context",
   "apiEndpoints": ["GET /v1/catalog/search", "POST /v1/catalog/search/filters"],
   "existingCodeReferenced": [
     "src/catalog/search/SearchController.kt",
@@ -17,6 +19,8 @@
     "keyEntityCount": 4,
     "version": "v1",
     "sectionPacksUsed": 3,
+    "productConstantCount": 5,
+    "displayRuleCount": 4,
     "isFreshDraft": true,
     "failsAddressed": 0
   },

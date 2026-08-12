@@ -50,6 +50,13 @@ Invariants enforced beyond per-field types:
     senior-pm ticketsVerified is required in `delta` mode and forbidden in
               `full` mode — the mode field is what tells a reader whether the
               earlier dispositions were re-judged or enforced
+    writer    technicalContractMode is slim | full — the mode the PRD was
+              actually written in, which the reviewer and senior PM consume
+              instead of re-resolving it (and losing a per-run --tc override)
+    reviewer  technicalContractMode is slim | full, and must be the mode the
+              review judged the PRD in
+    dispatch  technicalContractMode is slim | full, so Phase 3 and every
+              sub-reviewer prompt inherit one resolution
     senior-pm timestamp must not be midnight (the agent doc forbids it)
     senior-pm nextAgent follows the ticket count (tickets → prd-writer, no
               tickets → none)
@@ -99,6 +106,18 @@ TICKET_TYPES: Tuple[str, ...] = ("technical", "product")
 
 # Run modes (prd-senior-pm.md "Run Mode: Full or Delta").
 SENIOR_PM_MODES: Tuple[str, ...] = ("full", "delta")
+
+# Technical Contract modes (project-context.md "PRD Configuration → Technical
+# Contract → Mode", overridable per run with `/create-prd … --tc`). The mode a
+# PRD was written in is not re-derivable from the document, so it travels in
+# the handoffs: the writer records it, the reviewer and senior PM read it
+# rather than re-resolving it from project-context.md and losing the override.
+TECHNICAL_CONTRACT_MODES: Tuple[str, ...] = ("slim", "full")
+
+# Where a resolved Technical Contract mode came from.
+TECHNICAL_CONTRACT_MODE_SOURCES: Tuple[str, ...] = (
+    "run-override", "project-context", "default",
+)
 
 # Delta-mode prior-ticket verification buckets (prd-senior-pm.md Step 7).
 TICKETS_VERIFIED_KEYS: Tuple[str, ...] = ("applied", "partial", "notApplied")
@@ -468,6 +487,14 @@ def validate_writer(document: Dict[str, Any], problems: Problems) -> None:
     want_timestamp(problems, document, root, "timestamp")
     want_string(problems, document, root, "status")
     want_string(problems, document, root, "prdPath")
+    want_string(
+        problems, document, root, "technicalContractMode",
+        choices=TECHNICAL_CONTRACT_MODES,
+    )
+    want_string(
+        problems, document, root, "technicalContractModeSource",
+        required=False, choices=TECHNICAL_CONTRACT_MODE_SOURCES,
+    )
     want_list(problems, document, root, "apiEndpoints", of="string")
     want_list(
         problems, document, root, "existingCodeReferenced",
@@ -479,6 +506,11 @@ def validate_writer(document: Dict[str, Any], problems: Problems) -> None:
     if found:
         for key in ("frCount", "acCount", "edgeCaseCount", "keyEntityCount"):
             want_integer(problems, metrics, "prdMetrics", key, strict=False)
+        for key in ("productConstantCount", "displayRuleCount"):
+            want_integer(
+                problems, metrics, "prdMetrics", key,
+                required=False, strict=False,
+            )
         want_string(problems, metrics, "prdMetrics", "version", required=False)
         want_integer(
             problems, metrics, "prdMetrics", "sectionPacksUsed",
@@ -562,6 +594,10 @@ def validate_reviewer(document: Dict[str, Any], problems: Problems) -> None:
     )
     want_string(problems, document, root, "prdPath")
     want_string(problems, document, root, "reviewPath")
+    want_string(
+        problems, document, root, "technicalContractMode",
+        choices=TECHNICAL_CONTRACT_MODES,
+    )
 
     for key in ("subAgentCells", "orchestratorCells", "totalCells", "failCount"):
         want_integer(problems, document, root, key, strict=True)
@@ -664,6 +700,10 @@ def validate_dispatch(document: Dict[str, Any], problems: Problems) -> None:
     want_string(problems, document, root, "reviewMode", equals="parallel")
     want_string(problems, document, root, "scaffoldPath")
     want_string(problems, document, root, "prdPath")
+    want_string(
+        problems, document, root, "technicalContractMode",
+        choices=TECHNICAL_CONTRACT_MODES,
+    )
 
     for key in ("subAgentCells", "orchestratorCells", "totalCells"):
         want_integer(problems, document, root, key, strict=True)

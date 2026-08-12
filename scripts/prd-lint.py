@@ -15,8 +15,12 @@ Exit codes:
 
 Checks, mode `prd`:
     LINT-001  every [V<n>] marker in the Behavioral Contract resolves to a
-              `| V<n> |` row in a Vocabulary table inside the Technical
-              Contract; duplicate V-numbers are violations
+              `| V<n> |` row in a Vocabulary table — the Semantic Vocabulary
+              table in the Behavioral Contract (slim mode), a per-endpoint
+              Vocabulary table in the Technical Contract (full mode), or both;
+              duplicate V-numbers *within one layer* are violations, while the
+              same V-number appearing in both layers is the repetition the
+              placement rule expects
     LINT-002  unchecked writer-confirmation checkboxes
     LINT-003  branch-name (non commit-pinned) /blob/ URLs
     LINT-004  Changelog version numbers must be non-decreasing top-to-bottom
@@ -25,9 +29,18 @@ Checks, mode `prd`:
     LINT-007  analytics binding: ACs reference AE-<n>, never raw event names;
               every AE-<n> is referenced by at least one AC
     LINT-008  wire-value leak: API Field values must not appear in
-              FR / AC / Edge Case lines
-    LINT-009  template conformance: `## Behavioral Contract`,
-              `## Technical Contract`, `## Boundaries` present verbatim
+              FR / AC / Edge Case lines. `API Field` is an optional, dev-owned
+              column, so a slim PRD carries no source for this scan — it then
+              skips cleanly rather than reporting anything
+    LINT-009  template conformance: `## Behavioral Contract` and
+              `## Boundaries` present verbatim; `## Technical Contract`
+              present unless the PRD is slim (no Technical Contract), in which
+              case the behavioral anchors Product Constants / Semantic
+              Vocabulary / Display Rules must be present instead
+    LINT-010  Product Constants integrity (only runs when the PRD has a
+              Product Constants section): every PC-<n> row is referenced by at
+              least one FR / AC / Edge Case, and no FR / AC states a bound as a
+              bare inline duration instead of citing a PC-<n> row
 
 Checks, mode `review`:
     LINT-101  zero [PENDING] cells
@@ -243,17 +256,41 @@ V_MARKER_RE = re.compile(r"\[V(\d+)\]")
 PLACEHOLDER_RE = re.compile(r"^[\[<{]")
 
 
-def vocabulary_tables(doc: Document) -> List[Table]:
-    """Tables under a `Vocabulary` heading inside the Technical Contract."""
-    tc = doc.section("Technical Contract", 2)
-    if tc is None:
+def _vocabulary_tables_under(doc: Document, section: str) -> List[Table]:
+    span = doc.section(section, 2)
+    if span is None:
         return []
     tables: List[Table] = []
-    for heading in doc.subheadings(tc):
+    for heading in doc.subheadings(span):
         if "vocabulary" not in heading.title.lower():
             continue
         tables.extend(doc.tables(*doc.body(heading)))
     return tables
+
+
+def behavioral_vocabulary_tables(doc: Document) -> List[Table]:
+    """Tables under a `Vocabulary` heading inside the Behavioral Contract.
+
+    This is the slim-mode home of the `[V#]` dictionary: `### Semantic
+    Vocabulary`. The PRD names the concepts here; binding them to wire fields
+    is dev-owned and optional.
+    """
+    return _vocabulary_tables_under(doc, "Behavioral Contract")
+
+
+def technical_vocabulary_tables(doc: Document) -> List[Table]:
+    """Tables under a `Vocabulary` heading inside the Technical Contract."""
+    return _vocabulary_tables_under(doc, "Technical Contract")
+
+
+def vocabulary_tables(doc: Document) -> List[Table]:
+    """Every Vocabulary table, in either layer.
+
+    A full-mode PRD repeats its V-numbers in the Technical Contract with the
+    API-field binding attached; a slim-mode PRD defines them once in the
+    behavioral layer. Both are valid sources for resolving a marker.
+    """
+    return behavioral_vocabulary_tables(doc) + technical_vocabulary_tables(doc)
 
 
 def strip_cell(cell: str) -> str:
@@ -293,9 +330,12 @@ def word_occurrence(value: str) -> re.Pattern:
 # --------------------------------------------------------------------------
 
 
-def check_001_vocabulary_markers(doc: Document, out: List[Violation]) -> None:
+def _collect_v_rows(
+    doc: Document, tables: Sequence[Table], layer: str, out: List[Violation]
+) -> Dict[int, int]:
+    """V-number → defining line, reporting duplicates *within this layer*."""
     defined: Dict[int, int] = {}
-    for table in vocabulary_tables(doc):
+    for table in tables:
         for idx, _cells in table.rows:
             m = V_ROW_RE.match(doc.lines[idx])
             if not m:
@@ -306,11 +346,26 @@ def check_001_vocabulary_markers(doc: Document, out: List[Violation]) -> None:
                     out,
                     "LINT-001",
                     idx,
-                    "duplicate vocabulary V-number V%d (first defined on line %d)"
-                    % (num, defined[num] + 1),
+                    "duplicate vocabulary V-number V%d in the %s (first "
+                    "defined on line %d)" % (num, layer, defined[num] + 1),
                 )
                 continue
             defined[num] = idx
+    return defined
+
+
+def check_001_vocabulary_markers(doc: Document, out: List[Violation]) -> None:
+    # Duplicate detection is per layer on purpose: a full-mode PRD repeats each
+    # V-number in the Technical Contract to attach the API-field binding, which
+    # the placement rule expects. Two rows for one number *inside* a layer is
+    # still a defect — that is a second definition, not a repetition.
+    behavioral = _collect_v_rows(
+        doc, behavioral_vocabulary_tables(doc), "Behavioral Contract", out
+    )
+    technical = _collect_v_rows(
+        doc, technical_vocabulary_tables(doc), "Technical Contract", out
+    )
+    defined = set(behavioral) | set(technical)
 
     bc = doc.section("Behavioral Contract", 2)
     if bc is None:
@@ -323,8 +378,9 @@ def check_001_vocabulary_markers(doc: Document, out: List[Violation]) -> None:
                     out,
                     "LINT-001",
                     idx,
-                    "[V%d] marker does not resolve to a `| V%d |` row in any "
-                    "Vocabulary table inside the Technical Contract" % (num, num),
+                    "[V%d] marker does not resolve to a `| V%d |` row in the "
+                    "Semantic Vocabulary table or any Vocabulary table inside "
+                    "the Technical Contract" % (num, num),
                 )
 
 
@@ -572,7 +628,12 @@ def check_008_wire_value_leak(doc: Document, out: List[Violation]) -> None:
                 )
 
 
-REQUIRED_SECTIONS = ("Behavioral Contract", "Technical Contract", "Boundaries")
+REQUIRED_SECTIONS = ("Behavioral Contract", "Boundaries")
+
+# The behavioral anchors a slim PRD carries in place of the Technical Contract.
+# They are what keeps a slim document buildable: constants, concept names, and
+# render determinants all live in the behavioral layer, by the placement rule.
+SLIM_ANCHORS = ("Product Constants", "Semantic Vocabulary", "Display Rules")
 
 
 def check_009_template_conformance(doc: Document, out: List[Violation]) -> None:
@@ -584,6 +645,104 @@ def check_009_template_conformance(doc: Document, out: List[Violation]) -> None:
                 0,
                 "required section `## %s` is missing or renamed — top-level "
                 "section names must match the template exactly" % title,
+            )
+
+    if doc.heading_exact("Technical Contract", 2) is not None:
+        return  # full-mode shape: nothing further to require
+
+    # No Technical Contract: the PRD is slim (or the section was renamed).
+    # Either way the behavioral anchors must be present, because they are the
+    # only remaining home for user-perceivable values.
+    bc = doc.section("Behavioral Contract", 2)
+    present = set()
+    if bc is not None:
+        present = {h.title.strip() for h in doc.subheadings(bc)}
+    for anchor in SLIM_ANCHORS:
+        if anchor not in present:
+            add(
+                out,
+                "LINT-009",
+                0,
+                "no `## Technical Contract` section, so this PRD is slim — but "
+                "the behavioral anchor `### %s` is missing from the Behavioral "
+                "Contract. A slim PRD must carry Product Constants, Semantic "
+                "Vocabulary and Display Rules (or restore the Technical "
+                "Contract heading if the section was renamed)" % anchor,
+            )
+
+
+PC_ROW_RE = re.compile(r"^\s*\|\s*\*{0,2}(PC-[A-Za-z0-9]*-?\d+)\*{0,2}\s*\|")
+PC_REF_RE = re.compile(r"\bPC-(?:[A-Za-z0-9]+-)*\d+\b")
+FR_AC_ID_RE = re.compile(r"\b(?:FR|AC)-\d+\b")
+
+# Durations are the bound class the placement rule was written for: a timeout
+# the user waits through, a freshness window, a cooldown. Keeping the unit list
+# to time units is deliberate — "a 6-digit code" and "3 columns" are product
+# mechanics and design, not constants, and matching them would make the check
+# noise. Other bound classes are caught by the reviewer's F-33.
+DURATION_RE = re.compile(
+    r"(?<![\w.])(\d+(?:\.\d+)?)\s*-?\s*"
+    r"(ms|millisecond|milliseconds|s|sec|secs|second|seconds|"
+    r"min|mins|minute|minutes|h|hr|hrs|hour|hours|"
+    r"day|days|week|weeks|month|months|year|years)\b",
+    re.IGNORECASE,
+)
+
+
+def product_constants_span(doc: Document) -> Optional[Tuple[int, int]]:
+    for heading in doc.headings_containing("Product Constants"):
+        return doc.body(heading)
+    return None
+
+
+def check_010_product_constants(doc: Document, out: List[Violation]) -> None:
+    span = product_constants_span(doc)
+    if span is None:
+        return  # the PRD does not use the Product Constants discipline
+
+    pc_start, pc_end = span
+    defined: Dict[str, int] = {}
+    for table in doc.tables(pc_start, pc_end):
+        for idx, _cells in table.rows:
+            m = PC_ROW_RE.match(doc.lines[idx])
+            if m and not PLACEHOLDER_RE.match(m.group(1)):
+                defined.setdefault(m.group(1), idx)
+
+    # Reference scan deliberately excludes the Product Constants table itself:
+    # its "Referenced by" column names the FRs, so counting it would let every
+    # row vouch for itself.
+    behavioral: List[Tuple[int, str]] = [
+        (idx, line)
+        for idx, line in fr_ac_lines(doc)
+        if not (pc_start <= idx < pc_end)
+    ]
+
+    for pc_id, row_idx in defined.items():
+        pattern = re.compile(r"\b" + re.escape(pc_id) + r"\b")
+        if not any(pattern.search(line) for _idx, line in behavioral):
+            add(
+                out,
+                "LINT-010",
+                row_idx,
+                "%s is referenced by zero requirements — an unused constant is "
+                "dead spec: cite it from the FR/AC it bounds, or delete the row"
+                % pc_id,
+            )
+
+    for idx, line in behavioral:
+        if not FR_AC_ID_RE.search(line):
+            continue  # edge-case rows carry scenario values, not bounds
+        if PC_REF_RE.search(line):
+            continue
+        m = DURATION_RE.search(line)
+        if m:
+            add(
+                out,
+                "LINT-010",
+                idx,
+                "bare inline bound `%s` in a requirement — every bound the "
+                "user perceives lives in Product Constants and is cited by ID "
+                "(PC-NNN), never restated inline" % m.group(0).strip(),
             )
 
 
@@ -681,6 +840,7 @@ PRD_CHECKS = (
     check_007_analytics_binding,
     check_008_wire_value_leak,
     check_009_template_conformance,
+    check_010_product_constants,
 )
 
 REVIEW_CHECKS = (
