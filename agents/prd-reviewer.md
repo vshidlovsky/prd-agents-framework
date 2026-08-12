@@ -743,6 +743,8 @@ To genuinely verify (not just eyeball), read the source material for each spot-c
 - **Matrix D1/D2 PASS**: read the PRD's flow section and confirm the transition/state is specified
 - **Matrix F PASS**: read the PRD section the check references and confirm it exists
 
+**Arithmetic worked examples (both modes, always)**: recompute at least one arithmetic worked example per Display Rules table by *executing* the computation — a node or python one-liner with the locale and timezone the rule states — never by inspection. Pick the example most likely to be timezone- or unit-sensitive (an epoch instant near midnight, a minor-unit currency amount). A mismatch between the PRD's rendered value and the command's output is an Incorrect Fact FAIL naming the computed value — Display Rules examples are declared test oracles, so a wrong one pins a wrong unit test.
+
 If any spot-check disagrees with the original PASS, mark it FAIL with note: "Overridden by spot-check: [reason]."
 
 ### 8.1.4: Readability Spot-Check (advisory — never a FAIL)
