@@ -214,7 +214,7 @@ Based on the detected project type, recommend section packs:
 - user-journey, screen-flow, navigation, analytics-events, component-mapping, feature-flags, accessibility, platform-considerations
 
 **Web app porting from mobile** (detected by mobile research docs, mobile references in CLAUDE.md):
-- all frontend packs + create a custom `mobile-baseline` pack during Step 8 (document which mobile behaviors to match/change/skip, source files, API endpoints used by mobile)
+- all frontend packs + create a custom `mobile-baseline` pack during Step 8. The pack is an evidence appendix, not context: its `Insert into` tag places it at the END of the PRD (after Boundaries, alongside the discrepancy section it feeds), and its template carries exactly three things — the pinned mobile-repo SHA line, a feature summary of at most 3 sentences (what the mobile feature is, its screens/entry points, its data source), and the match/diverge/skip decision table with source-code citations only in the table's Source column, never in prose. Endpoint inventories, file walkthroughs, and per-screen prose belong in the research document, not the pack.
 
 **Projects with a design system / Storybook / prototype components** (detected by Storybook config, `design-system/` or `__prototype__/` directories, or component library with visual examples):
 - add design-prototype to whichever list above applies

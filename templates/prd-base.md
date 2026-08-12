@@ -8,7 +8,7 @@
 > **How to use**: Copy this template, fill in every Tier 1 section, include section packs listed in project-context.md.
 > Delete the `> **GUIDE**` blocks after filling each section.
 >
-> **Section order**: Context (what, who) → Behavioral Contract (requirements, constants, vocabulary, display rules, verification, edge cases) → Technical Contract (section packs, dependencies, and — in `full` mode only — APIs, mappings, config) → Boundaries (scope, questions). Within each area, follow the numbered insertion-point markers for section pack placement.
+> **Section order**: Context (what, who) → Behavioral Contract (requirements, constants, vocabulary, display rules, verification, edge cases) → Technical Contract (section packs, dependencies, and — in `full` mode only — APIs, mappings, config) → Boundaries (scope, questions) → evidence appendices (project-specific evidence packs, e.g. a custom mobile-baseline pack and the discrepancy section it feeds). Within each area, follow the numbered insertion-point markers for section pack placement. Evidence is not context: an appendix never sits between Context and the Behavioral Contract — every reader would have to scroll past it to reach the contract.
 >
 > **Separation principle**: The Behavioral Contract describes *what* the system does (observable by users and testers). The Technical Contract describes *how* it's built (readable by engineers). A requirement passes the behavioral test if a QA engineer can verify it without reading source code. See `.claude/rules/behavioral-separation.md` for the full rules.
 >
@@ -404,6 +404,8 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **Format**: `- OQ-N [METHOD:target]: question`
 
 None — all questions resolved.
+
+<!-- Section packs: Evidence appendices — end of document, after Boundaries [position: 1] (e.g., a custom mobile-baseline pack). An evidence appendix carries at most: a pinned source-repo SHA line, a summary of at most 3 sentences, and a decision table with source-code citations only in its Source column — never in prose. Everything longer lives in the research document. Decision-row IDs (e.g., MA-###) are position-independent, so FR/AC references to them are unaffected by the appendix placement. -->
 
 ## Tier 2 — Include When Applicable
 
