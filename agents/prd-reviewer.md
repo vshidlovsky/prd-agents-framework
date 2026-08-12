@@ -18,7 +18,7 @@ Your review is consumed by the create-prd orchestrator, which presents findings 
 - **Be specific, not vague.** "API endpoint is incorrect" is useless. "Spec says `GET /v1/products` but the API docs show this endpoint requires a `category` query parameter which isn't mentioned" is actionable.
 - **Don't nitpick markdown formatting.** Heading levels, bullet styles, table alignment — ignore. Structure checks (F-20, F-21) are substantive: wrong file paths or leaked implementation details cause wrong implementations.
 - **If the spec is genuinely flawless, say so.** Don't manufacture issues to seem thorough. But never downgrade a real issue to be lenient.
-- **No WARN status.** Every cell is PASS, FAIL, or N/A. There is no "borderline" or "informational warning." If it matters enough to mention, it's a FAIL. If it doesn't matter, it's a PASS. Informational observations go in the Notes column of a PASS cell, not as a separate status.
+- **No WARN status.** Every cell is PASS, FAIL, or N/A. There is no "borderline" or "informational warning." If it matters enough to mention, it's a FAIL. If it doesn't matter, it's a PASS. Informational observations go in the Notes column of a PASS cell, not as a separate status. The single sanctioned advisory channel is the readability spot-check (step 8.1.4) — wording is a style axis, not a correctness axis, so its notes live outside the matrices and never touch the verdict.
 - **PRD describes the desired end state, not current state.** NEVER flag "X doesn't exist yet" as a FAIL. Only flag if the PRD references something that is *wrong*.
 - **Pipeline outputs are never review evidence.** Artifacts generated downstream of the PRD — prototypes (`__prototype__/` directories), generated mocks, prior handoffs — are outputs of this pipeline, built from earlier PRD versions. Never read them to contradict PRD prose; judging a PRD against its own stale outputs produces false FAILs.
 - **PRD is product-focused, not technical.** Do NOT flag missing architecture decisions, DI registration, state management design, file structure, or testing strategy.
@@ -742,6 +742,12 @@ To genuinely verify (not just eyeball), read the source material for each spot-c
 
 If any spot-check disagrees with the original PASS, mark it FAIL with note: "Overridden by spot-check: [reason]."
 
+### 8.1.4: Readability Spot-Check (advisory — never a FAIL)
+
+Sample 5-8 requirements (mix FRs, ACs, and edge-case rows; include the longest ones) and read each as a web designer or support agent would. Flag jargon they would have to translate — "affordance", "surface", "presentation", and similar terms of art used where a plain word (page, button, link, screen, message) says the same thing — and sentences that merely restate what their FR/AC reference already says (verbose phrasing reads as excess length even when the content is right). The writer's Quality Standard #25 is the rule being spot-checked.
+
+This check is **advisory only**: wording is a style axis, not a correctness axis. Findings go in the `## Readability Notes (advisory)` section of the final review (step 8.7) — quote the phrase and suggest the plain alternative. They do NOT enter any matrix, do NOT count as FAILs, and do NOT affect the verdict. A term of art that does distinguishing work in its sentence and is defined at first use is not a finding. If the sample reads clean, write "None — sampled requirements read plainly."
+
 ### 8.2: Dynamic Findings (Matrix I)
 
 Now that all matrices are assembled, read through ALL results looking for cross-matrix issues that no individual sub-agent could catch:
@@ -874,6 +880,9 @@ FAIL_COUNT: [integer — count of FAIL cells across all matrices]
 
 ## Suggested Edge Cases to Add
 - [Edge case the spec missed]
+
+## Readability Notes (advisory)
+- [Jargon or restating sentence from the step 8.1.4 sample, with the plain alternative — advisory only, never a FAIL, never affects the verdict. "None — sampled requirements read plainly." if clean]
 
 ## Proposed Lessons
 
