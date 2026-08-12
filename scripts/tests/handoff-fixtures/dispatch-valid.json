@@ -2,6 +2,7 @@
   "reviewMode": "parallel",
   "scaffoldPath": "/repo/docs/initiatives/search-filters/search-filters-prd-review.md",
   "prdPath": "/repo/docs/initiatives/search-filters/search-filters-prd.md",
+  "technicalContractMode": "slim",
   "subAgentCells": 231,
   "orchestratorCells": 16,
   "totalCells": 247,
