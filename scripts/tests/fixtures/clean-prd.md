@@ -102,6 +102,24 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
+### Test Coverage
+
+| AC / AC group | Verification | Notes |
+|---|---|---|
+| AC-001..AC-013 | integration | Order list, cancellation, loading and error behavior against a stubbed orders service. |
+| AC-014 | E2E | Session-expiry handoff spans the sign-in flow, so it is verified end to end. |
+| AC-015..AC-016 | integration | Rejection and empty-state behavior against a stubbed orders service. |
+
+**Environment overrides** — states a test must be able to force:
+
+| State | How the test produces it |
+|---|---|
+| Expired session | Run the request with a session token past its expiry. |
+| Cancellation rejected as already shipped | Seed the stubbed order as shipped before submitting the cancellation. |
+| Background refresh failure with cached data on screen | Load the list once, then make the stub fail the next refresh. |
+
+---
+
 ### Edge Cases
 
 | # | Condition | Expected Behavior |

@@ -397,6 +397,30 @@ None — all questions resolved.
 
 ---
 
+### Test Coverage
+
+> **Insert into**: Behavioral Contract — after Acceptance Criteria [position: 2]
+
+> **GUIDE**
+> **When**: Any PRD whose ACs will be handed to an implementer (i.e. effectively always; omit only for exploratory specs that will not be built from directly).
+> **What**: How each acceptance criterion gets verified, and how states that cannot occur naturally in a test environment are produced.
+> **Both modes**: behavioral-layer content — it describes how the product's observable behavior gets verified, not how the code is structured. Keep it in `slim` and `full` mode alike.
+> **How**: Bind every AC (or AC group) to a verification approach — unit / integration / E2E where a UI exists; unit / integration / contract for backend services (E2E is not required where no UI exists) — or designate it `manual` with its trigger described. An AC that no test type claims and no manual designation covers will silently not be verified. Add an environment-override row for every state a test must be able to force but that cannot occur naturally (a denied permission, an absent platform capability, a dismissed native sheet).
+
+| AC / AC group | Verification | Notes |
+|---|---|---|
+| AC-001..AC-004 | integration | |
+| AC-012 | manual | native share sheet cannot be automated; tester dismisses it by hand |
+
+**Environment overrides** — states a test must be able to force:
+
+| State | How the test produces it |
+|---|---|
+| clipboard write denied | deny the permission in the test context |
+| share unavailable | run in a context where the platform share entry point is absent |
+
+---
+
 ### Success Criteria
 
 > **Insert into**: Behavioral Contract — after Edge Cases [position: 1]
