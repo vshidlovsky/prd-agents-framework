@@ -299,6 +299,7 @@ After drafting FRs, Key Entities, and ACs, generate edge cases mechanically — 
 | Rate limit | What if the API returns 429? |
 | Partial response | What if optional response fields come back null? |
 | Concurrent mutation | What if two users/tabs submit the same request simultaneously? |
+| Deadline | Every network interaction the PRD introduces — read or write, foreground or background — either cites a deadline Product Constant or explicitly inherits one ("the enrolment write and its follow-up read each run under PC-001"). State what the user sees at the limit. An interaction with a count budget but no time bound leaves the user waiting on a hang. |
 
 **Per conditional FR (supplements Quality Standard #8):**
 

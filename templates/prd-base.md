@@ -110,6 +110,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - **Every FR/AC that depends on a bound cites the constant by ID** — `PC-001` — instead of restating the bare number inline. The value appears in this table and nowhere else.
 > - Every row must be referenced by at least one FR, AC, or Edge Case. An unreferenced constant is dead spec — delete it (Quality Standard #9).
 > - Values that are *not* user-perceivable (connection pool sizes, buffer lengths, internal batch sizes) do NOT belong here — they are dev-owned.
+> - **Deadlines are per network interaction** — every read *and* write runs under one. When a sequence spans several interactions (a write plus its follow-up read), state whether the constant bounds each step or the whole sequence (e.g., "PC-001 bounds each recovery call").
 > **Both modes**: this section is Tier 1 in `slim` and `full` alike. In `full` mode the Technical Contract may repeat a value; it must never be its only home.
 
 | ID | Constant | Value | What it bounds | Referenced by |
