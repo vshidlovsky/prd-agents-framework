@@ -41,6 +41,14 @@ Checks, mode `prd`:
               Product Constants section): every PC-<n> row is referenced by at
               least one FR / AC / Edge Case, and no FR / AC states a bound as a
               bare inline duration instead of citing a PC-<n> row
+    LINT-011  slim shape only (no `## Technical Contract` heading): the
+              Analytics Events and Support sections carry no transport
+              taxonomy — no `error_status_code` / `status_code` / `http_error`
+              / `parse_error` tokens and no literal status-number encoding
+              rules ("0 for transport failure", "200 for ..."). Failure
+              classes are product-semantic (`unreachable`, `rejected`,
+              `unusable_response`, `incomplete_record`); wire encodings are
+              dev-owned diagnostics. Never fires in full mode
 
 Checks, mode `review`:
     LINT-101  zero [PENDING] cells
@@ -295,6 +303,16 @@ def vocabulary_tables(doc: Document) -> List[Table]:
 
 def strip_cell(cell: str) -> str:
     return cell.strip().strip("`").strip("*").strip()
+
+
+def is_slim(doc: Document) -> bool:
+    """A PRD without a `## Technical Contract` heading is in the slim shape.
+
+    The slim-only checks below gate on this: in full mode the Technical
+    Contract legitimately carries wire taxonomy, encodings, and code wiring,
+    so those checks must never fire there.
+    """
+    return doc.heading_exact("Technical Contract", 2) is None
 
 
 def analytics_table(doc: Document) -> Optional[Table]:
@@ -746,6 +764,64 @@ def check_010_product_constants(doc: Document, out: List[Violation]) -> None:
             )
 
 
+# Transport taxonomy the slim analytics contract must not carry: wire-level
+# class names / status-code properties, and literal status-number encoding
+# rules. Semantic classes (unreachable, rejected, unusable_response,
+# incomplete_record) pass — they are named by what support does, not by how
+# the wire failed.
+WIRE_TAXONOMY_RE = re.compile(
+    r"\b(error_status_code|status_code|http_error|parse_error)\b"
+)
+STATUS_ENCODING_RE = re.compile(
+    r"`?\b(?:0|[1-5]\d{2})\b`?\s+for\s+"
+    r"(?:a\s+|an\s+|the\s+)?(?:transport|timeout|success|error|failure)",
+    re.IGNORECASE,
+)
+
+
+def check_011_analytics_wire_taxonomy(doc: Document, out: List[Violation]) -> None:
+    if not is_slim(doc):
+        return
+    spans: List[Tuple[int, int]] = []
+    for heading in doc.headings_containing("Analytics Events"):
+        spans.append(doc.body(heading))
+    for heading in doc.headings_containing("Support"):
+        spans.append(doc.body(heading))
+    seen: set = set()
+    for start, end in spans:
+        for idx, line in doc.live_lines(start, end):
+            if idx in seen:
+                continue
+            m = WIRE_TAXONOMY_RE.search(line)
+            if m:
+                seen.add(idx)
+                add(
+                    out,
+                    "LINT-011",
+                    idx,
+                    "wire failure taxonomy `%s` in the Analytics/Support "
+                    "content — slim-mode failure classes are product-semantic "
+                    "(unreachable / rejected / unusable_response / "
+                    "incomplete_record); status codes and wire classes are "
+                    "dev-owned diagnostics documented in the analytics "
+                    "catalog" % m.group(1),
+                )
+                continue
+            m = STATUS_ENCODING_RE.search(line)
+            if m:
+                seen.add(idx)
+                add(
+                    out,
+                    "LINT-011",
+                    idx,
+                    "status-number encoding rule `%s` in the "
+                    "Analytics/Support content — how a failure class is "
+                    "detected and encoded on the wire is dev-owned; the PRD "
+                    "names the class by its support meaning only"
+                    % m.group(0).strip(),
+                )
+
+
 # --------------------------------------------------------------------------
 # Mode `review` checks
 # --------------------------------------------------------------------------
@@ -841,6 +917,7 @@ PRD_CHECKS = (
     check_008_wire_value_leak,
     check_009_template_conformance,
     check_010_product_constants,
+    check_011_analytics_wire_taxonomy,
 )
 
 REVIEW_CHECKS = (

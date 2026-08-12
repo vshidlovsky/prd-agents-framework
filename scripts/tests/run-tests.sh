@@ -22,7 +22,12 @@
 #   3b. violations-prd-slim.md — the slim-mode shape: the LINT-009 slim-anchor
 #                          branch, a `[V#]` that resolves against no Semantic
 #                          Vocabulary row, a duplicate V-number inside one
-#                          layer, and both LINT-010 shapes
+#                          layer, both LINT-010 shapes, and transport taxonomy
+#                          in an Analytics Events property cell (LINT-011).
+#                          The slim-only checks are locked in the other
+#                          direction too: clean-prd.md (full mode) carries
+#                          `error_status_code` in its Error Classification
+#                          table and still lints clean
 #   4. violations-review.md — same annotation contract in --mode review, and at
 #                          least one violation for each of LINT-101..LINT-103
 #   5. a missing input file exits 2
@@ -195,7 +200,7 @@ assert_annotated "$FIXTURES/violations-prd.md" prd \
   LINT-001 LINT-002 LINT-003 LINT-004 LINT-005 LINT-006 LINT-007 LINT-008 LINT-009
 
 assert_annotated "$FIXTURES/violations-prd-slim.md" prd \
-  LINT-001 LINT-009 LINT-010
+  LINT-001 LINT-009 LINT-010 LINT-011
 
 assert_annotated "$FIXTURES/violations-review.md" review \
   LINT-101 LINT-102 LINT-103

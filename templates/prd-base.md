@@ -180,7 +180,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 > **GUIDE**: What happens when something fails. Cover: API errors, auth errors, network failures, validation errors.
 > Applies to all project types — every system has failure modes. Describe error behavior semantically. Don't hardcode error copy.
-> - **Transient vs persistent**: When an error state can result from both transient (transport, 429, 5xx) and persistent (parse_error, content-bug) failures, either (a) specify differentiated copy per class, OR (b) explicitly document in the PRD body that generic copy is intentional with a stated rationale. Silent reliance on generic copy is a defect.
+> - **Transient vs persistent**: When an error state can result from both transient (the service unreachable, rate-limited, or failing) and persistent (an unusable response, a content bug) failures, either (a) specify differentiated copy per class, OR (b) explicitly document in the PRD body that generic copy is intentional with a stated rationale. Silent reliance on generic copy is a defect.
 
 - [ ] **AC-NNN**: [Error behavior].
 
@@ -472,6 +472,8 @@ None — all questions resolved.
 > 3. **Multi-gated suppression**: When a UI element has multiple gates that can suppress it, include a single internal analytics event with a discriminator (`reason` enum) covering every suppression path.
 >
 > 4. **Cross-initiative hand-offs**: When a silent state's analytics is delegated to another initiative, name (a) the specific event name, (b) the specific property/sentinel, (c) the symptom-to-query mapping. Soft hand-offs without a named event are insufficient — log as an Open Question if the owning initiative hasn't defined the event yet.
+>
+> **Semantic classes, not wire taxonomy (`slim` mode)**: support workflows reference the semantic failure classes carried on the analytics events (`unreachable | rejected | unusable_response | incomplete_record`, or the initiative's equivalents) and state what support DOES per class. Never build a workflow on reading HTTP encodings ("`error_status_code: 200` + `parse_error` → escalate") — the mapping from wire observation to class is dev-owned, and deeper discrimination lives in the dev-owned diagnostic properties documented in the analytics catalog.
 
 ---
 

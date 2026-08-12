@@ -8,7 +8,8 @@
 > Planted here: no `## Technical Contract` **and** no `### Display Rules`
 > (LINT-009 slim-anchor branch), a `[V#]` marker with no Semantic Vocabulary row
 > and a duplicate V-number inside the behavioral layer (LINT-001), an unused
-> Product Constant and a bare inline bound in an AC (LINT-010).
+> Product Constant and a bare inline bound in an AC (LINT-010), transport
+> taxonomy in an Analytics Events property cell (LINT-011).
 
 ---
 
@@ -70,6 +71,15 @@ As a returning shopper, I want to see my past orders so that I do not have to co
 #### Error States
 
 - [ ] **AC-003**: When the initial order list request fails, the page shows a retry-able error state.
+- [ ] **AC-004**: When the initial order list request fails, AE-001 fires with the failure-reason property.
+
+---
+
+#### Analytics Events
+
+| # | Event Name | Trigger | Properties | Description |
+|---|---|---|---|---|
+| AE-001 | `order_history_load_failed` | The initial order list request fails | `error_status_code: number` (`0` for transport failure; the real response status otherwise), `failure_reason: "transport" / "http_error" / "parse_error"` | Wire taxonomy planted. <!-- expect: LINT-011 --> |
 
 ---
 

@@ -16,6 +16,8 @@
 > - Include event properties when relevant
 > - Check existing events in the codebase first to avoid duplicates
 > - Every event gets a stable ID: AE-001, AE-002, ...
+> - **Failure classes are semantic (`slim` mode)**: property values are product-semantic enums — outcomes (`copied | failed`), failure classes named by what they mean to support/product (`unreachable | rejected | unusable_response | incomplete_record`), suppression reasons. No HTTP status numbers, no status-encoding rules ("`0` for transport failure", "`200` for a success response that could not be interpreted"), no wire-level class names (`transport`, `http_error`, `parse_error`, `error_status_code`). A failure class earns a property value because support treats it differently — how each class is detected and encoded on the wire is dev-owned. If a class cannot be named without HTTP vocabulary, it is dev-owned diagnostics, not a PRD property.
+> - When failure classes are used, add one dev-owned note under the table in place of any encoding rules: teams may attach additional diagnostic properties (status codes, correlation identifiers, precise error causes); their naming and encoding, and the mapping from wire observations to the semantic classes, are dev-owned and documented in the analytics catalog, not the PRD.
 > - If the project maintains a central analytics event catalog (see Registry-Mirrored Catalogs in project-context.md), mirror every event addition, property change, and removal into the catalog in the same PRD edit — the lockstep applies to property updates and removals, not just new event names
 >
 > **AC-binding rules** (writer):

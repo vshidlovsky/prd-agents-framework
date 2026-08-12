@@ -147,7 +147,9 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 |---|---|---|---|---|
 | AE-001 | `order_history_viewed` | Order history page becomes visible | `order_count` (integer) | Page view event. |
 | AE-002 | `order_cancellation_confirmed` | Backend confirms a cancellation | `motive` (enum) | Successful cancellation. |
-| AE-OH-003 | `order_history_refetch_failed` | Background refresh fails with cached data on screen | `failure_reason` (enum) | Silent background failure — the sole signal of this state. |
+| AE-OH-003 | `order_history_refetch_failed` | Background refresh fails with cached data on screen | `failure_reason` (one of: `unreachable`, `rejected`, `unusable_response`) | Silent background failure — the sole signal of this state. Classes are named by what support does with them; how each class is detected is dev-owned. |
+
+> Teams may attach additional diagnostic properties to these events (status codes, correlation identifiers); their naming and encoding, and the mapping from wire observations to the semantic failure classes, are dev-owned and documented in the analytics catalog, not in this PRD.
 
 ---
 
