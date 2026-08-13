@@ -409,19 +409,18 @@ Section packs: {list of recommended packs}
 TODOs remaining: {count and list}
 ```
 
-Then say: **"Review `.claude/project-context.md` and fill in any `[TODO]` markers. When you're happy with it, we can delete unused section pack files from `docs/prd-sections/` and run the setup verification."**
+Then say: **"Review `.claude/project-context.md` and fill in any `[TODO]` markers. When you're happy with it, I'll run the setup verification."** (Unused section pack files stay on disk — see Step 13.)
 
 ## Step 13: Cleanup (after user confirms)
 
 When the user confirms the draft is good:
-1. Create an empty `prd-lessons.md` in the project root if it doesn't already exist. This file captures lessons learned across PRD initiatives — the reviewer and writer agents will reference it over time.
-2. Copy rule files from the framework to enforce approval guardrails:
+1. Create an empty `.claude/prd-lessons.md` if it doesn't already exist. This file captures lessons learned across PRD initiatives — the reviewer and writer agents will reference it over time.
+2. Verify the rule files the install map copies into `.claude/rules/` are all present; re-copy any that are missing from the framework checkout:
    ```bash
    mkdir -p .claude/rules
-   cp .claude/agents/../../../rules/prd-lessons.md .claude/rules/prd-lessons.md 2>/dev/null || true
-   cp .claude/agents/../../../rules/domain-glossary.md .claude/rules/domain-glossary.md 2>/dev/null || true
-   cp .claude/agents/../../../rules/shared-requirements.md .claude/rules/shared-requirements.md 2>/dev/null || true
-   cp .claude/agents/../../../rules/semantic-vocabulary.md .claude/rules/semantic-vocabulary.md 2>/dev/null || true
+   for f in behavioral-separation.md prd-lessons.md lesson-lifecycle.md domain-glossary.md shared-requirements.md semantic-vocabulary.md; do
+     [ -f ".claude/rules/$f" ] || cp "<framework checkout>/rules/$f" ".claude/rules/$f" 2>/dev/null || true
+   done
    ```
    If the framework rule files aren't available, create them manually:
 
@@ -493,11 +492,13 @@ When the user confirms the draft is good:
    - Confirm all checked section pack files exist on disk
    - Confirm all custom research step files exist on disk
    - Confirm `docs/api-sources.md` exists and references valid files
-   - Confirm `prd-lessons.md` exists in the project root
+   - Confirm `.claude/prd-lessons.md` exists
+   - Confirm `.claude/rules/behavioral-separation.md` exists
    - Confirm `.claude/rules/prd-lessons.md` exists
+   - Confirm `.claude/rules/lesson-lifecycle.md` exists
    - Confirm `.claude/rules/domain-glossary.md` exists
    - Confirm `.claude/rules/shared-requirements.md` exists
    - Confirm `.claude/rules/semantic-vocabulary.md` exists
    - If semantic vocabulary initialized: confirm `semantic-vocabulary/` directory exists
    - If shared requirements enabled: confirm `docs/shared-requirements.md` exists
-4. Report: "Setup complete. **Restart your Claude Code session** (exit and reopen) so the `/create-prd` skill gets registered. After restarting, you can run `/create-prd {initiative}` or individual agents."
+5. Report: "Setup complete. **Restart your Claude Code session** (exit and reopen) so the `/create-prd` skill gets registered. After restarting, you can run `/create-prd {initiative}` or individual agents."

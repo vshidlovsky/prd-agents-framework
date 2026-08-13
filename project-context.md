@@ -114,10 +114,10 @@
 
 > GUIDE: Captures timing, model assignments, and quality metrics for each `/create-prd` run.
 > Useful for comparing model profiles on the same initiative (e.g., reliable vs cost-optimized).
-> Each run produces a timestamped JSON file. Set to "no" to skip.
+> Each run appends JSONL entries (one per phase, plus a pipeline summary) to the log file. Set to "no" to skip.
 
 - **Enabled**: yes
-- **Output path**: `docs/initiatives/{initiative}/runs/`
+- **Log file**: `.claude/prd-run-log.jsonl`
 
 ### Included Section Packs
 
@@ -170,7 +170,7 @@ Custom section pack files (one path per line, or "none"):
 ### Project-Specific Review Checks
 
 > GUIDE: Additional review checks beyond the universal ones.
-> The prd-reviewer runs these ON TOP OF the 8 universal checks.
+> The prd-reviewer runs these ON TOP OF its universal check matrices, as Matrix P rows.
 > Write each as a checklist the reviewer can verify against the codebase.
 
 Add one table per custom check, or leave this section empty if none apply.

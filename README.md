@@ -367,17 +367,17 @@ The profile is stored in the **Model Profile** table in `project-context.md`. Ch
 
 ### Run logs & model comparison
 
-Each `/create-prd` run produces a JSON run log capturing:
+Each `/create-prd` run appends run-log entries capturing:
 - **Timing** — per-phase and per-sub-agent durations, with human gate wait time separated from agent work time. Review phase breaks down into scaffold, sub-agent dispatch (with individual agent times), and assembly.
 - **Models used** — the full model map for that run
 - **Quality metrics** — verdict, FAIL count broken down by matrix (A through P), defect taxonomy, smell detection stats (total checked vs found), spot-check overrides, revision cycles
 
-Run logs accumulate in `docs/initiatives/{initiative}/runs/`. To compare model profiles:
+Run logs accumulate in `.claude/prd-run-log.jsonl` — one JSONL entry per phase, plus a pipeline summary per run, all sharing a `runId`. To compare model profiles:
 
 1. Run `/create-prd my-feature` with the **reliable** profile
 2. Edit `project-context.md` to switch to **cost-optimized**
 3. Run `/create-prd my-feature` again
-4. Compare the two run log JSONs — did the cheaper profile miss FAILs? How much faster was it?
+4. Compare the two runs' JSONL entries — did the cheaper profile miss FAILs? How much faster was it?
 
 Token usage is not captured programmatically — correlate with your Anthropic dashboard for the session time window. Run logging is enabled by default; set `Enabled: no` under **Run Logs** in `project-context.md` to skip it.
 

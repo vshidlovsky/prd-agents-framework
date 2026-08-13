@@ -82,7 +82,7 @@ Rules for this layer:
 
 **Optional — `slim` (default) or `full`.** `project-context.md` → PRD Configuration → Technical Contract → **Mode** selects it, and a `/create-prd … --tc` run override wins. In `slim` mode the PRD-owned technical content is dev-owned: it lives in the team's technical design, and a PRD is not incomplete for omitting it. In `full` mode the PRD carries it (legacy behavior).
 
-Contains (in `full` mode): Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Vocabulary tables + Error Handling, Component Mapping, Visual References, Screen Flow, MSW Mock Data, Configuration Attributes, Dependencies. In `slim` mode only Dependencies and the section packs that insert here remain. (Copy, localization keys, and translations are NOT here — they are design deliverables; see "Copy and Localization Are Design-Owned" above.)
+Contains (in `full` mode): Data Sources, Query Configuration, Error Classification, Route Mapping, per-endpoint Vocabulary tables + Error Handling, Component Mapping, Visual References, Screen Flow, mock-data sections, Configuration Attributes, Dependencies. In `slim` mode only Dependencies and the section packs that insert here remain. (Copy, localization keys, and translations are NOT here — they are design deliverables; see "Copy and Localization Are Design-Owned" above.)
 
 Rules for this layer:
 - **Cross-cutting concerns defined once**: Error classification, query config, route mapping each live in one table as implementation reference
@@ -140,7 +140,7 @@ The prd-reviewer detects violations using the "Behavioral/Technical Separation S
 ## This Rule Applies To
 
 - **prd-writer**: MUST produce separated Behavioral/Technical Contracts with `[V#]` vocabulary references
-- **prd-reviewer**: MUST check for separation violations in FRs, ACs, and Edge Cases (FAIL for FRs/ACs, WARN for Edge Cases)
+- **prd-reviewer**: MUST check for separation violations in FRs, ACs, and Edge Cases — every violation is a FAIL (there is no WARN status; edge cases may be slightly more specific, but the same rule applies)
 - **All agents**: MUST NOT embed technical details in the behavioral layer when writing or revising PRDs
 
 This rule applies to all agents, skills, and conversations in this project.
