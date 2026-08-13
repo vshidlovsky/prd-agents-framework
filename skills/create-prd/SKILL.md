@@ -341,7 +341,7 @@ Append reviewer JSONL entry:
      --field 'metrics=<all metrics from the handoff, verbatim JSON object>' \
      --field 'subAgentDurations={"scaffold":<delta>,"api":<delta|null>,"structure":<delta|null>,"flow":<delta|null>,"requirements":<delta|null>,"smells":<delta|null>,"assembly":<delta>}'
    ```
-   Per-sub-agent deltas come from the same helper: `python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta subagent_api_start subagent_api_end` (and likewise for structure/flow/requirements/smells, using whatever key names the sub-agent timing files carried). If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
+   Per-sub-agent deltas come from the same helper: `python3 scripts/run-log.py timing --file "$TIMING_FILE" --delta subagent_api_start subagent_api_end` (and likewise for structure/flow/requirements/smells, using whatever key names the sub-agent timing files used). If `scripts/run-log.py` is missing, construct the JSON manually as before (one `echo` of the full object appended to `$LOG_FILE`), following the [JSONL Schema Reference](#jsonl-schema-reference).
 4. Update state file — set `currentPhase: "gate3"`, push reviewer phase into `completedPhases`
 
 ### Step 3.6: Defensive cleanup
@@ -481,7 +481,7 @@ If no shared requirements were proposed, say "No new shared requirements propose
 
 **Then**, ask for action — one prompt covering the dispositions, lessons, glossary terms, vocabulary, and shared requirements. The user has three powers over the senior PM's work:
 
-- **(a) Answer the escalations** — each answer becomes an additional ticket for the writer, carrying the user's decision verbatim.
+- **(a) Answer the escalations** — each answer becomes an additional ticket for the writer, holding the user's decision word for word.
 - **(b) Veto or override any disposition** — turn a `reject` back into a ticket ("fix F-14 after all"), drop a ticket ("skip T-3"), or replace a `fix-product` decision with a different one. The senior PM's dispositions are proposals with authority, not commands. Record every override: it changes the ticket list you pass to the writer, and the writer applies the amended list.
 - **(c) Say "go"** — accept the dispositions as written and start the revision.
 
@@ -507,7 +507,7 @@ On shared-requirement approval, spawn a new Agent using `.claude/agents/prd-revi
 If lessons, glossary terms, vocabulary entries, and shared requirements are all approved, spawn all four callbacks in parallel — they write to different files and don't conflict.
 
 If "go" (or "revise"): increment the revision count. If run logging is enabled, increment `cycle` in the state file and set `currentPhase: "revision"`.
-  - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the senior-PM ticket file at {senior_pm_review_path} (handoff: {senior_pm_handoff_path}). Follow Step 3.5 (Revision Mode) — apply each ticket exactly. `fix-product` tickets carry a decision already made: implement it as written, do not re-decide. Do not fix anything on the Rejected FAILs list — those were overridden. If something needs a product decision no ticket covers, leave it and add an Open Question tagged `ASK:PM`. Do not rewrite the entire PRD. [If the user vetoed or added anything at Gate 3: 'The user amended the ticket list: <list the amendments>.']" **Pass the ticket file, not the raw review** — the writer's Step 3.5 consumes tickets. The writer handles versioning, targeted edits, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review**, which will be followed by Phase 3.5 in `delta` mode.
+  - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the senior-PM ticket file at {senior_pm_review_path} (handoff: {senior_pm_handoff_path}). Follow Step 3.5 (Revision Mode) — apply each ticket exactly. `fix-product` tickets hold a decision already made: implement it as written, do not re-decide. Do not fix anything on the Rejected FAILs list — those were overridden. If something needs a product decision no ticket covers, leave it and add an Open Question tagged `ASK:PM`. Do not rewrite the entire PRD. [If the user vetoed or added anything at Gate 3: 'The user amended the ticket list: <list the amendments>.']" **Pass the ticket file, not the raw review** — the writer's Step 3.5 consumes tickets. The writer handles versioning, targeted edits, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review**, which will be followed by Phase 3.5 in `delta` mode.
   - If revision count = 3: tell the user: **"This PRD has gone through 3 revision cycles and still has open tickets. Remaining tickets: [list]. Options: 'override' to approve as-is, 'continue' to try one more cycle, or 'stop' to pause and resolve issues manually."**
 If "override": mark as approved and end.
 

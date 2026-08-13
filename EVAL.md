@@ -113,7 +113,7 @@ only where the machinery exists.
 by construction, so a size, cell-count, or conformance delta between them is definitional, not
 evidence. The only honest cross-mode questions are buildability and guessCount from the Tech Lead
 lens, and whether either arm lost a user-perceivable value. Hold the mode constant in any two-arm
-release comparison, and record it in the pre-registration — the run log's pipeline entry carries
+release comparison, and record it in the pre-registration — the run log's pipeline entry includes
 `technicalContractMode` and `technicalContractModeSource` for exactly this.
 
 ## Standing assets (create once, reuse)
@@ -137,7 +137,7 @@ release comparison, and record it in the pre-registration — the run log's pipe
 3. **Repo-wide greps leak prior verdicts**: reviewers grepping for a symbol will surface
    earlier review files. Instruct agents to exclude review artifacts from search paths and
    to disclose any leak plus re-derive the affected cells independently.
-4. **The judging environment carries one arm's edits**: verify factual disputes directly in
+4. **The judging environment contains one arm's edits**: verify factual disputes directly in
    code, and have the judge disclose environment artifacts.
 
 ## Operational lessons

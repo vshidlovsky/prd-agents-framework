@@ -14,7 +14,7 @@
 >
 > **Placement rule (governs both contracts)**: *Every number, rule, and policy the user can see or feel lives in the behavioral layer. A value, format, ordering, or policy may never live only in a technical table, a discrepancy row, or scattered pieces the reader has to assemble.* The Technical Contract may repeat such a value; it must never be its only home.
 >
-> **Technical Contract mode**: `project-context.md` → PRD Configuration → **Technical Contract → Mode** selects `slim` (default) or `full`; a `/create-prd <initiative> --tc full|slim` run override wins over the project setting. In `slim` mode the PRD-owned technical tables below are omitted and the team's technical design owns that content — the PRD still carries Product Constants, Semantic Vocabulary and Display Rules in the behavioral layer. In `full` mode the PRD also carries the Technical Contract tables (legacy behavior).
+> **Technical Contract mode**: `project-context.md` → PRD Configuration → **Technical Contract → Mode** selects `slim` (default) or `full`; a `/create-prd <initiative> --tc full|slim` run override wins over the project setting. In `slim` mode the PRD-owned technical tables below are omitted and the team's technical design owns that content — the PRD still keeps Product Constants, Semantic Vocabulary and Display Rules in the behavioral layer. In `full` mode the PRD also includes the Technical Contract tables (legacy behavior).
 >
 > **Section packs**: The prd-writer inserts additional sections from `templates/sections/` based on what's listed in `project-context.md`. Each section pack has an `Insert into` tag with a numbered position (e.g., `Insert into: Technical Contract [position: 1]`). Insert packs in ascending position order. Packs sharing the same position number should be inserted in alphabetical order by section name.
 
@@ -239,7 +239,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > 2. Per-endpoint blocks — Vocabulary table (V-numbered rows binding semantic names to API fields) + Error Handling
 > 3. UI/config sections — Component Mapping, Visual References, etc. (the exact user-facing words, localization keys, and translations are design-owned — not a PRD section)
 >
-> In `full` mode the per-endpoint Vocabulary tables carry the API-field binding for the same V-numbers defined in the Semantic Vocabulary table. Repeating a V-number across the two layers is expected; splitting the set across them is not — every marker must resolve in both places or in the Semantic Vocabulary table alone.
+> In `full` mode the per-endpoint Vocabulary tables hold the API-field binding for the same V-numbers defined in the Semantic Vocabulary table. Repeating a V-number across the two layers is expected; splitting the set across them is not — every marker must resolve in both places or in the Semantic Vocabulary table alone.
 
 <!-- PRD-owned technical content — `full` mode only. In `slim` mode delete every sub-section from here through Configuration Attributes, keeping the section packs and Dependencies. -->
 
@@ -338,7 +338,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 > **Sub-section order**: Always use this order: Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
 > Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
-> The PRD body carries no list of omitted sections — no reader builds from a list of absences. Conditional sections whose trigger is absent are LEFT OUT of the document and recorded in the writer handoff's `consideredNA` field instead (see the prd-writer spec); the reviewer checks that record, not a PRD section.
+> The PRD body has no list of omitted sections — no reader builds from a list of absences. Conditional sections whose trigger is absent are LEFT OUT of the document and recorded in the writer handoff's `consideredNA` field instead (see the prd-writer spec); the reviewer checks that record, not a PRD section.
 
 ### Dependencies
 
@@ -396,7 +396,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 None — all questions resolved.
 
-<!-- Section packs: Evidence appendices — end of document, after Boundaries [position: 1] (e.g., a custom mobile-baseline pack). An evidence appendix carries at most: a pinned source-repo SHA line, a summary of at most 3 sentences, and ONE match/diverge/skip decision table whose rows carry the discrepancy IDs (e.g., MA-###), with source-code citations only in its Source column — never in prose. There is no separate flagged-discrepancies section: the appendix table holds those decisions, and the project's central discrepancy catalog stays the mirror authority for the IDs (registry lockstep). Everything longer lives in the research document. Decision-row IDs are position-independent, so FR/AC references to them are unaffected by the appendix placement. -->
+<!-- Section packs: Evidence appendices — end of document, after Boundaries [position: 1] (e.g., a custom mobile-baseline pack). An evidence appendix holds at most: a pinned source-repo SHA line, a summary of at most 3 sentences, and ONE match/diverge/skip decision table whose rows hold the discrepancy IDs (e.g., MA-###), with source-code citations only in its Source column — never in prose. There is no separate flagged-discrepancies section: the appendix table holds those decisions, and the project's central discrepancy catalog stays the mirror authority for the IDs (registry lockstep). Everything longer lives in the research document. Decision-row IDs are position-independent, so FR/AC references to them are unaffected by the appendix placement. -->
 
 ## Tier 2 — Include When Applicable
 
@@ -469,7 +469,7 @@ None — all questions resolved.
 >
 > 4. **Cross-initiative hand-offs**: When a silent state's analytics is delegated to another initiative, name (a) the specific event name, (b) the specific property/sentinel, (c) the symptom-to-query mapping. Soft hand-offs without a named event are insufficient — log as an Open Question if the owning initiative hasn't defined the event yet.
 >
-> **Name failures by what they mean, not by HTTP code (`slim` mode)**: support workflows use the failure classes carried on the analytics events (`unreachable | rejected | unusable_response | incomplete_record`, or the initiative's equivalents) and say what support DOES for each class. Never build a workflow on reading HTTP codes ("`error_status_code: 200` + `parse_error` → escalate") — turning a wire observation into a class is the developers' job, and finer detail lives in the dev-owned diagnostic properties documented in the analytics catalog.
+> **Name failures by what they mean, not by HTTP code (`slim` mode)**: support workflows use the failure classes on the analytics events (`unreachable | rejected | unusable_response | incomplete_record`, or the initiative's equivalents) and say what support DOES for each class. Never build a workflow on reading HTTP codes ("`error_status_code: 200` + `parse_error` → escalate") — turning a wire observation into a class is the developers' job, and finer detail lives in the dev-owned diagnostic properties documented in the analytics catalog.
 
 ---
 

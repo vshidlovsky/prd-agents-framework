@@ -86,10 +86,10 @@
 
 ### Technical Contract
 
-> GUIDE: "slim" (default) — the PRD carries Product Constants, Semantic Vocabulary and Display
+> GUIDE: "slim" (default) — the PRD keeps Product Constants, Semantic Vocabulary and Display
 > Rules in the behavioral layer; API tables, error-code mappings, component paths and config
 > attributes are dev-owned and live in the team's technical design.
-> "full" — the PRD also carries the Technical Contract sections (legacy behavior).
+> "full" — the PRD also includes the Technical Contract sections (legacy behavior).
 >
 > Pick by who owns the technical design. Working solo end-to-end? "full" — the technical
 > contract is your own build plan and one document beats two. Handing specs to developers?

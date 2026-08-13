@@ -30,7 +30,7 @@ Recurrence detection is mechanical: grep prior initiatives' `*-writer-qa.json` f
 
 **Anti-pattern — an SR is a *rule*, never a feature requirement.** "Screen-view events fire only when a screen renders" is an SR. "The referrer screen fires a view event" is not — it belongs in that initiative's PRD. If the candidate names a specific screen, endpoint, or feature, it is not an SR.
 
-Who proposes: the writer (a clarifying question whose answer is initiative-independent — `srCandidate` in the Q&A log), the senior PM (a disposition whose resolution is a universal rule — `sr-candidate` evidence marker), and the reviewer (a FAIL whose fix is a universal rule). All three carry proposals as `proposedSharedRequirements` in their handoffs; none of them writes this file.
+Who proposes: the writer (a clarifying question whose answer is initiative-independent — `srCandidate` in the Q&A log), the senior PM (a disposition whose resolution is a universal rule — `sr-candidate` evidence marker), and the reviewer (a FAIL whose fix is a universal rule). All three pass proposals as `proposedSharedRequirements` in their handoffs; none of them writes this file.
 
 ## Consumption — An Existing SR Ends the Argument
 
