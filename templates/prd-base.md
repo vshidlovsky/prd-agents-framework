@@ -237,7 +237,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **Organization (`full` mode)**:
 > 1. Cross-cutting tables — Data Sources, Query Configuration, Error Classification, Route Mapping
 > 2. Per-endpoint blocks — Vocabulary table (V-numbered rows binding semantic names to API fields) + Error Handling
-> 3. UI/config sections — Component Mapping, Visual References, etc. (copy, localization keys, and translations are design-owned — not a PRD section)
+> 3. UI/config sections — Component Mapping, Visual References, etc. (the exact user-facing words, localization keys, and translations are design-owned — not a PRD section)
 >
 > In `full` mode the per-endpoint Vocabulary tables carry the API-field binding for the same V-numbers defined in the Semantic Vocabulary table. Repeating a V-number across the two layers is expected; splitting the set across them is not — every marker must resolve in both places or in the Semantic Vocabulary table alone.
 
