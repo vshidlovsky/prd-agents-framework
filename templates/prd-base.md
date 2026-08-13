@@ -110,7 +110,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - **Every FR/AC that depends on a bound cites the constant by ID** — `PC-001` — instead of restating the bare number inline. The value appears in this table and nowhere else.
 > - Every row must be referenced by at least one FR, AC, or Edge Case. An unreferenced constant is dead spec — delete it (Quality Standard #9).
 > - Values the user cannot notice (connection pool sizes, buffer lengths, internal batch sizes) do NOT belong here — they are dev-owned.
-> - **Every call to the server has a time limit** — reads and writes alike. When one action makes several calls (a write, then a read to check it), say whether the constant limits each call or the whole chain (e.g., "PC-001 limits each call").
+> - **Every call to the server has a time limit** — loading data and saving data alike. When one action makes several calls (a save, then a load to check it), say whether the constant limits each call or the whole chain (e.g., "PC-001 limits each call").
 > **Both modes**: this section is Tier 1 in `slim` and `full` alike. In `full` mode the Technical Contract may repeat a value; it must never be its only home.
 
 | ID | Constant | Value | What it bounds | Referenced by |
@@ -174,7 +174,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **GUIDE**: What the user/caller sees while processing. Cover three distinct cases:
 > - **Initial load**: the screen has no data yet — say that a loading state shows until the data the screen needs has loaded, referencing the shared loading requirement where one exists. What the placeholder looks like is design-owned — no "shaped like the code block and list" instructions.
 > - **Background reload with old data on screen**: the saved data is old and a fresh read is running, but the old data is still showing — does the screen keep showing it unchanged (no skeleton, no spinner), or add a loading sign on top?
-> - **Background reload fails**: for every read that reloads in the background, include a dedicated AC for the reload failing. Default: keep the old data on screen, fire a `<feature>_refetch_failed` analytics event, do NOT switch to the error state. Make the choice explicit in an AC — do not assume.
+> - **Background reload fails**: wherever the screen reloads data in the background, include a dedicated AC for the reload failing. Default: keep the old data on screen, fire a `<feature>_refetch_failed` analytics event, do NOT switch to the error state. Make the choice explicit in an AC — do not assume.
 > - **While a write is running**: what is disabled, what shows progress?
 > For backend services: cover async processing indicators, queue states, or in-flight request states if applicable. Mark `N/A` if the service is purely synchronous with no user-visible wait states.
 
