@@ -215,7 +215,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ### Feature Flags / Remote Config
 
-> **GUIDE**: Feature flags, remote config, rollout settings. If the feature ships with no flag and no remote config, OMIT this section and add a clause to the Considered, N/A ledger in Boundaries instead — a table saying "None" is dead text.
+> **GUIDE**: Feature flags, remote config, rollout settings. If the feature ships with no flag and no remote config, OMIT this section and record it in the handoff's `consideredNA` list instead (see the prd-writer spec) — a table saying "None" is dead text.
 
 | Field | Value |
 |-------|-------|
@@ -336,20 +336,9 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ## Boundaries
 
-> **Sub-section order**: Always use this order: Considered, N/A → Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
+> **Sub-section order**: Always use this order: Dependencies → Out of Scope → Assumptions → [section packs: position 1] → Open Questions.
 > Section packs inserted into Boundaries go between Assumptions and Open Questions, in position order.
-
-### Considered, N/A
-
-> **GUIDE**
-> **What**: One line naming every conditional section that was considered and left out because its trigger is absent — with the reason in a few words per clause.
-> **Why**: Conditional sections (Compliance, Feature Flags, capacity where trivial, form/input material, ...) are LEFT OUT when their trigger is absent — no defensive N/A paragraphs. But leaving one out silently is worse than N/A text: the reviewer must be able to tell "considered and not applicable" from "forgotten." This ledger is how they tell, and the reviewer FAILs a conditional section that is both missing and unledgered.
-> **How**: One clause per omitted section, ` · ` separated, reason in a few words (one sentence maximum). Each reason must hold against the PRD's own facts. If nothing was omitted, state "None — every conditional section applies."
-> **Both modes**: applies in `slim` and `full` mode alike.
-
-**Considered, N/A**: [Section] ([reason in a few words]) · [Section] ([reason])
-
----
+> The PRD body carries no list of omitted sections — no reader builds from a list of absences. Conditional sections whose trigger is absent are LEFT OUT of the document and recorded in the writer handoff's `consideredNA` field instead (see the prd-writer spec); the reviewer checks that record, not a PRD section.
 
 ### Dependencies
 
@@ -407,12 +396,12 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 None — all questions resolved.
 
-<!-- Section packs: Evidence appendices — end of document, after Boundaries [position: 1] (e.g., a custom mobile-baseline pack). An evidence appendix carries at most: a pinned source-repo SHA line, a summary of at most 3 sentences, and a decision table with source-code citations only in its Source column — never in prose. Everything longer lives in the research document. Decision-row IDs (e.g., MA-###) are position-independent, so FR/AC references to them are unaffected by the appendix placement. -->
+<!-- Section packs: Evidence appendices — end of document, after Boundaries [position: 1] (e.g., a custom mobile-baseline pack). An evidence appendix carries at most: a pinned source-repo SHA line, a summary of at most 3 sentences, and ONE match/diverge/skip decision table whose rows carry the discrepancy IDs (e.g., MA-###), with source-code citations only in its Source column — never in prose. There is no separate flagged-discrepancies section: the appendix table holds those decisions, and the project's central discrepancy catalog stays the mirror authority for the IDs (registry lockstep). Everything longer lives in the research document. Decision-row IDs are position-independent, so FR/AC references to them are unaffected by the appendix placement. -->
 
 ## Tier 2 — Include When Applicable
 
 > Include these when conditions apply. Each has an **Insert into** tag.
-> **How to use**: When the condition applies, MOVE the section to its insertion point (specified by the `Insert into` tag) — do not leave it here at the bottom. When the condition does not apply, DELETE the section entirely and record it as a clause in the Considered, N/A ledger in Boundaries — never leave an N/A prose block in its place.
+> **How to use**: When the condition applies, MOVE the section to its insertion point (specified by the `Insert into` tag) — do not leave it here at the bottom. When the condition does not apply, DELETE the section entirely and record it in the writer handoff's `consideredNA` list — never leave an N/A prose block in its place.
 
 ---
 
@@ -423,7 +412,7 @@ None — all questions resolved.
 > **GUIDE**
 > **When**: `full` mode only — any PRD whose ACs will be handed to an implementer (omit only for exploratory drafts nobody will build from).
 > **What**: How each acceptance criterion gets verified, and how states that cannot occur naturally in a test environment are produced.
-> **Slim mode**: leave this section out entirely, and do not add a ledger clause for it — the test plan is the QA lead's document, not a product section this PRD considered and dropped. What the PM still owes in slim mode: every AC is phrased so a tester can check it by using the running app.
+> **Slim mode**: leave this section out entirely, and do not list it in the handoff's `consideredNA` — the test plan is the QA lead's document, not a product section this PRD considered and dropped. What the PM still owes in slim mode: every AC is phrased so a tester can check it by using the running app.
 > **How**: Bind every AC (or AC group) to a verification approach — unit / integration / E2E where a UI exists; unit / integration / contract for backend services (E2E is not required where no UI exists) — or designate it `manual` with its trigger described. An AC that no test type claims and no manual designation covers will silently not be verified. Add an environment-override row for every state a test must be able to force but that cannot occur naturally (a denied permission, an absent platform capability, a dismissed native sheet).
 
 | AC / AC group | Verification | Notes |

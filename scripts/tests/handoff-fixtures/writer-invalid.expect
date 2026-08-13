@@ -3,6 +3,8 @@
 agent: expected "prd-writer", got "prd-author"
 timestamp: expected ISO8601 timestamp
 apiEndpoints[1]: expected string, got integer
+consideredNA[0].reason: required field is missing
+consideredNA[1]: expected object, got string
 prdMetrics.frCount: expected integer, got non-numeric string "eighteen"
 prdMetrics.acCount: required field is missing
 prdMetrics.isFreshDraft: expected boolean, got string

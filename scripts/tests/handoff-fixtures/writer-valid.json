@@ -15,6 +15,16 @@
     "src/catalog/search/FilterMapper.kt"
   ],
   "dependencies": [],
+  "consideredNA": [
+    {
+      "section": "Feature Flags / Remote Config",
+      "reason": "The feature ships without a flag or remote config."
+    },
+    {
+      "section": "Compliance",
+      "reason": "The flow adds no new data collection or regulated action."
+    }
+  ],
   "prdMetrics": {
     "frCount": 18,
     "acCount": "42",

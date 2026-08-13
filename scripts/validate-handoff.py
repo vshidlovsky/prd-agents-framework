@@ -53,6 +53,10 @@ Invariants enforced beyond per-field types:
     writer    technicalContractMode is slim | full — the mode the PRD was
               actually written in, which the reviewer and senior PM consume
               instead of re-resolving it (and losing a per-run --tc override)
+    writer    consideredNA (optional) lists omitted conditional sections as
+              {section, reason} pairs — the Considered, N/A record that used
+              to be a PRD section; reviewer F-36 and the senior PM read it
+              from the handoff, so a half-filled entry breaks that check
     reviewer  technicalContractMode is slim | full, and must be the mode the
               review judged the PRD in
     dispatch  technicalContractMode is slim | full, so Phase 3 and every
@@ -501,6 +505,7 @@ def validate_writer(document: Dict[str, Any], problems: Problems) -> None:
         required=False, of="string",
     )
     want_list(problems, document, root, "dependencies", required=False)
+    validate_considered_na(document, problems, root)
 
     found, metrics = want_object(problems, document, root, "prdMetrics")
     if found:
@@ -529,6 +534,26 @@ def validate_writer(document: Dict[str, Any], problems: Problems) -> None:
     validate_shared_requirement_proposals(document, problems, root)
 
     want_string(problems, document, root, "nextAgent", equals="prd-reviewer")
+
+
+def validate_considered_na(
+    document: Dict[str, Any], problems: Problems, root: str
+) -> None:
+    """`consideredNA` is optional: absent (or empty) means "no applicable
+    conditional section was omitted". When present, each entry names the
+    omitted section and the reason its trigger is absent — reviewer F-36
+    judges every reason against the PRD's own facts, so both fields must be
+    non-empty strings."""
+    ok, entries = want_list(
+        problems, document, root, "consideredNA",
+        required=False, of="object",
+    )
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            continue  # the non-object item was already reported above
+        path = "consideredNA[%d]" % index
+        want_string(problems, entry, path, "section")
+        want_string(problems, entry, path, "reason")
 
 
 def validate_glossary_proposals(

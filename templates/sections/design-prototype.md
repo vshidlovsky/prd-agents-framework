@@ -2,7 +2,7 @@
 
 > **Insert into**: Technical Contract [position: 2] (`full` mode only)
 > **When**: Projects with a design system (`src/components/ui/` or equivalent) and/or Figma mockups, in `full` mode only.
-> **Slim mode — omit the section**: in `slim` mode this section does not exist. Leave it out entirely, and do not add a ledger clause for it — the PRD says nothing about design readiness. Whether a design exists yet is workflow state, owned by the pipeline and the team: designers and developers talk to each other. When the pipeline finds a screen with no design, it files a `ds-gap` issue on GitHub — that stays pipeline behavior, and the PRD does not track or restate issue status anywhere, Dependencies included.
+> **Slim mode — omit the section**: in `slim` mode this section does not exist. Leave it out entirely, and do not list it in the handoff's `consideredNA` — the PRD says nothing about design readiness. Whether a design exists yet is workflow state, owned by the pipeline and the team: designers and developers talk to each other. When the pipeline finds a screen with no design, it files a `ds-gap` issue on GitHub — that stays pipeline behavior, and the PRD does not track or restate issue status anywhere, Dependencies included.
 
 ### Visual References
 

@@ -2,7 +2,7 @@
 
 > **Insert into**: Technical Contract [position: 1] (`full` mode only)
 > **When**: Web applications that must work across viewport sizes, in `full` mode only.
-> **Slim mode — omit the section**: in `slim` mode this section does not exist. Leave it out entirely, and do not add a ledger clause for it — the project's responsive shared requirement already promises the baseline (the feature works at every breakpoint the SR defines, and nothing needs sideways scrolling), and how content is arranged at each width is the designer's decision. When the product really differs by width — something is shown, hidden, or unreachable at one width — write that as an ordinary FR or AC ("the list is hidden at phone width"), not as a section. In every mode, any screen width named anywhere in the PRD must be one of the responsive SR's breakpoints, or carry an explicit override in Shared Requirements → Feature-specific overrides.
+> **Slim mode — omit the section**: in `slim` mode this section does not exist. Leave it out entirely, and do not list it in the handoff's `consideredNA` — the project's responsive shared requirement already promises the baseline (the feature works at every breakpoint the SR defines, and nothing needs sideways scrolling), and how content is arranged at each width is the designer's decision. When the product really differs by width — something is shown, hidden, or unreachable at one width — write that as an ordinary FR or AC ("the list is hidden at phone width"), not as a section. In every mode, any screen width named anywhere in the PRD must be one of the responsive SR's breakpoints, or carry an explicit override in Shared Requirements → Feature-specific overrides.
 
 #### Responsive Layout
 

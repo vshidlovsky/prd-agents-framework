@@ -12,6 +12,12 @@
     "src/catalog/search/SearchController.kt"
   ],
   "dependencies": [],
+  "consideredNA": [
+    {
+      "section": "Feature Flags / Remote Config"
+    },
+    "Compliance"
+  ],
   "prdMetrics": {
     "frCount": "eighteen",
     "edgeCaseCount": 11,
