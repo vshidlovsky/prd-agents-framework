@@ -224,13 +224,13 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 
 ---
 
-<!-- Section packs: Behavioral Contract — after Edge Cases [position: 1] (e.g., accessibility, compliance, platform-considerations); in `slim` mode also [position: 3] design-prototype, [position: 4] screen-flow + navigation (responsive-layout is `full`-mode only) -->
+<!-- Section packs: Behavioral Contract — after Edge Cases [position: 1] (e.g., accessibility, compliance, platform-considerations); in `slim` mode also [position: 4] screen-flow + navigation (responsive-layout and design-prototype are `full`-mode only) -->
 
 ## Technical Contract
 
 > **Tier 2 — condition**: the project keeps a PRD-owned technical contract (`Technical Contract → Mode: full` in `project-context.md`, or a `--tc full` run override). This ENTIRE section — heading included — exists **only** in `full` mode; in `slim` mode DELETE it completely.
 >
-> In `slim` mode every piece of content still has a home: Dependencies lives in Boundaries (both modes), the user-facing section packs (screen-flow, navigation, design-prototype) insert into the Behavioral Contract per their `slim` insertion tags, and the implementation packs (component-mapping, database-changes, service-integration, monitoring) are `full`-mode only — as is responsive-layout: the responsive shared requirement owns the works-at-every-breakpoint baseline, arrangement is design-owned, and a width-specific product difference is an ordinary FR/AC. Content that is *purely* implementation reference is **dev-owned by default**: component paths, configuration attributes, mock data, error-code-to-class mappings, query/cache configuration, route constants, and API request/response shapes live in the team's technical design, not in the PRD. A PRD is not incomplete for leaving them out.
+> In `slim` mode every piece of content still has a home: Dependencies lives in Boundaries (both modes), the user-facing section packs (screen-flow, navigation) insert into the Behavioral Contract per their `slim` insertion tags, and the implementation packs (component-mapping, database-changes, service-integration, monitoring) are `full`-mode only — as are responsive-layout (the responsive shared requirement owns the works-at-every-breakpoint baseline, arrangement is design-owned, and a width-specific product difference is an ordinary FR/AC) and design-prototype (the PRD says nothing about design readiness — whether a design exists yet is workflow state the pipeline and the team own, and a design gap lives as a `ds-gap` issue on GitHub, not as a PRD row). Content that is *purely* implementation reference is **dev-owned by default**: component paths, configuration attributes, mock data, error-code-to-class mappings, query/cache configuration, route constants, and API request/response shapes live in the team's technical design, not in the PRD. A PRD is not incomplete for leaving them out.
 >
 > The behavioral anchors stay in the Behavioral Contract in both modes: **Product Constants**, **Semantic Vocabulary**, **Display Rules**. Never move a number, format, ordering, or policy the user can notice down here — this section may repeat one, but it may never be its only home.
 >
@@ -354,7 +354,8 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 ### Dependencies
 
 > **GUIDE**
-> **What**: Other initiatives, components, or infrastructure that must exist before this can be built.
+> **What**: Product-level blockers the reader must know about — another initiative that must ship first, a backend capability that must exist, a deliverable that must arrive (for example, the final wording from the content team).
+> **Not here**: Developer and pipeline work items — an entry to add to the canonical API reference, package or route work, and the status of any tracked issue. Design readiness is not tracked here either: whether a design exists yet is workflow state the pipeline and the team own, and a design gap lives as a `ds-gap` issue on GitHub — the pipeline files it, and the PRD does not track or restate its status. One home per fact: a dependency already recorded as an Assumption (an unverified fact) is not repeated as a row here.
 > **Both modes**: Dependencies is a product fact (a blocked initiative), not implementation reference — it lives here in `slim` and `full` mode alike.
 
 | Dependency | Source | Status |
