@@ -420,9 +420,9 @@ None — all questions resolved.
 > **Insert into**: Behavioral Contract — after Acceptance Criteria [position: 2]
 
 > **GUIDE**
-> **When**: Any PRD whose ACs will be handed to an implementer (i.e. effectively always; omit only for exploratory drafts nobody will build from).
+> **When**: `full` mode only — any PRD whose ACs will be handed to an implementer (omit only for exploratory drafts nobody will build from).
 > **What**: How each acceptance criterion gets verified, and how states that cannot occur naturally in a test environment are produced.
-> **Both modes**: behavioral-layer content — it describes how the product's observable behavior gets verified, not how the code is structured. Keep it in `slim` and `full` mode alike.
+> **Slim mode**: leave this section out entirely, and do not add a ledger clause for it — the test plan is the QA lead's document, not a product section this PRD considered and dropped. What the PM still owes in slim mode: every AC is phrased so a tester can check it by using the running app.
 > **How**: Bind every AC (or AC group) to a verification approach — unit / integration / E2E where a UI exists; unit / integration / contract for backend services (E2E is not required where no UI exists) — or designate it `manual` with its trigger described. An AC that no test type claims and no manual designation covers will silently not be verified. Add an environment-override row for every state a test must be able to force but that cannot occur naturally (a denied permission, an absent platform capability, a dismissed native sheet).
 
 | AC / AC group | Verification | Notes |
