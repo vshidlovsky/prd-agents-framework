@@ -422,7 +422,7 @@ Provide a **HANDOFF SUMMARY** to the user:
 
 After finishing the spec, write a structured JSON handoff file so the prd-reviewer can read your output without guessing.
 
-Save to the `_artifacts/` subdirectory of the initiative directory:
+Save it as `_artifacts/{initiative}-prd-handoff.json` in the initiative directory — the reviewer looks it up by exactly this name:
 
 ```json
 {

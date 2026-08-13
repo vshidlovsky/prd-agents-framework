@@ -249,7 +249,7 @@ If run logging is enabled: `echo "review_scaffold_start=$(date +%s)" >> "$TIMING
 
 Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
-> "Run Phase 1 only for initiative '{argument}'. Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — prefer the writer handoff's `technicalContractMode` if it disagrees, and record the resolved mode in the scaffold, the dispatch JSON, and every sub-agent prompt. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-12). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
+> "Run Phase 1 only for initiative '{argument}'. Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — prefer the writer handoff's `technicalContractMode` if it disagrees, and record the resolved mode in the scaffold, the dispatch JSON, and every sub-agent prompt. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-11). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
 
 If run logging is enabled: `echo "review_scaffold_end=$(date +%s)" >> "$TIMING_FILE"`
 
