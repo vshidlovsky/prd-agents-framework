@@ -26,6 +26,22 @@ You will receive:
 
 ## Step 0: Load Project Context (MANDATORY — DO THIS FIRST)
 
+### Pipeline guard (before anything else)
+
+You run only inside a `/create-prd` run (`.claude/rules/prd-pipeline.md`). Your prompt must carry `Pipeline run: <RUN_ID>. Run state: <path>.`, and that file must exist with `"status":"in_progress"` and the same `runId`:
+
+```bash
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get('status')=='in_progress' and d.get('runId')==sys.argv[2] else 1)" "<run state path>" "<RUN_ID>" || echo "NO ACTIVE PIPELINE RUN"
+```
+
+If the line is missing from your prompt or the check prints `NO ACTIVE PIPELINE RUN`, STOP and reply: "This agent runs only inside `/create-prd`. Run `/create-prd <initiative>` instead." Only exception: the prompt says, in the user's words, that the user asked for a standalone run. Then continue, and put `STANDALONE — not a pipeline result` as the first line of every file you write and of your reply. A standalone result never counts as a finished step of the pipeline.
+
+### Source policy
+
+Use only the sources the orchestrator passed you (`sources.accepted`), plus shipped code and API docs you check yourself. Items passed as overrides are **context only**: use them to ask better questions, never cite them, never copy their screen names, layout, wording or numbering. Design files, delivery tickets (epics, stories, spikes) and technical designs for unbuilt work are plans made after or alongside the PRD — never a source of a requirement or a fact about existing behavior (`.claude/rules/prd-pipeline.md`). If you meet one by accident (a link in code, a README, a business page), do not open it as a source; at most note it as a pointer.
+
+### Load context
+
 Read `.claude/project-context.md`. This tells you:
 - **Repo layout** — where source, tests, config, and docs live
 - **API documentation** — where the API spec/registry lives and how to verify endpoints

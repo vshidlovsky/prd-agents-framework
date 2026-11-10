@@ -12,7 +12,8 @@
 > taxonomy in an Analytics Events property cell (LINT-011), a wire encoding in
 > a Semantic Vocabulary Type cell (LINT-012), a route constant and repo path in
 > a Navigation entry point (LINT-013), design-mechanism phrases (politeness
-> levels, stacking order) in the behavioral layer (LINT-014).
+> levels, stacking order) in the behavioral layer (LINT-014), a design file and
+> a delivery ticket cited outside their allowed sections (LINT-015).
 
 ---
 
@@ -101,6 +102,8 @@ As a returning shopper, I want to see my past orders so that I do not have to co
 #### Entry Points
 
 - The account menu's order history item, routed via `paths.orderHistory` in `apps/web/src/config/paths.ts`. <!-- expect: LINT-013 -->
+- Screen names follow the Figma design. <!-- expect: LINT-015 -->
+- Entry point agreed in [ORD-42](https://example.atlassian.net/browse/ORD-42). <!-- expect: LINT-015 -->
 
 ---
 

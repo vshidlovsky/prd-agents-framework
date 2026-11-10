@@ -51,6 +51,7 @@ Determine the mode as part of Step 0, before judging anything:
 
 ### Delta-mode procedure
 
+0. **Confirm the revision is verifiable.** The PRD you judge must be a new versioned file (higher version than the one your prior pass read), and the writer handoff must carry `ticketsApplied`. If the PRD was edited in place, the version did not go up, or `ticketsApplied` is missing, STOP and tell the orchestrator: "The revision cannot be verified — it was not made by prd-writer as a new version. Re-run the revision through the writer." Do not verify tickets against an unversioned edit.
 1. **Verify each prior ticket was applied.** For every ticket in your prior handoff, open the PRD location it named and check the edit landed as instructed — not merely that something changed there. Classify each as `applied`, `partial`, or `not-applied`, and count them into `ticketsVerified`.
 2. **Re-issue, do not re-decide.** A `partial` or `not-applied` ticket is re-issued with the same `id`, the same decision, and a note on what is still missing. Never soften or change the decision because the writer struggled with it.
 3. **Judge only NEW FAILs — matched by CONTENT, never by cell ID.** A re-review regenerates its matrices, so row numbers shift between passes (the finding that was B-7 last pass may be B-6 now). Match each FAIL cell against your prior findings by the defect it describes, not by its row ID. A cell whose content matches a finding you already judged keeps that finding's disposition regardless of its new ID — a repeat of a prior rejection is noted as such and not re-argued. Judge the genuinely new content with Step 1's two axes, dispose it, and ticket it.
@@ -60,6 +61,18 @@ Determine the mode as part of Step 0, before judging anything:
 A **first-pass `READY` verdict still gets `full` mode**: there were no FAILs to judge, so Step 1 is empty and `failsJudged` is `0`, but the product challenge in Step 2 applies exactly as it would with 90 FAILs. A clean technical review is not evidence that the product is right. If full mode on a `READY` review produces zero tickets, set `nextAgent` to `"none"` and the pipeline completes as before — never manufacture a ticket to justify the pass.
 
 ## Step 0: Load Context (MANDATORY — DO THIS FIRST)
+
+### Pipeline guard (before anything else)
+
+You run only inside a `/create-prd` run (`.claude/rules/prd-pipeline.md`). Your prompt must carry `Pipeline run: <RUN_ID>. Run state: <path>.`, and that file must exist with `"status":"in_progress"` and the same `runId`:
+
+```bash
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get('status')=='in_progress' and d.get('runId')==sys.argv[2] else 1)" "<run state path>" "<RUN_ID>" || echo "NO ACTIVE PIPELINE RUN"
+```
+
+If the line is missing from your prompt or the check prints `NO ACTIVE PIPELINE RUN`, STOP and reply: "This agent runs only inside `/create-prd`. Run `/create-prd <initiative>` instead." Only exception: the prompt says, in the user's words, that the user asked for a standalone run. Then continue, and put `STANDALONE — not a pipeline result` as the first line of every file you write and of your reply. A standalone result never counts as a finished step of the pipeline.
+
+### Load context
 
 Verify project context exists:
 

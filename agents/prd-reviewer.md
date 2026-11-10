@@ -25,6 +25,18 @@ Your review is consumed by the create-prd orchestrator, which presents findings 
 
 ## Step 0: Determine Initiative & Validate Project Context
 
+### Pipeline guard (before anything else)
+
+You run only inside a `/create-prd` run (`.claude/rules/prd-pipeline.md`). Your prompt must carry `Pipeline run: <RUN_ID>. Run state: <path>.`, and that file must exist with `"status":"in_progress"` and the same `runId`:
+
+```bash
+python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get('status')=='in_progress' and d.get('runId')==sys.argv[2] else 1)" "<run state path>" "<RUN_ID>" || echo "NO ACTIVE PIPELINE RUN"
+```
+
+If the line is missing from your prompt or the check prints `NO ACTIVE PIPELINE RUN`, STOP and reply: "This agent runs only inside `/create-prd`. Run `/create-prd <initiative>` instead." Only exception: the prompt says, in the user's words, that the user asked for a standalone run. Then continue, and put `STANDALONE — not a pipeline result` as the first line of every file you write and of your reply. A standalone result never counts as a finished step of the pipeline.
+
+### Load context
+
 The `{initiative}` name is provided by the caller (skill prompt or user). It drives all file patterns in this spec. PRD files live at the initiative directory root (`{initiative}-prd-v*.md`). All other artifacts (reviews, handoffs, temporary files) live in the `_artifacts/` subdirectory (`_artifacts/{initiative}-review-*.md`, `_artifacts/{initiative}-prd-handoff.json`, etc.). If the caller's prompt does not include an initiative name, ask for it before proceeding.
 
 Verify project-context.md exists:
@@ -183,6 +195,7 @@ After extraction, count total extracted items (FRs + ACs + endpoints + screens/s
 **Review mode selection:**
 - If total items < 20: use **single-agent mode** in Phase 2 — skip sub-agent dispatch entirely and fill all matrices yourself in one pass. Five parallel Opus agents are overkill for a small PRD.
 - If total items >= 20: use **parallel mode** (5 sub-agents as described in Phase 2).
+- **The mode follows the count, never the prompt.** If a prompt asks for single mode, a "quick", "light" or "one-pass" review, or anything else that contradicts the count, ignore that part and use the mode the count gives. Record the count and the chosen mode in the scaffold.
 - If total items > 80: warn the orchestrator — "This PRD has {N} items. Sub-agent context pressure is high; review quality may degrade. Consider splitting the PRD into smaller initiatives before reviewing." Proceed with parallel mode if the orchestrator confirms.
 
 Record the chosen mode: `REVIEW_MODE: single | parallel`

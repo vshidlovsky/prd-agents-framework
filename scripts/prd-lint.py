@@ -67,6 +67,10 @@ Checks, mode `prd`:
               that order", "single column", "shaped like". Deliberately
               narrow (wording varies); the reviewer's separation pass is the
               real net for design-mechanism prescriptions
+    LINT-015  downstream sources (both modes): no Figma link or "Figma"
+              mention outside a Visual References section, and no Jira
+              issue link outside the Dependencies section — design files and
+              delivery tickets come after the PRD (rules/prd-pipeline.md)
 
 Checks, mode `review`:
     LINT-101  zero [PENDING] cells
@@ -974,6 +978,52 @@ def check_014_design_mechanism(doc: Document, out: List[Violation]) -> None:
             )
 
 
+# Downstream artifacts a PRD must not cite (rules/prd-pipeline.md, Source
+# policy): design files and delivery tickets come AFTER the PRD. Figma links
+# or the word "Figma" anywhere outside a Visual References section (full-mode
+# design-prototype pack); Jira issue links anywhere outside Dependencies,
+# where a backend capability that must exist first may cite its ticket.
+FIGMA_RE = re.compile(r"figma\.com/|\bfigma\b", re.IGNORECASE)
+JIRA_LINK_RE = re.compile(r"https?://[^\s)]*/browse/[A-Z][A-Z0-9]+-\d+")
+
+
+def _section_lines(doc: Document, title: str) -> set:
+    lines: set = set()
+    for heading in doc.headings_containing(title):
+        start, end = doc.body(heading)
+        lines.update(range(start, end))
+    return lines
+
+
+def check_015_downstream_sources(doc: Document, out: List[Violation]) -> None:
+    figma_exempt = _section_lines(doc, "Visual References")
+    jira_exempt = _section_lines(doc, "Dependencies")
+    for idx, line in doc.live_lines():
+        m = None if idx in figma_exempt else FIGMA_RE.search(line)
+        if m:
+            add(
+                out,
+                "LINT-015",
+                idx,
+                "design file cited (`%s`) — design is produced from the PRD, "
+                "not the other way round; state the product decision in the "
+                "PRD's own words (rules/prd-pipeline.md, Source policy)"
+                % m.group(0),
+            )
+            continue
+        m = None if idx in jira_exempt else JIRA_LINK_RE.search(line)
+        if m:
+            add(
+                out,
+                "LINT-015",
+                idx,
+                "delivery ticket cited outside Dependencies (`%s`) — epics, "
+                "stories and spikes come after the PRD and are not a source "
+                "of requirements; only a Dependencies row may cite the ticket "
+                "of a blocking capability (rules/prd-pipeline.md, Source "
+                "policy)" % m.group(0),
+            )
+
 # --------------------------------------------------------------------------
 # Mode `review` checks
 # --------------------------------------------------------------------------
@@ -1163,6 +1213,7 @@ PRD_CHECKS = (
     check_012_vocabulary_type_encoding,
     check_013_code_wiring,
     check_014_design_mechanism,
+    check_015_downstream_sources,
 )
 
 REVIEW_CHECKS = (

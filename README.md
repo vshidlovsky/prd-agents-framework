@@ -49,6 +49,7 @@ prd-agents-framework/
 │   └── tests/                  # Fixtures + run-tests.sh for the three PRD scripts
 ├── rules/
 │   ├── behavioral-separation.md # Rule: behavioral/technical contract separation
+│   ├── prd-pipeline.md         # Rule: PRDs only via /create-prd; design/tickets are not sources
 │   ├── prd-lessons.md          # Rule: no lessons written without user approval
 │   ├── lesson-lifecycle.md     # Lesson statuses + graduation workflow
 │   ├── domain-glossary.md      # Rule: no glossary terms written without user approval

@@ -29,7 +29,8 @@
 #                          Navigation entry point (LINT-013), and
 #                          design-mechanism phrases — politeness levels,
 #                          stacking order — in the behavioral layer
-#                          (LINT-014). The slim-only
+#                          (LINT-014), and a Figma mention plus a Jira
+#                          link outside Dependencies (LINT-015). The slim-only
 #                          checks are locked in the other direction too:
 #                          clean-prd.md (full mode) carries
 #                          `error_status_code` in its Error Classification
@@ -220,7 +221,7 @@ assert_annotated "$FIXTURES/violations-prd.md" prd \
   LINT-001 LINT-002 LINT-003 LINT-004 LINT-005 LINT-006 LINT-007 LINT-008 LINT-009
 
 assert_annotated "$FIXTURES/violations-prd-slim.md" prd \
-  LINT-001 LINT-009 LINT-010 LINT-011 LINT-012 LINT-013 LINT-014
+  LINT-001 LINT-009 LINT-010 LINT-011 LINT-012 LINT-013 LINT-014 LINT-015
 
 assert_annotated "$FIXTURES/violations-review.md" review \
   LINT-101 LINT-102 LINT-103

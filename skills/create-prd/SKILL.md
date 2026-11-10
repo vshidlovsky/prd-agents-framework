@@ -18,6 +18,15 @@ Run the full PRD workflow for `{argument}`.
 
 Anything else after the initiative name is initiative brief text, not a flag — pass it through to Phase 0.
 
+## Orchestrator ground rules
+
+These hold for the whole run, and outside it (`.claude/rules/prd-pipeline.md`):
+
+- **You never edit the PRD.** Draft feedback (Gate 2) and approved tickets (Gate 3) go to prd-writer, which writes a new versioned file and records what it applied. No "quick fix" by hand, however small.
+- **You never write lessons, glossary terms, vocabulary entries or SRs yourself.** After the user approves them at Gate 3, dispatch the approval-gated callback of the agent that owns the file.
+- **You never tell the reviewer which mode to use.** It decides from its own item count.
+- **Every agent prompt carries the run identity**: `Pipeline run: {RUN_ID}. Run state: {STATE_FILE}.` Agents stop without it.
+
 ## Pre-flight
 
 0. **Resolve the Technical Contract mode** and store it as `TC_MODE`, with `TC_MODE_SOURCE` recording where it came from. Precedence, highest first:
@@ -33,11 +42,16 @@ Anything else after the initiative name is initiative brief text, not a flag —
    mkdir -p "{initiative_dir}/_artifacts"
    ```
 3. Read the **Model Profile** table from project-context.md. Extract the `Model` column for each agent row. Store as `MODEL_MAP` — a lookup from agent name to model (e.g., `researcher → sonnet`, `prd-writer → opus`, `prd-senior-pm → fable`). If the Model Profile section is missing, default all agents to `opus` — except `prd-senior-pm`, which defaults to `fable`. Pass every value through to the Agent spawn **as-is**: `opus`, `sonnet`, `haiku`, and `fable` are all valid tier names. Never rewrite `fable` to another tier because it looks unfamiliar.
-4. Check if **Run Logs** are enabled in project-context.md. If enabled:
+4. Set the run identity — always, whether or not run logs are enabled. Every pipeline agent refuses to run without the state file (see `.claude/rules/prd-pipeline.md`):
    ```bash
    RUN_ID=$(date -u +%Y%m%d-%H%M%S)
-   LOG_FILE=".claude/prd-run-log.jsonl"
    STATE_FILE="{initiative_dir}/_artifacts/.run-state.json"
+   ```
+   Check that `scripts/prd-lint.py` exists. If it is missing, STOP and tell the user: "`scripts/prd-lint.py` is missing — copy it from the framework (install map) before running the pipeline. Without it, mechanical checks are skipped and a review can report READY on a PRD that fails them." Do not continue without it.
+
+   Then check if **Run Logs** are enabled in project-context.md. If enabled:
+   ```bash
+   LOG_FILE=".claude/prd-run-log.jsonl"
    TIMING_FILE="{initiative_dir}/_artifacts/.run-timing.tmp"
    echo "pipeline_start=$(date +%s) $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$TIMING_FILE"
    ```
@@ -65,8 +79,9 @@ Anything else after the initiative name is initiative brief text, not a flag —
 
 6. **Create state file** for the current run:
    ```bash
-   echo '{"runId":"'"$RUN_ID"'","initiative":"{argument}","status":"in_progress","currentPhase":"preflight","cycle":1,"startedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","profile":"<profile>","technicalContractMode":"<TC_MODE>","technicalContractModeSource":"<TC_MODE_SOURCE>","modelMap":<MODEL_MAP as JSON>,"completedPhases":[]}' > "$STATE_FILE"
+   echo '{"runId":"'"$RUN_ID"'","initiative":"{argument}","status":"in_progress","currentPhase":"preflight","cycle":1,"startedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","profile":"<profile>","technicalContractMode":"<TC_MODE>","technicalContractModeSource":"<TC_MODE_SOURCE>","modelMap":<MODEL_MAP as JSON>,"sources":{"accepted":[],"excluded":[],"overrides":[]},"completedPhases":[]}' > "$STATE_FILE"
    ```
+   Fill `sources` at Phase 0 (Source intake). Completion deletes the state file (see Completion), so no agent can be started against a finished run.
 
 ### Handoff file naming convention
 
@@ -96,6 +111,17 @@ If the user provides a detailed brief (more than 2 sentences with clear scope), 
 
 Pass the clarified scope to the researcher so it knows exactly what to focus on.
 
+### Source intake (always — even when the brief is clear)
+
+Sort every link and file the user gave with the brief (or later, at any gate) by the Source policy in `.claude/rules/prd-pipeline.md`:
+
+- **Accepted**: the PM brief and answers, business requirement pages, shipped code and API docs, meeting notes.
+- **Excluded by default**: design files and drafts (Figma, prototypes), delivery tickets (epics, stories, tasks, spikes), technical design documents for unbuilt work (PDRs, RFCs, tech specs).
+
+If anything is excluded, tell the user in one short list: **"Left out as downstream artifacts — the PRD comes first, so design, tickets and tech designs are not sources: [item — kind]. To keep one as context only, name it and give a reason."** If the user names one with a reason, record it under `sources.overrides` with the reason; it stays context only — agents never cite it or copy its names, layout or wording. Record the rest in `sources.accepted` / `sources.excluded` in the state file.
+
+Pass **only** `sources.accepted` and `sources.overrides` (each override marked "context only — never a source") to the researcher and the writer. Never pass an excluded item, and never paraphrase one into an agent prompt.
+
 ## Phase 1: Research
 
 If run logging is enabled: `echo "research_start=$(date +%s)" >> "$TIMING_FILE"`
@@ -103,6 +129,7 @@ If run logging is enabled: `echo "research_start=$(date +%s)" >> "$TIMING_FILE"`
 Spawn an Agent using the prompt from `.claude/agents/researcher.md`, with `model: MODEL_MAP[researcher]`:
 - Pass `{argument}` as the INITIATIVE
 - Pass the clarified scope from Phase 0 (if any) as additional context
+- Pass the run identity (`Pipeline run: {RUN_ID}. Run state: {STATE_FILE}.`) and the source list from Phase 0 Source intake: `sources.accepted`, plus `sources.overrides` marked "context only — never a source"
 - Let it scan the codebase (or docs/specs for greenfield) and produce a research document
 
 The researcher will detect whether this is a greenfield project (no source code) or an existing codebase and adjust its approach automatically.
@@ -173,6 +200,7 @@ If run logging is enabled: `echo "writing_start=$(date +%s)" >> "$TIMING_FILE"`
 Spawn an Agent using the prompt from `.claude/agents/prd-writer.md`, with `model: MODEL_MAP[prd-writer]`:
 - Pass `{argument}` as the initiative name
 - Pass the research document path as context
+- Pass the run identity and the same source list as the researcher got
 - Pass the resolved mode explicitly: "Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — this is a run-level instruction; record it in your handoff as `technicalContractMode` and do not re-resolve it from project-context.md."
 
 The prd-writer will:
@@ -221,7 +249,7 @@ Update state file — set `currentPhase: "gate2"`.
 python3 scripts/prd-lint.py "{prd_path}" --mode prd
 ```
 
-Exit 0 means clean. Any violations are mechanical facts, not opinions — surface them verbatim to the user alongside the draft notice below (one line per violation: check ID, line number, message) and note that the writer will fix them in the next revision. If the script is absent, skip this step silently.
+Exit 0 means clean. Any violations are mechanical facts, not opinions — surface them verbatim to the user alongside the draft notice below (one line per violation: check ID, line number, message) and note that the writer will fix them in the next revision. The script is required (Pre-flight step 4 stops without it).
 
 **Cycle 1 (first draft)**: Tell the user: **"PRD draft is ready at `{prd_path}`. Review it, then say 'continue' to run the reviewer, or provide feedback for revisions."** If the lint run reported violations, append: **"prd-lint found N violation(s):"** followed by the violation lines. If feedback is given, send it back to the prd-writer for revision. Repeat until the user says "continue."
 
@@ -245,11 +273,18 @@ Track the revision count starting at 0.
 
 ### Step 3.1: Scaffold (reviewer Phase 1)
 
+**Revision check (cycle 2+ only).** Before spawning the reviewer, confirm the revision really came from prd-writer:
+- the PRD path in the new writer handoff is a NEW file whose version is higher than the one the last review read;
+- the previous file still exists unchanged;
+- the writer handoff has a `ticketsApplied` list, and every Gate 3 ticket ID is either in it or named as not applied with a reason.
+
+If any check fails, STOP and tell the user: "The PRD revision did not come from prd-writer (or was not versioned): [what failed]. Re-run the revision through the writer — a review of an unversioned edit cannot be verified." Never review a PRD that was edited in place.
+
 If run logging is enabled: `echo "review_scaffold_start=$(date +%s)" >> "$TIMING_FILE"`
 
 Spawn an Agent using `.claude/agents/prd-reviewer.md`, with `model: MODEL_MAP[prd-reviewer]`, and the prompt:
 
-> "Run Phase 1 only for initiative '{argument}'. Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — prefer the writer handoff's `technicalContractMode` if it disagrees, and record the resolved mode in the scaffold, the dispatch JSON, and every sub-agent prompt. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-11). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
+> "Pipeline run: {RUN_ID}. Run state: {STATE_FILE}. Run Phase 1 only for initiative '{argument}'. Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — prefer the writer handoff's `technicalContractMode` if it disagrees, and record the resolved mode in the scaffold, the dispatch JSON, and every sub-agent prompt. Write the scaffold, determine review mode. If single mode (< 20 items), fill all matrices yourself and complete the full review (Steps 0-11). If parallel mode (>= 20 items), write the scaffold, construct sub-agent prompt files, write the dispatch JSON, then STOP."
 
 If run logging is enabled: `echo "review_scaffold_end=$(date +%s)" >> "$TIMING_FILE"`
 
@@ -386,7 +421,7 @@ Decide once, then enforce — re-running a full judgment every cycle produces ne
 
 Spawn an Agent using `.claude/agents/prd-senior-pm.md`, with `model: MODEL_MAP[prd-senior-pm]` (default `fable`), and the prompt:
 
-> "Judge the review for initiative '{argument}'. Run mode: **{full|delta}** (this is review pass {N}). Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — in `slim` mode a FAIL demanding Technical-Contract content is overreach; reject it citing the configured mode. The PRD is at {prd_path}. The technical review is at {review_path} and its handoff at {review_handoff_path}; the verdict was {READY|NEEDS_REVISION}. The research doc is at {research_path} and the writer's Q&A log at {qa_path} if it exists. {In delta mode: 'Your previous decision sheet is at {senior_pm_review_path} and your previous handoff at {senior_pm_handoff_path} — verify each prior ticket was applied, judge only NEW FAILs, and do not revisit earlier dispositions.'} Write the decision sheet and the handoff JSON, then commit them. Do not edit the PRD or the review."
+> "Pipeline run: {RUN_ID}. Run state: {STATE_FILE}. Judge the review for initiative '{argument}'. Run mode: **{full|delta}** (this is review pass {N}). Technical Contract mode: **{TC_MODE}** (source: {TC_MODE_SOURCE}) — in `slim` mode a FAIL demanding Technical-Contract content is overreach; reject it citing the configured mode. The PRD is at {prd_path}. The technical review is at {review_path} and its handoff at {review_handoff_path}; the verdict was {READY|NEEDS_REVISION}. The research doc is at {research_path} and the writer's Q&A log at {qa_path} if it exists. {In delta mode: 'Your previous decision sheet is at {senior_pm_review_path} and your previous handoff at {senior_pm_handoff_path} — verify each prior ticket was applied, judge only NEW FAILs, and do not revisit earlier dispositions.'} Write the decision sheet and the handoff JSON, then commit them. Do not edit the PRD or the review."
 
 If run logging is enabled: `echo "senior_pm_end=$(date +%s)" >> "$TIMING_FILE"`
 
@@ -507,13 +542,15 @@ On shared-requirement approval, spawn a new Agent using `.claude/agents/prd-revi
 If lessons, glossary terms, vocabulary entries, and shared requirements are all approved, spawn all four callbacks in parallel — they write to different files and don't conflict.
 
 If "go" (or "revise"): increment the revision count. If run logging is enabled, increment `cycle` in the state file and set `currentPhase: "revision"`.
-  - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "This is a revision cycle. Read the existing PRD at {prd_path} and the senior-PM ticket file at {senior_pm_review_path} (handoff: {senior_pm_handoff_path}). Follow Step 3.5 (Revision Mode) — apply each ticket exactly. `fix-product` tickets hold a decision already made: implement it as written, do not re-decide. Do not fix anything on the Rejected FAILs list — those were overridden. If something needs a product decision no ticket covers, leave it and add an Open Question tagged `ASK:PM`. Do not rewrite the entire PRD. [If the user vetoed or added anything at Gate 3: 'The user amended the ticket list: <list the amendments>.']" **Pass the ticket file, not the raw review** — the writer's Step 3.5 consumes tickets. The writer handles versioning, targeted edits, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review**, which will be followed by Phase 3.5 in `delta` mode.
+  - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "Pipeline run: {RUN_ID}. Run state: {STATE_FILE}. This is a revision cycle. Read the existing PRD at {prd_path} and the senior-PM ticket file at {senior_pm_review_path} (handoff: {senior_pm_handoff_path}). Follow Step 3.5 (Revision Mode) — apply each ticket exactly. `fix-product` tickets hold a decision already made: implement it as written, do not re-decide. Do not fix anything on the Rejected FAILs list — those were overridden. If something needs a product decision no ticket covers, leave it and add an Open Question tagged `ASK:PM`. Do not rewrite the entire PRD. [If the user vetoed or added anything at Gate 3: 'The user amended the ticket list: <list the amendments>.']" **Pass the ticket file, not the raw review** — the writer's Step 3.5 consumes tickets. The writer handles versioning, targeted edits, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review**, which will be followed by Phase 3.5 in `delta` mode.
   - If revision count = 3: tell the user: **"This PRD has gone through 3 revision cycles and still has open tickets. Remaining tickets: [list]. Options: 'override' to approve as-is, 'continue' to try one more cycle, or 'stop' to pause and resolve issues manually."**
 If "override": mark as approved and end.
 
 The **cycle-2+ Gate-2 skip stays as it is** (see Gate 2): the writer just applied a ticket list the user already saw and approved at Gate 3, so there is no second draft review to hold. The senior-PM gate has already happened.
 
 ## Completion
+
+Delete the state file when the run ends — on completion, "override", or "stop" — whether or not run logs are enabled: `rm -f "$STATE_FILE"` (the run-log step below also removes it).
 
 ### Write Run Log (if enabled)
 
