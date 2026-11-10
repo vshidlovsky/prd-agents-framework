@@ -154,9 +154,7 @@ Every event names the question(s) it answers. Event and property names belong he
 | **Spec version** | {version or last-changed date from the spec's changelog} |
 | **Brief version** | {Brief vN — increment by 1 if a brief already exists at the output path, else v1} |
 | **Brief generated** | {YYYY-MM-DD} by `prd-brief-author` from `{spec file name}`. Do not edit by hand — regenerate from the spec. |
-| **Epics** | {links} |
 | **Business case** | {link} |
-| **Design** | {link} |
 | **Other references** | {links} |
 
 ---
