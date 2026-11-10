@@ -16,11 +16,13 @@ prd-agents-framework/
 │   ├── prd-writer.md          # PRD drafting agent
 │   ├── prd-reviewer.md        # PRD review agent (orchestrates parallel sub-reviewers)
 │   ├── prd-senior-pm.md       # Judges the review, decides, writes tickets for the writer
+│   ├── prd-brief-author.md    # Writes the plain-language Product Brief from the final PRD
 │   └── prd-smell-patterns.md  # Requirements smell patterns (Femmer et al.)
 ├── skills/
-│   └── create-prd/SKILL.md    # Orchestration skill (chains all 4)
+│   └── create-prd/SKILL.md    # Orchestration skill (chains all 5)
 ├── templates/
 │   ├── prd-base.md            # Universal PRD template (always used)
+│   ├── prd-brief.md           # Product Brief template (used by prd-brief-author)
 │   └── sections/              # Modular section packs (pick what applies)
 │       ├── screen-flow.md
 │       ├── navigation.md
@@ -77,7 +79,7 @@ Claude clones the framework to a temporary location, copies each file per the in
 
 #### Install map
 
-This table is the install contract — an installing agent MUST follow it exactly. Two entries **rename the file on copy**; do not miss them.
+This table is the install contract — an installing agent MUST follow it exactly. Three entries **rename the file on copy**; do not miss them.
 
 | Framework source | Project destination | Note |
 |---|---|---|
@@ -85,6 +87,7 @@ This table is the install contract — an installing agent MUST follow it exactl
 | `skills/create-prd/SKILL.md` | `.claude/skills/create-prd/SKILL.md` | |
 | `rules/*.md` | `.claude/rules/` | Enforced across all agents and conversations |
 | `templates/prd-base.md` | `docs/prd-base-template.md` | **Renamed on copy** |
+| `templates/prd-brief.md` | `docs/prd-brief-template.md` | **Renamed on copy** |
 | `templates/sections/*.md` | `docs/prd-sections/` | |
 | `project-context.md` | `.claude/project-context.md` | **Moves under `.claude/` on copy** |
 | `scripts/*.py` | `scripts/` | Stdlib-only Python 3.9+; agents call these exact paths |

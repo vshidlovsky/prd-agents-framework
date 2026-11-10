@@ -1,6 +1,6 @@
 ---
 name: create-prd
-description: Full PRD creation pipeline — research, draft, review, and senior-PM judgment with human gates between phases. Chains researcher → prd-writer → prd-reviewer → prd-senior-pm agents.
+description: Full PRD creation pipeline — research, draft, review, and senior-PM judgment with human gates between phases. Chains researcher → prd-writer → prd-reviewer → prd-senior-pm → prd-brief-author agents.
 argument-hint: <initiative-name> [--tc slim|full]
 ---
 
@@ -521,7 +521,7 @@ If no shared requirements were proposed, say "No new shared requirements propose
 - **(c) Say "go"** — accept the dispositions as written and start the revision.
 
 Phrase it as:
-- If there are zero tickets (READY with no findings, or a delta pass where everything landed): **"No revision needed. Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Approve vocabulary entries: all / specific / skip. Approve SRs: all / specific / skip. Then we're done."**
+- If there are zero tickets (READY with no findings, or a delta pass where everything landed): **"No revision needed. Approve lessons: all / specific (e.g., '1 and 3') / skip. Approve glossary terms: all / specific / skip. Approve vocabulary entries: all / specific / skip. Approve SRs: all / specific / skip. Then I'll write the product brief (Phase 4)."**
 - If there are tickets: **"'go' to send the N tickets to prd-writer, or veto/override any disposition first (e.g., 'un-reject F-14', 'drop T-3', 'change T-5's decision to X'). Answer any escalations above. Or 'override' to approve the PRD as-is without revising. For lessons: all / specific / skip. For glossary terms: all / specific / skip. For vocabulary entries: all / specific / skip. Approve SRs: all / specific / skip."**
 
 Apply every veto/override to the ticket list before spawning the writer. Do NOT ask the senior PM to re-run: the user's decision is final and does not need re-judging.
@@ -544,9 +544,21 @@ If lessons, glossary terms, vocabulary entries, and shared requirements are all 
 If "go" (or "revise"): increment the revision count. If run logging is enabled, increment `cycle` in the state file and set `currentPhase: "revision"`.
   - If revision count < 3: spawn a new prd-writer agent with `model: MODEL_MAP[prd-writer]` and the prompt: "Pipeline run: {RUN_ID}. Run state: {STATE_FILE}. This is a revision cycle. Read the existing PRD at {prd_path} and the senior-PM ticket file at {senior_pm_review_path} (handoff: {senior_pm_handoff_path}). Follow Step 3.5 (Revision Mode) — apply each ticket exactly. `fix-product` tickets hold a decision already made: implement it as written, do not re-decide. Do not fix anything on the Rejected FAILs list — those were overridden. If something needs a product decision no ticket covers, leave it and add an Open Question tagged `ASK:PM`. Do not rewrite the entire PRD. [If the user vetoed or added anything at Gate 3: 'The user amended the ticket list: <list the amendments>.']" **Pass the ticket file, not the raw review** — the writer's Step 3.5 consumes tickets. The writer handles versioning, targeted edits, and handoff. **After the writer completes the revision, return to Step 3.1 to re-run the review**, which will be followed by Phase 3.5 in `delta` mode.
   - If revision count = 3: tell the user: **"This PRD has gone through 3 revision cycles and still has open tickets. Remaining tickets: [list]. Options: 'override' to approve as-is, 'continue' to try one more cycle, or 'stop' to pause and resolve issues manually."**
-If "override": mark as approved and end.
+If "override": mark as approved and go to Phase 4.
 
 The **cycle-2+ Gate-2 skip stays as it is** (see Gate 2): the writer just applied a ticket list the user already saw and approved at Gate 3, so there is no second draft review to hold. The senior-PM gate has already happened.
+
+## Phase 4: Product Brief
+
+Runs once the PRD is final: Gate 3 ended with zero tickets, or the user said "override". It does not run on "stop".
+
+Spawn the `prd-brief-author` agent (`.claude/agents/prd-brief-author.md`) with the prompt: "Write the product brief for initiative '{argument}'. The full spec is at {prd_path}. Template: docs/prd-brief-template.md. Do not apply senior-PM tickets and do not edit the full spec."
+
+### Gate 4: Brief Review
+
+Show the user: brief path, word count vs the spec, and the contradictions the brief author raised as Open Questions. Ask: **"Brief ready. 'done', or tell me what to change."** Changes to product behavior go to the full spec first (prd-writer revision), then the brief is regenerated — never hand-edit the brief.
+
+The brief can also be generated on demand for any existing PRD: "Run the prd-brief-author agent on {initiative}".
 
 ## Completion
 
@@ -626,6 +638,7 @@ Summarize what was produced:
 - Research document path
 - Technical Contract mode used, and where it came from (run override / project-context / default)
 - PRD path (with version)
+- Product brief path
 - Review path
 - Senior-PM decision sheet path, with the final disposition counts
 - Handoff file paths
