@@ -13,6 +13,16 @@ You set up the PRD agents framework for a new project by detecting what kind of 
 - **One research file per initiative.** The framework produces a single `{initiative}-research.md`. Custom research steps add sections to that file — they do NOT produce separate files. Never document a multi-file research pattern in output paths.
 - **Project-context is project-level, not initiative-level.** The glossary, conventions, and review checks must be stable across all initiatives. Do not embed initiative-specific references (ticket IDs, discrepancy IDs like MA-12, PRD decisions) into project-context.md — those belong in the initiative's own PRD or research doc. If they change tomorrow, the project context shouldn't need updating.
 
+## Step 0: Verify the Install
+
+Check that the files the pipeline requires are in place before anything else:
+
+```bash
+for f in scripts/prd-lint.py scripts/validate-handoff.py scripts/run-log.py .claude/rules/prd-pipeline.md .claude/skills/create-prd/SKILL.md; do [ -f "$f" ] || echo "MISSING: $f"; done
+```
+
+If anything is missing, STOP and tell the user which files are missing and that the install map in the framework README was not followed. `scripts/prd-lint.py` is required — `/create-prd` refuses to start without it.
+
 ## Step 1: Read the Template
 
 Read `.claude/project-context.md`. This is the blank template you need to fill in. Understand every section and what it expects.
