@@ -41,7 +41,7 @@ The brief explains the product; the spec keeps the details. Nothing is decided h
 
 ## 4. Terms
 
-<!-- GUIDE: Readers are the app team. Only concepts this feature introduces, or domain words with a feature-specific meaning. No existing app screens or elements, no common IT vocabulary, no description of what a UI element contains or looks like. Product constants go below the table. -->
+<!-- GUIDE: Readers are the app team. Only concepts this feature introduces, or domain words with a feature-specific meaning. No existing app screens or elements, no common IT vocabulary, no description of what a UI element contains or looks like. Product constants go below the table; if the spec has none, delete the constant line — never write a "none" statement. -->
 
 | Term | Meaning |
 |---|---|
