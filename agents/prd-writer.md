@@ -37,6 +37,7 @@ Read `.claude/project-context.md`. Extract:
 - **Included section packs** — checked (`[x]`) items in the section packs list
 - **PRD versioning** — how versions are tracked
 - **Technical Contract mode** — the `Mode` value under PRD Configuration → Technical Contract
+- **Project-Specific Review Checks** — every check item there is a drafting rule. Write the PRD so each one already passes; the reviewer FAILs any that do not
 
 **Decide the Technical Contract mode before you read the template.** Order of priority, strongest first:
 
