@@ -35,6 +35,7 @@ The spec stays the source of truth. You explain it; you do not change it, and yo
 - **No technical reasoning or actors.** No "because…" about how the system works, and never say which system does something (back-end, app, API, request). State the rule and what the user sees. "The cheapest available plan is preselected" — not "the server preselects the cheapest plan".
 - **No design.** What a UI element contains, how it looks, icons, copy — that's the design team's call.
 - **No explaining what the app team already knows**: existing screens and elements, common IT words ("screen visit").
+- **No requirements made from context.** User Journey, entry paths and "applies in every flow" statements are context, not rules. Never turn them into an R-item. Mention a flow or entry only where it behaves differently, inside the requirement it changes.
 
 **How a requirement reads:**
 - One sentence stating the rule, then short bullets — one condition, exception or case each. No paragraphs.
