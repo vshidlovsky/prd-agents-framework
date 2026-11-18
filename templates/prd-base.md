@@ -110,6 +110,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > - **Every FR/AC that depends on a bound cites the constant by ID** — `PC-001` — instead of restating the bare number inline. The value appears in this table and nowhere else.
 > - Every row must be referenced by at least one FR, AC, or Edge Case. An unreferenced constant is dead spec — delete it (Quality Standard #9).
 > - Values the user cannot notice (connection pool sizes, buffer lengths, internal batch sizes) do NOT belong here — they are dev-owned.
+> - **No constants → keep the heading, delete the table, write nothing.** Never write a "None" statement or explain why there are none ("the feature adds no limit the user can notice", "waiting times are as today").
 > - **Every call to the server has a time limit** — loading data and saving data alike. When one action makes several calls (a save, then a load to check it), say whether the constant limits each call or the whole chain (e.g., "PC-001 limits each call").
 > **Both modes**: this section is Tier 1 in `slim` and `full` alike. In `full` mode the Technical Contract may repeat a value; it must never be its only home.
 
@@ -161,7 +162,7 @@ This feature inherits all shared requirements from `docs/shared-requirements.md`
 > **How**:
 > - Every criterion gets a stable ID: AC-001, AC-002, ...
 > - Every criterion starts with a user-visible action or state.
-> - Must include sub-sections for: Loading States, Error States, Empty States (when applicable).
+> - Loading States, Error States and Empty States sub-sections cover only states this feature adds or changes. When the feature changes none, replace all three with one line: "As today. The feature adds no new loading, error or empty state."
 > **Separation check**: Describe what the user sees and does, using semantic concept names with `[V#]` markers on first use — apply the Quick Reference lists in `.claude/rules/behavioral-separation.md`.
 
 #### [Screen / Flow Area]
@@ -458,6 +459,8 @@ None — all questions resolved.
 > **GUIDE**
 > **When**: Features with failure states the user sees no sign of (e.g., silent background failures), OR features that show one identical message for several different underlying problems.
 > **What**: Symptom-to-query mappings for support engineers. This section is MANDATORY when any of these conditions hold.
+>
+> **Backend-decided outcomes are not silent states.** When the app shows what the backend returned and the result is "nothing extra shows" (no promo, no offer, no item), the app did its job — that is not a silent failure and needs no workflow here. When support still needs a workflow for an outcome the backend decides (why a promo, price or eligibility came out as it did), support checks the owning backend system for that user and time, never app analytics: app events show only what the app displayed.
 >
 > **Required sub-sections**:
 >

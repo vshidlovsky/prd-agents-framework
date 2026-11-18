@@ -345,13 +345,13 @@ After drafting FRs, Key Entities, and ACs, build edge cases by checklist — do 
 | Internal-view discriminator | When one page shows several inner views that switch without the URL changing, every screen-view event must include a property — with a fixed set of values — naming the active view, or each view fires its own event. Without this, support cannot tell which view the user was on. |
 
 **Process:**
-1. Walk each entity through the entity checklist → this produces candidate rows. The walk MUST be done like filling a table — for every (entity × dimension) cell, either write an edge-case row, mark it N/A with a one-line reason, or note it's covered by another row. Do not stop after the first union variant or the first field; go through the full table.
+1. Walk each entity through the entity checklist → this produces candidate rows. The walk MUST be done like filling a table — for every (entity × dimension) cell, either write an edge-case row, mark it N/A with a one-line reason, note it's covered by another row, note it's **unchanged by this feature** (today's behavior stays; the PRD's single "as today" line covers it — no row), or note it's **covered by SR-NN** (a shared requirement already decides it — no row). Only cells whose outcome this feature creates or changes become rows; the dispositions stay in your working notes, not in the PRD. Do not stop after the first union variant or the first field; go through the full table.
 2. Walk each endpoint through the endpoint checklist → produces candidate rows
 3. Walk each conditional FR through the conditional checklist → produces candidate rows
 4. Walk each UI interaction through the interaction checklist → produces candidate rows
 5. Remove doubles — merge rows that describe the same situation from different angles
 6. Remove rows that truly cannot happen given how the system works (write down why)
-7. Write the rows that remain into the Edge Cases table
+7. Write the rows that remain into the Edge Cases table — never a row whose expected behavior is only "as today" or only "per SR-NN"
 
 This is checklist work, not creative work. Every entity × dimension cell gets looked at. The reviewer's Matrix E checks these same dimensions — covering them here saves revision cycles.
 

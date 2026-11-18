@@ -144,13 +144,11 @@ Every event names the question(s) it answers. Event and property names belong he
 
 ## References
 
-<!-- GUIDE: Document info. Take each value from the spec; if the spec doesn't state it, write "Not stated in the spec" — never guess a name, version or status. -->
+<!-- GUIDE: Document info. Take each value from the spec; if the spec doesn't state it, write "Not stated in the spec" — never guess a version or link. -->
 
 | Item | Link / value |
 |---|---|
 | **Full spec (PRD)** | [{spec file name}](./{spec file name}) — the source of truth; all details live there |
-| **Product owner / author** | {name from the spec} |
-| **Status** | {status from the spec} |
 | **Spec version** | {version or last-changed date from the spec's changelog} |
 | **Brief version** | {Brief vN — increment by 1 if a brief already exists at the output path, else v1} |
 | **Brief generated** | {YYYY-MM-DD} by `prd-brief-author` from `{spec file name}`. Do not edit by hand — regenerate from the spec. |

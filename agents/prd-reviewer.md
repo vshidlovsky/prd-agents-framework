@@ -243,7 +243,7 @@ Also add a meta row (mark per-item columns as `N/A`):
 
 - **Testable**: Can be verified by using the running application, not by reading code
 - **FR Link**: Which FR(s) does this AC verify? If none = orphan AC = FAIL
-- **Loading/Error/Empty State**: Mark `N/A` if not applicable to this AC, `PASS` if covered, `FAIL` if missing and should be present
+- **Loading/Error/Empty State**: Mark `N/A` if not applicable to this AC or if the state is unchanged by this feature (the PRD's "as today" line covers it), `PASS` if covered, `FAIL` only if the feature adds or changes that state and no AC covers it
 - **Implementation Detail Leak**: Owned by Matrix S — mark `N/A` unless the AC delegates verification to a function name so directly that testability (the "Testable" column) is broken; in that case FAIL under **Testable** and put the note here. This column never holds a smell FAIL of its own and never contributes to the smell counts.
 
 **Matrix S: Smell Detection** — one row per FR, then one row per AC
@@ -281,6 +281,7 @@ Column definitions:
 - **Support: Errors Distinguishable**: FAIL if different failures produce the same message
 
 For frontend/mobile projects, rows are screens, dialogs, and UI states.
+In D1 and D2, judge only what this feature adds or changes. A cell whose behavior stays as today — an existing error message, an existing loading state, a message that today already covers several causes — is `N/A — as today`, never a FAIL.
 For backend services, rows are processing stages, API request phases, or state machine states.
 
 **Matrix E: Edge Case Coverage** — one row per entity or field that has edge case potential
@@ -289,7 +290,7 @@ For backend services, rows are processing stages, API request phases, or state m
 |----|-------------|------------------|-----------------|----------------|-------------------|-----------------|
 | E-1 | [entity] | [PENDING] | [PENDING] | [PENDING] | [PENDING] | [PENDING] |
 
-The writer generates edge cases using systematic checklists (entity × dimension, endpoint × dimension, conditional FR × dimension). This matrix verifies the writer didn't skip dimensions:
+The writer generates edge cases using systematic checklists (entity × dimension, endpoint × dimension, conditional FR × dimension). This matrix verifies the writer didn't skip dimensions. A dimension is covered — PASS — when an AC or edge case addresses it, when the behavior is unchanged by this feature and the PRD's "as today" line covers it, or when a shared requirement decides it (`N/A — covered by SR-NN`). Never FAIL a dimension only because unchanged or SR-decided behavior has no row of its own:
 
 - **Nullable Handled**: If the field can be null/missing, is it addressed in ACs or edge cases? Also check: empty string, empty list, zero — the writer's checklist distinguishes null from empty.
 - **Boundary Values**: Min, max, just-outside-boundary, invalid format — specified? FAIL if the writer covered null but skipped boundary values for a numeric or date field.
@@ -800,7 +801,7 @@ Fill the Defect Taxonomy Scorecard (replace the `—` placeholders with actual c
 
 | Category | Second Pass: Re-examine |
 |----------|------------------------|
-| Omission | In Matrix C, check that every entity from Matrix E has at least one AC with an FR Link. In Matrix D1, check every screen has loading + error rows. |
+| Omission | In Matrix C, check that every entity from Matrix E has at least one AC with an FR Link. In Matrix D1, check every screen whose loading or error behavior this feature adds or changes has loading + error rows (unchanged ones are covered by the "as today" line). |
 | Ambiguity | In Matrix S, re-read the 3 longest PASS cells — verify the FR/AC text was scanned against all 18 patterns. |
 | Inconsistency | In Matrix B, cross-check all "Contradicts FR: PASS" cells — verify the sub-agent compared against ALL other FRs, not just adjacent ones. |
 | Incorrect Fact | In Matrix A, verify any PASS cell where the Notes column is empty — a PASS with no evidence may be unchecked. |
